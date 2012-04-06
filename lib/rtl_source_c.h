@@ -95,10 +95,9 @@ private:
 
   rtlsdr_dev_t *_dev;
   gruel::thread _thread;
-  boost::circular_buffer<unsigned char> _buf;
+  boost::circular_buffer<unsigned short> _buf;
   boost::mutex _buf_mutex;
   boost::condition_variable _buf_cond;
-  bool _has_i_sample;
 };
 
 #endif /* INCLUDED_RTLSDR_SOURCE_C_H */
