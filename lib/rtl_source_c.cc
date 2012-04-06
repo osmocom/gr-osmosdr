@@ -79,8 +79,8 @@ rtl_source_c::rtl_source_c (const std::string &args)
   // create a lookup table for gr_complex values
   for (unsigned int i = 0; i <= 0xffff; i++)
   {
-    _lut.push_back( gr_complex( ((i >> 8) - 127) * 0.00787,
-                                ((i & 0xff) - 127) * 0.00787 ) );
+    _lut.push_back( gr_complex( (float(i >> 8) - 127.0) * 0.00787,
+                                (float(i & 0xff) - 127.0) * 0.00787 ) );
   }
 
   std::cout << "Opening " << rtlsdr_get_device_name(dev_index) << std::endl;

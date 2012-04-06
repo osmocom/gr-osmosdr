@@ -38,10 +38,10 @@ class osmosdr_source_c(grc_wxgui.top_block_gui):
 			self.GetWin(),
 			fft_size=1024,
 			sample_rate=samp_rate,
-			ref_scale=50.0,
-			ref_level=145,
+			ref_scale=2.0,
+			ref_level=0,
 			y_divs=10,
-			fft_rate=20,
+			fft_rate=15,
 			average=False,
 			avg_alpha=0.5
 		)
