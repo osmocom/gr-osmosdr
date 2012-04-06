@@ -145,7 +145,7 @@ double meta_range_t::clip(double value, bool clip_step) const{
         }
         //in this range, clip here
         if (value <= r.stop()){
-            if (not clip_step or r.step() == 0) return value;
+            if (! clip_step || r.step() == 0) return value;
             return boost::math::round((value - r.start())/r.step())*r.step() + r.start();
         }
         //continue on to the next range
