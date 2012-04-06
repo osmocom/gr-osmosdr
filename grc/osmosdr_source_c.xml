@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<block>
+  <name>OsmoSDR Source</name>
+  <key>osmosdr_source_c</key>
+  <category>OsmoSDR</category>
+  <import>import osmosdr</import>
+  <make>osmosdr.source_c($args)
+self.$(id).set_center_freq($freq)
+self.$(id).set_samp_rate($rate)
+self.$(id).set_gain($gain)
+  </make>
+  <callback>set_center_freq($freq)</callback>
+  <callback>set_samp_rate($rate)</callback>
+  <callback>set_gain($gain)</callback>
+  <param>
+    <name>Device specific arguments</name>
+    <key>args</key>
+    <value></value>
+    <type>string</type>
+  </param>
+  <param>
+    <name>Frequency (Hz)</name>
+    <key>freq</key>
+    <value>392.8e6</value>
+    <type>real</type>
+  </param>
+  <param>
+    <name>Samplerate (Hz)</name>
+    <key>rate</key>
+    <value>2048000</value>
+    <type>real</type>
+  </param>
+  <param>
+    <name>Gain (dB)</name>
+    <key>gain</key>
+    <value>20.0</value>
+    <type>real</type>
+  </param>
+  <check>($freq &gt;= 50e6) and ($freq &lt;= 2.2e9)</check>
+  <source>
+    <name>out</name>
+    <type>complex</type>
+  </source>
+</block>
