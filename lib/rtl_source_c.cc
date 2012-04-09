@@ -80,11 +80,11 @@ rtl_source_c::rtl_source_c (const std::string &args)
   for (unsigned int i = 0; i <= 0xffff; i++)
   {
 #if 1 // little endian
-    _lut.push_back( gr_complex( (float(i & 0xff) - 127.0) * 0.00787,
-                                (float(i >> 8) - 127.0) * 0.00787 ) );
+    _lut.push_back( gr_complex( (float(i & 0xff) - 127.5f) *(1.0f/128.0f),
+                                (float(i >> 8) - 127.5f) * (1.0f/128.0f) ) );
 #else // big endian
-    _lut.push_back( gr_complex( (float(i >> 8) - 127.0) * 0.00787,
-                                (float(i & 0xff) - 127.0) * 0.00787 ) );
+    _lut.push_back( gr_complex( (float(i >> 8) - 127.5f) * (1.0f/128.0f),
+                                (float(i & 0xff) - 127.5f) * (1.0f/128.0f) ) );
 #endif
   }
 
