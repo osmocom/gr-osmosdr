@@ -31,21 +31,29 @@
 class OSMOSDR_API osmosdr_source_c_impl : public osmosdr_source_c
 {
 public:
-  osmosdr::meta_range_t get_samp_rates( void );
-  double set_samp_rate( double rate );
-  double get_samp_rate( void );
+  size_t get_num_channels( void );
+
+  osmosdr::meta_range_t get_sample_rates( void );
+  double set_sample_rate( double rate );
+  double get_sample_rate( void );
 
   osmosdr::freq_range_t get_freq_range( size_t chan = 0 );
   double set_center_freq( double freq, size_t chan = 0 );
   double get_center_freq( size_t chan = 0 );
-  double set_freq_correction( double ppm, size_t chan = 0 );
-  double get_freq_correction( size_t chan = 0 );
+  double set_freq_corr( double ppm, size_t chan = 0 );
+  double get_freq_corr( size_t chan = 0 );
 
   std::vector<std::string> get_gain_names( size_t chan = 0 );
-  osmosdr::gain_range_t get_gain_range( const std::string & name = "", size_t chan = 0 );
-  void set_gain( double gain, size_t chan = 0 );
-  void set_gain( double gain, const std::string & name = "", size_t chan = 0 );
-  double get_gain( const std::string & name = "", size_t chan = 0 );
+  osmosdr::gain_range_t get_gain_range( size_t chan = 0 );
+  osmosdr::gain_range_t get_gain_range( const std::string & name, size_t chan = 0 );
+  double set_gain( double gain, size_t chan = 0 );
+  double set_gain( double gain, const std::string & name, size_t chan = 0 );
+  double get_gain( size_t chan = 0 );
+  double get_gain( const std::string & name, size_t chan = 0 );
+
+  std::vector< std::string > get_antennas( size_t chan = 0 );
+  std::string set_antenna( const std::string & antenna, size_t chan = 0 );
+  std::string get_antenna( size_t chan = 0 );
 
 private:
   osmosdr_source_c_impl (const std::string & args);  	// private constructor

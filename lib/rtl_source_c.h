@@ -30,6 +30,8 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/condition_variable.hpp>
 
+#include "osmosdr_src_iface.h"
+
 class rtl_source_c;
 typedef struct rtlsdr_dev rtlsdr_dev_t;
 
@@ -60,7 +62,8 @@ OSMOSDR_API rtl_source_c_sptr make_rtl_source_c (const std::string & args = "");
  * \ingroup block
  *
  */
-class OSMOSDR_API rtl_source_c : public gr_sync_block
+class OSMOSDR_API rtl_source_c : public gr_sync_block,
+                                 public osmosdr_src_iface
 {
 private:
   // The friend declaration allows make_rtl_source_c to
@@ -80,10 +83,29 @@ public:
             gr_vector_const_void_star &input_items,
             gr_vector_void_star &output_items );
 
-  double set_center_freq( double freq );
+  size_t get_num_channels( void );
+
+  osmosdr::meta_range_t get_sample_rates( void );
   double set_sample_rate( double rate );
-  double get_sample_rate();
-  double set_gain( double gain );
+  double get_sample_rate( void );
+
+  osmosdr::freq_range_t get_freq_range( size_t chan = 0 );
+  double set_center_freq( double freq, size_t chan = 0 );
+  double get_center_freq( size_t chan = 0 );
+  double set_freq_corr( double ppm, size_t chan = 0 );
+  double get_freq_corr( size_t chan = 0 );
+
+  std::vector<std::string> get_gain_names( size_t chan = 0 );
+  osmosdr::gain_range_t get_gain_range( size_t chan = 0 );
+  osmosdr::gain_range_t get_gain_range( const std::string & name, size_t chan = 0 );
+  double set_gain( double gain, size_t chan = 0 );
+  double set_gain( double gain, const std::string & name, size_t chan = 0 );
+  double get_gain( size_t chan = 0 );
+  double get_gain( const std::string & name, size_t chan = 0 );
+
+  std::vector< std::string > get_antennas( size_t chan = 0 );
+  std::string set_antenna( const std::string & antenna, size_t chan = 0 );
+  std::string get_antenna( size_t chan = 0 );
 
 private:
   static void _rtlsdr_callback(unsigned char *buf, uint32_t len, void *ctx);
@@ -98,6 +120,7 @@ private:
   boost::circular_buffer<unsigned short> _buf;
   boost::mutex _buf_mutex;
   boost::condition_variable _buf_cond;
+  bool _running;
 };
 
 #endif /* INCLUDED_RTLSDR_SOURCE_C_H */

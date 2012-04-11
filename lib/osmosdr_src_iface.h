@@ -1,6 +1,6 @@
 /* -*- c++ -*- */
 /*
- * Copyright 2004 Free Software Foundation, Inc.
+ * Copyright 2012 Free Software Foundation, Inc.
  * Copyright 2012 Dimitri Stolnikov <horiz0n@gmx.net>
  *
  * This file is part of GNU Radio
@@ -20,44 +20,17 @@
  * the Free Software Foundation, Inc., 51 Franklin Street,
  * Boston, MA 02110-1301, USA.
  */
-#ifndef INCLUDED_OSMOSDR_SOURCE_C_H
-#define INCLUDED_OSMOSDR_SOURCE_C_H
 
-#include <osmosdr_api.h>
+#ifndef OSMOSDR_SRC_IFACE_H
+#define OSMOSDR_SRC_IFACE_H
+
 #include <osmosdr_ranges.h>
-#include <gr_hier_block2.h>
-
-class osmosdr_source_c;
-
-/*
- * We use boost::shared_ptr's instead of raw pointers for all access
- * to gr_blocks (and many other data structures).  The shared_ptr gets
- * us transparent reference counting, which greatly simplifies storage
- * management issues.  This is especially helpful in our hybrid
- * C++ / Python system.
- *
- * See http://www.boost.org/libs/smart_ptr/smart_ptr.htm
- *
- * As a convention, the _sptr suffix indicates a boost::shared_ptr
- */
-typedef boost::shared_ptr<osmosdr_source_c> osmosdr_source_c_sptr;
 
 /*!
- * \brief Return a shared_ptr to a new instance of osmosdr_source_c.
+ * TODO: document
  *
- * To avoid accidental use of raw pointers, osmosdr_source_c's
- * constructor is private.  osmosdr_make_source_c is the public
- * interface for creating new instances.
  */
-OSMOSDR_API osmosdr_source_c_sptr osmosdr_make_source_c ( const std::string & args = "" );
-
-/*!
- * \brief Provides a stream of complex samples.
- * \ingroup block
- *
- * This uses the preferred technique: subclassing gr_hier_block2.
- */
-class OSMOSDR_API osmosdr_source_c : virtual public gr_hier_block2
+class OSMOSDR_API osmosdr_src_iface
 {
 public:
   /*!
@@ -207,4 +180,4 @@ public:
   virtual std::string get_antenna( size_t chan = 0 ) = 0;
 };
 
-#endif /* INCLUDED_OSMOSDR_SOURCE_C_H */
+#endif // OSMOSDR_SRC_IFACE_H

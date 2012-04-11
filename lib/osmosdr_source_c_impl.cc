@@ -70,67 +70,97 @@ osmosdr_source_c_impl::osmosdr_source_c_impl (const std::string &args)
   connect(_src, 0, self(), 0);
 }
 
-osmosdr::meta_range_t osmosdr_source_c_impl::get_samp_rates( void )
+size_t osmosdr_source_c_impl::get_num_channels()
 {
-
+  return _src->get_num_channels();
 }
 
-double osmosdr_source_c_impl::set_samp_rate( double rate )
+osmosdr::meta_range_t osmosdr_source_c_impl::get_sample_rates()
 {
-  return _src->set_sample_rate( rate );
+  return _src->get_sample_rates();
 }
 
-double osmosdr_source_c_impl::get_samp_rate( void )
+double osmosdr_source_c_impl::set_sample_rate(double rate)
+{
+  return _src->set_sample_rate(rate);
+}
+
+double osmosdr_source_c_impl::get_sample_rate()
 {
   return _src->get_sample_rate();
 }
 
 osmosdr::freq_range_t osmosdr_source_c_impl::get_freq_range( size_t chan )
 {
-
+  return _src->get_freq_range( chan );
 }
 
 double osmosdr_source_c_impl::set_center_freq( double freq, size_t chan )
 {
-  return _src->set_center_freq( freq );
+  return _src->set_center_freq( freq, chan );
 }
 
 double osmosdr_source_c_impl::get_center_freq( size_t chan )
 {
-
+  return _src->get_center_freq( chan );
 }
 
-double osmosdr_source_c_impl::set_freq_correction( double ppm, size_t chan )
+double osmosdr_source_c_impl::set_freq_corr( double ppm, size_t chan )
 {
-
+  return _src->set_freq_corr( ppm, chan );
 }
 
-double osmosdr_source_c_impl::get_freq_correction( size_t chan )
+double osmosdr_source_c_impl::get_freq_corr( size_t chan )
 {
-
+  return _src->get_freq_corr( chan );
 }
 
 std::vector<std::string> osmosdr_source_c_impl::get_gain_names( size_t chan )
 {
+  return _src->get_gain_names( chan );
+}
 
+osmosdr::gain_range_t osmosdr_source_c_impl::get_gain_range( size_t chan )
+{
+  return _src->get_gain_range( chan );
 }
 
 osmosdr::gain_range_t osmosdr_source_c_impl::get_gain_range( const std::string & name, size_t chan )
 {
-
+  return _src->get_gain_range( name, chan );
 }
 
-void osmosdr_source_c_impl::set_gain( double gain, size_t chan )
+double osmosdr_source_c_impl::set_gain( double gain, size_t chan )
 {
-  _src->set_gain( gain );
+  return _src->set_gain( gain, chan );
 }
 
-void osmosdr_source_c_impl::set_gain( double gain, const std::string & name, size_t chan )
+double osmosdr_source_c_impl::set_gain( double gain, const std::string & name, size_t chan)
 {
+  return _src->set_gain( gain, name, chan );
+}
 
+double osmosdr_source_c_impl::get_gain( size_t chan )
+{
+  return _src->get_gain( chan );
 }
 
 double osmosdr_source_c_impl::get_gain( const std::string & name, size_t chan )
 {
+  return _src->get_gain( name, chan );
+}
 
+std::vector< std::string > osmosdr_source_c_impl::get_antennas( size_t chan )
+{
+  return _src->get_antennas( chan );
+}
+
+std::string osmosdr_source_c_impl::set_antenna( const std::string & antenna, size_t chan )
+{
+  return _src->set_antenna( antenna, chan );
+}
+
+std::string osmosdr_source_c_impl::get_antenna( size_t chan )
+{
+  return _src->get_antenna( chan );
 }

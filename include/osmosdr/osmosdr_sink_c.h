@@ -48,7 +48,7 @@ typedef boost::shared_ptr<osmosdr_sink_c> osmosdr_sink_c_sptr;
  * constructor is private.  osmosdr_make_sink_c is the public
  * interface for creating new instances.
  */
-OSMOSDR_API osmosdr_sink_c_sptr osmosdr_make_sink_c (const std::string & args = "");
+OSMOSDR_API osmosdr_sink_c_sptr osmosdr_make_sink_c ( const std::string & args = "" );
 
 /*!
  * \brief Takes a stream of complex samples.

@@ -33,11 +33,15 @@
 #include <rtl_source_c.h>
 #include <gr_io_signature.h>
 
+#include <boost/assign.hpp>
+
 #include <stdexcept>
 #include <iostream>
 #include <stdio.h>
 
 #include <rtl-sdr.h>
+
+using namespace boost::assign;
 
 /*
  * Create a new instance of rtl_source_c and return
@@ -88,18 +92,24 @@ rtl_source_c::rtl_source_c (const std::string &args)
 #endif
   }
 
-  std::cout << "Opening " << rtlsdr_get_device_name(dev_index) << std::endl;
+  std::cerr << "Using device #" << dev_index << " "
+            << "(" << rtlsdr_get_device_name(dev_index) << ")"
+            << std::endl;
 
   _dev = NULL;
-  ret = rtlsdr_open(&_dev, dev_index);
+  ret = rtlsdr_open( &_dev, dev_index );
   if (ret < 0)
-      throw std::runtime_error("failed to open rtlsdr device.");
+      throw std::runtime_error("Failed to open rtlsdr device.");
 
-  ret = rtlsdr_reset_buffer(_dev);
+  ret = rtlsdr_set_sample_rate( _dev, 1024000 );
   if (ret < 0)
-      throw std::runtime_error("failed to reset usb buffers.");
+      throw std::runtime_error("Failed to set default samplerate.");
 
-//  rtlsdr_set_sample_rate( _dev, 2048000 );
+  ret = rtlsdr_reset_buffer( _dev );
+  if (ret < 0)
+      throw std::runtime_error("Failed to reset usb buffers.");
+
+  _running = true;
 
   _thread = gruel::thread(_rtlsdr_wait, this);
 }
@@ -127,21 +137,22 @@ void rtl_source_c::rtlsdr_callback(unsigned char *buf, uint32_t len)
 {
   unsigned short * sbuf = (unsigned short *)buf;
 
-  if (len % 2 != 0) {
-    printf("len: %d\n", len); fflush(stdout);
-  }
-
   boost::mutex::scoped_lock lock( _buf_mutex );
+
+  if (len % 2 != 0) {
+    printf("!!! len: %d\n", len); fflush(stdout);
+  }
 
   for (int i = 0; i < len/2; i++) {
     if (!_buf.full()) {
-      _buf.push_back(sbuf[i]);
-      _buf_cond.notify_one();
+      _buf.push_back( sbuf[i] );
     } else {
       printf("O"); fflush(stdout);
       break;
     }
   }
+
+  _buf_cond.notify_one();
 }
 
 void rtl_source_c::_rtlsdr_wait(rtl_source_c *obj)
@@ -151,11 +162,12 @@ void rtl_source_c::_rtlsdr_wait(rtl_source_c *obj)
 
 void rtl_source_c::rtlsdr_wait()
 {
-  int ret = rtlsdr_wait_async(_dev, _rtlsdr_callback, (void *)this);
-  if (-10 == ret)
-    ret = rtlsdr_wait_async(_dev, _rtlsdr_callback, (void *)this);
+  int ret = rtlsdr_read_async( _dev, _rtlsdr_callback, (void *)this, 0, 0 );
 
-  std::cout << "rtlsdr_wait() finished due to " << ret << std::endl;
+  _running = false;
+
+  if ( ret != 0 )
+    std::cerr << "rtlsdr_read_async returned with " << ret << std::endl;
 }
 
 int rtl_source_c::work( int noutput_items,
@@ -163,6 +175,9 @@ int rtl_source_c::work( int noutput_items,
                         gr_vector_void_star &output_items )
 {
   gr_complex *out = (gr_complex *)output_items[0];
+
+  if (!_running)
+    return WORK_DONE;
 
   int items_left = noutput_items;
   while ( items_left )
@@ -177,53 +192,162 @@ int rtl_source_c::work( int noutput_items,
 
     // convert samples to gr_complex type by using the lookup table
     *out++ = _lut[ _buf.front() ];
+    items_left--;
 
     {
       boost::mutex::scoped_lock lock( _buf_mutex );
 
       _buf.pop_front();
     }
-
-    items_left--;
   }
 
   return noutput_items;
 }
 
-double rtl_source_c::set_center_freq(double freq)
+size_t rtl_source_c::get_num_channels()
 {
-  if (_dev) {
-    rtlsdr_set_center_freq( _dev, (unsigned int)freq );
-    return (double)rtlsdr_get_center_freq( _dev );
-  }
-
-  return 0;
+  return 1;
 }
 
-double rtl_source_c::set_sample_rate( double rate )
+osmosdr::meta_range_t rtl_source_c::get_sample_rates()
+{
+  osmosdr::meta_range_t range;
+
+  range += osmosdr::range_t( 1024000 );
+  range += osmosdr::range_t( 2048000 );
+  range += osmosdr::range_t( 3200000 );
+
+  // TODO: read from the librtlsdr as soon as the api is available
+
+  return range;
+}
+
+double rtl_source_c::set_sample_rate(double rate)
 {
   if (_dev) {
-    rtlsdr_set_sample_rate( _dev, (unsigned int)rate );
-    return (double)rtlsdr_get_sample_rate( _dev );
+    rtlsdr_set_sample_rate( _dev, (uint32_t)rate );
   }
 
-  return 0;
+  return get_sample_rate();
 }
 
 double rtl_source_c::get_sample_rate()
 {
   if (_dev)
-    return (double) rtlsdr_get_sample_rate( _dev );
+    return (double)rtlsdr_get_sample_rate( _dev );
 
   return 0;
 }
 
-double rtl_source_c::set_gain( double gain )
+osmosdr::freq_range_t rtl_source_c::get_freq_range( size_t chan )
 {
-  if (_dev) {
-    rtlsdr_set_tuner_gain( _dev, (unsigned int)gain );
-    return (double)rtlsdr_get_tuner_gain( _dev );
-  }
+  osmosdr::freq_range_t range;
+
+  range += osmosdr::range_t( 50e6, 2.2e9, 100 );
+
+  // TODO: read from the librtlsdr as soon as the api is available
+
+  return range;
+}
+
+double rtl_source_c::set_center_freq( double freq, size_t chan )
+{
+  if (_dev)
+    rtlsdr_set_center_freq( _dev, (uint32_t)freq );
+
+  return get_center_freq( chan );
+}
+
+double rtl_source_c::get_center_freq( size_t chan )
+{
+  if (_dev)
+    return (double)rtlsdr_get_center_freq( _dev );
 
   return 0;
+}
+
+double rtl_source_c::set_freq_corr( double ppm, size_t chan )
+{
+  if ( _dev )
+    rtlsdr_set_freq_correction( _dev, (int)ppm );
+
+  return get_freq_corr( chan );
+}
+
+double rtl_source_c::get_freq_corr( size_t chan )
+{
+  if ( _dev )
+    return (double)rtlsdr_get_freq_correction( _dev );
+
+  return 0;
+}
+
+std::vector<std::string> rtl_source_c::get_gain_names( size_t chan )
+{
+  std::vector< std::string > antennas;
+
+  antennas += "LNA";
+
+  return antennas;
+}
+
+osmosdr::gain_range_t rtl_source_c::get_gain_range( size_t chan )
+{
+  osmosdr::gain_range_t range;
+
+  range += osmosdr::range_t( -5, 30, 2.5 );
+
+  // TODO: read from the librtlsdr as soon as the api is available
+
+  return range;
+}
+
+osmosdr::gain_range_t rtl_source_c::get_gain_range( const std::string & name, size_t chan )
+{
+  return get_gain_range( chan );
+}
+
+double rtl_source_c::set_gain( double gain, size_t chan )
+{
+  if (_dev)
+    rtlsdr_set_tuner_gain( _dev, gain );
+
+  return get_gain( chan );
+}
+
+double rtl_source_c::set_gain( double gain, const std::string & name, size_t chan)
+{
+  return set_gain( gain, chan );
+}
+
+double rtl_source_c::get_gain( size_t chan )
+{
+  if ( _dev )
+    return (double)rtlsdr_get_tuner_gain( _dev );
+
+  return 0;
+}
+
+double rtl_source_c::get_gain( const std::string & name, size_t chan )
+{
+  return get_gain( chan );
+}
+
+std::vector< std::string > rtl_source_c::get_antennas( size_t chan )
+{
+  std::vector< std::string > antennas;
+
+  antennas += get_antenna( chan );
+
+  return antennas;
+}
+
+std::string rtl_source_c::set_antenna( const std::string & antenna, size_t chan )
+{
+  return get_antenna( chan );
+}
+
+std::string rtl_source_c::get_antenna( size_t chan )
+{
+  return "ANT";
 }
