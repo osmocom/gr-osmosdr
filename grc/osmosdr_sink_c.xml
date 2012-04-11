@@ -5,9 +5,9 @@
   <category>OsmoSDR</category>
   <import>import osmosdr</import>
   <make>osmosdr.sink_c()</make>
-
   <sink>
     <name>in</name>
     <type>complex</type>
+    <nports>1</nports>
   </sink>
 </block>

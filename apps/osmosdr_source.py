@@ -22,14 +22,15 @@ class osmosdr_source_c(grc_wxgui.top_block_gui):
 
 		self.src = osmosdr.source_c()
 
-		self.src.set_samp_rate(1024000)
-		self.src.set_center_freq(392.8e6)
+		self.src.set_sample_rate(1024000)
+		self.src.set_center_freq(394.5e6)
 		self.src.set_gain(10)
 
 		##################################################
 		# Variables
 		##################################################
-		self.samp_rate = samp_rate = self.src.get_samp_rate()
+		self.sample_rate = self.src.get_sample_rate()
+		self.center_freq = self.src.get_center_freq()
 
 		##################################################
 		# Blocks
@@ -37,11 +38,12 @@ class osmosdr_source_c(grc_wxgui.top_block_gui):
 		self.sink = fftsink2.fft_sink_c(
 			self.GetWin(),
 			fft_size=1024,
-			sample_rate=samp_rate,
+			baseband_freq=self.center_freq,
+			sample_rate=self.sample_rate,
 			ref_scale=2.0,
 			ref_level=0,
 			y_divs=10,
-			fft_rate=15,
+			fft_rate=10,
 			average=False,
 			avg_alpha=0.5
 		)
@@ -53,10 +55,13 @@ class osmosdr_source_c(grc_wxgui.top_block_gui):
 		##################################################
 		self.connect((self.src, 0), (self.sink, 0))
 
+	def set_sample_rate(self, sample_rate):
+		self.sample_rate = sample_rate
+		self.sink.set_sample_rate(self.sample_rate)
 
-	def set_samp_rate(self, samp_rate):
-		self.samp_rate = samp_rate
-		self.sink.set_sample_rate(self.samp_rate)
+	def set_center_freq(self, center_freq):
+		self.center_freq = center_freq
+		self.sink.set_center_freq(self.center_freq)
 
 if __name__ == '__main__':
 	parser = OptionParser(option_class=eng_option, usage="%prog: [options]")
