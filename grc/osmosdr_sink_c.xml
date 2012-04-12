@@ -3,6 +3,7 @@
   <name>OsmoSDR Sink</name>
   <key>osmosdr_sink_c</key>
   <category>OsmoSDR</category>
+  <throttle>1</throttle>
   <import>import osmosdr</import>
   <make>osmosdr.sink_c()</make>
   <sink>
