@@ -19,6 +19,6 @@
 
 install(FILES
     osmosdr_source_c.xml
-    osmosdr_sink_c.xml
+#    osmosdr_sink_c.xml
     DESTINATION share/gnuradio/grc/blocks
 )

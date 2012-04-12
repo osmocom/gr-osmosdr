@@ -25,6 +25,6 @@ install(FILES
     osmosdr_pimpl.h
     osmosdr_ranges.h
     osmosdr_source_c.h
-    osmosdr_sink_c.h
+#    osmosdr_sink_c.h
     DESTINATION include/osmosdr
 )

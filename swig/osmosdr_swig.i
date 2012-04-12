@@ -9,14 +9,14 @@
 
 %{
 #include "osmosdr_source_c.h"
-#include "osmosdr_sink_c.h"
+//#include "osmosdr_sink_c.h"
 %}
 
 GR_SWIG_BLOCK_MAGIC(osmosdr,source_c);
 %include "osmosdr_source_c.h"
 
-GR_SWIG_BLOCK_MAGIC(osmosdr,sink_c);
-%include "osmosdr_sink_c.h"
+//GR_SWIG_BLOCK_MAGIC(osmosdr,sink_c);
+//%include "osmosdr_sink_c.h"
 
 #if SWIGGUILE
 %scheme %{
