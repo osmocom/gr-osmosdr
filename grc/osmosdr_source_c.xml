@@ -3,6 +3,7 @@
   <name>OsmoSDR Source</name>
   <key>osmosdr_source_c</key>
   <category>OsmoSDR</category>
+  <throttle>1</throttle>
   <import>import osmosdr</import>
   <make>osmosdr.source_c($args)
 self.$(id).set_sample_rate($rate)
