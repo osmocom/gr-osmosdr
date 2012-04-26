@@ -1,9 +1,6 @@
 /* -*- c++ -*- */
 /*
- * Copyright 2012 Free Software Foundation, Inc.
  * Copyright 2012 Dimitri Stolnikov <horiz0n@gmx.net>
- *
- * This file is part of GNU Radio
  *
  * GNU Radio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

@@ -1,9 +1,6 @@
 /* -*- c++ -*- */
 /*
- * Copyright 2012 Free Software Foundation, Inc.
  * Copyright 2012 Dimitri Stolnikov <horiz0n@gmx.net>
- *
- * This file is part of GNU Radio
  *
  * GNU Radio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -62,7 +59,8 @@ private:
   // access the private constructor.
   friend OSMOSDR_API osmosdr_source_c_sptr osmosdr_make_source_c (const std::string & args);
 
-  rtl_source_c_sptr _src;
+  size_t _nchan;
+  std::vector< rtl_source_c_sptr > _srcs;
 };
 
 #endif /* INCLUDED_OSMOSDR_SOURCE_C_IMPL_H */

@@ -1,9 +1,6 @@
 /* -*- c++ -*- */
 /*
- * Copyright 2012 Free Software Foundation, Inc.
  * Copyright 2012 Dimitri Stolnikov <horiz0n@gmx.net>
- *
- * This file is part of GNU Radio
  *
  * GNU Radio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,6 +22,11 @@
 #define OSMOSDR_SRC_IFACE_H
 
 #include <osmosdr_ranges.h>
+#include <gr_basic_block.h>
+
+class osmosdr_src_iface;
+
+typedef boost::shared_ptr<osmosdr_src_iface> osmosdr_src_iface_sptr;
 
 /*!
  * TODO: document
