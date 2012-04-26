@@ -25,8 +25,8 @@
 
 #include <osmosdr_api.h>
 #include <gr_sync_block.h>
+
 #include <gruel/thread.h>
-#include <boost/circular_buffer.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/condition_variable.hpp>
 
@@ -117,10 +117,16 @@ private:
 
   rtlsdr_dev_t *_dev;
   gruel::thread _thread;
-  boost::circular_buffer<unsigned short> _buf;
+  unsigned short **_buf;
+  unsigned int _buf_num;
+  unsigned int _buf_head;
+  unsigned int _buf_used;
   boost::mutex _buf_mutex;
   boost::condition_variable _buf_cond;
   bool _running;
+
+  unsigned int _buf_offset;
+  unsigned int _samp_avail;
 };
 
 #endif /* INCLUDED_RTLSDR_SOURCE_C_H */

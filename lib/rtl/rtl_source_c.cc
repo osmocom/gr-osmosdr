@@ -1,9 +1,6 @@
 /* -*- c++ -*- */
 /*
- * Copyright 2012 Free Software Foundation, Inc.
  * Copyright 2012 Dimitri Stolnikov <horiz0n@gmx.net>
- *
- * This file is part of GNU Radio
  *
  * GNU Radio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -43,6 +40,8 @@
 
 using namespace boost::assign;
 
+#define BUF_SIZE (16 * 32 * 512)
+
 /*
  * Create a new instance of rtl_source_c and return
  * a boost shared_ptr.  This is effectively the public constructor.
@@ -76,13 +75,21 @@ rtl_source_c::rtl_source_c (const std::string &args)
         gr_make_io_signature (MIN_OUT, MAX_OUT, sizeof (gr_complex)))
 {
   int ret;
-  int dev_index = 0;
+  unsigned int dev_index = atoi( args.c_str() );
 
-  _buf = boost::circular_buffer<unsigned short>(1024*1024);
+  std::cout << "'" << args << "'" << std::endl;
+
+  _buf_num = 32;
+  _buf = (unsigned short **) malloc(_buf_num * sizeof(unsigned short *));
+
+  for(unsigned int i = 0; i < _buf_num; ++i)
+    _buf[i] = (unsigned short *) malloc(BUF_SIZE);
+
+  _buf_head = _buf_used = _buf_offset = 0;
+  _samp_avail = BUF_SIZE;
 
   // create a lookup table for gr_complex values
-  for (unsigned int i = 0; i <= 0xffff; i++)
-  {
+  for (unsigned int i = 0; i <= 0xffff; i++) {
 #if 1 // little endian
     _lut.push_back( gr_complex( (float(i & 0xff) - 127.5f) *(1.0f/128.0f),
                                 (float(i >> 8) - 127.5f) * (1.0f/128.0f) ) );
@@ -91,6 +98,9 @@ rtl_source_c::rtl_source_c (const std::string &args)
                                 (float(i & 0xff) - 127.5f) * (1.0f/128.0f) ) );
 #endif
   }
+
+  if ( dev_index >= rtlsdr_get_device_count() )
+    throw std::runtime_error("Device index out of bounds for rtlsdr.");
 
   std::cerr << "Using device #" << dev_index << " "
             << "(" << rtlsdr_get_device_name(dev_index) << ")"
@@ -125,6 +135,14 @@ rtl_source_c::~rtl_source_c ()
     rtlsdr_close( _dev );
     _dev = NULL;
   }
+
+  for(unsigned int i = 0; i < _buf_num; ++i) {
+    if (_buf[i])
+      free(_buf[i]);
+  }
+
+  free(_buf);
+  _buf = NULL;
 }
 
 void rtl_source_c::_rtlsdr_callback(unsigned char *buf, uint32_t len, void *ctx)
@@ -135,20 +153,22 @@ void rtl_source_c::_rtlsdr_callback(unsigned char *buf, uint32_t len, void *ctx)
 
 void rtl_source_c::rtlsdr_callback(unsigned char *buf, uint32_t len)
 {
-  unsigned short * sbuf = (unsigned short *)buf;
-
-  boost::mutex::scoped_lock lock( _buf_mutex );
-
-  if (len % 2 != 0) {
-    printf("!!! len: %d\n", len); fflush(stdout);
+  if (len != BUF_SIZE) {
+    printf("U(%d)\n", len); fflush(stdout);
+    return;
   }
 
-  for (int i = 0; i < len/2; i++) {
-    if (!_buf.full()) {
-      _buf.push_back( sbuf[i] );
-    } else {
+  {
+    boost::mutex::scoped_lock lock( _buf_mutex );
+
+    int buf_tail = (_buf_head + _buf_used) % _buf_num;
+    memcpy(_buf[buf_tail], buf, len);
+
+    if (_buf_used == _buf_num) {
       printf("O"); fflush(stdout);
-      break;
+      _buf_head = (_buf_head + 1) % _buf_num;
+    } else {
+      _buf_used++;
     }
   }
 
@@ -162,7 +182,7 @@ void rtl_source_c::_rtlsdr_wait(rtl_source_c *obj)
 
 void rtl_source_c::rtlsdr_wait()
 {
-  int ret = rtlsdr_read_async( _dev, _rtlsdr_callback, (void *)this, 0, 0 );
+  int ret = rtlsdr_read_async( _dev, _rtlsdr_callback, (void *)this, 0, BUF_SIZE );
 
   _running = false;
 
@@ -176,29 +196,49 @@ int rtl_source_c::work( int noutput_items,
 {
   gr_complex *out = (gr_complex *)output_items[0];
 
+  {
+    boost::mutex::scoped_lock lock( _buf_mutex );
+
+    while (_buf_used < 3 && _running)
+        _buf_cond.wait( lock );
+  }
+
   if (!_running)
     return WORK_DONE;
 
-  int items_left = noutput_items;
-  while ( items_left )
-  {
-    {
-      boost::mutex::scoped_lock lock( _buf_mutex );
+  unsigned short *buf = _buf[_buf_head];
 
-      while( _buf.empty() ) {
-          _buf_cond.wait( lock );
-      }
-    }
+  if (noutput_items <= int(_samp_avail)) {
+    for (int i = 0; i <= noutput_items; ++i)
+      *out++ = _lut[ *(buf + _buf_offset + i) ];
 
-    // convert samples to gr_complex type by using the lookup table
-    *out++ = _lut[ _buf.front() ];
-    items_left--;
+    _buf_offset += noutput_items;
+    _samp_avail -= noutput_items;
+    return noutput_items;
+  } else {
+    for (int i = 0; i <= int(_samp_avail); ++i)
+      *out++ = _lut[ *(buf + _buf_offset + i) ];
 
     {
       boost::mutex::scoped_lock lock( _buf_mutex );
 
-      _buf.pop_front();
+      _buf_head = (_buf_head + 1) % _buf_num;
+      _buf_used--;
     }
+
+    buf = _buf[_buf_head];
+    _buf_offset = 0;
+
+    int remaining = noutput_items - _samp_avail;
+
+    for (int i = 0; i <= remaining; ++i)
+      *out++ = _lut[ *(buf + _buf_offset + i) ];
+
+    _buf_offset = remaining;
+
+    _samp_avail = (BUF_SIZE/2) - remaining;
+
+    return noutput_items;
   }
 
   return noutput_items;
@@ -213,9 +253,9 @@ osmosdr::meta_range_t rtl_source_c::get_sample_rates()
 {
   osmosdr::meta_range_t range;
 
-  range += osmosdr::range_t( 1024000 );
-  range += osmosdr::range_t( 2048000 );
-  range += osmosdr::range_t( 3200000 );
+  range += osmosdr::range_t( 1024000 ); // known to work
+  range += osmosdr::range_t( 2048000 ); // known to work
+  range += osmosdr::range_t( 3200000 ); // max rate, may work
 
   // TODO: read from the librtlsdr as soon as the api is available
 
