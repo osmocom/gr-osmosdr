@@ -20,38 +20,99 @@
 ########################################################################
 # Setup library
 ########################################################################
-include(GrPlatform) #define LIB_SUFFIX
+INCLUDE(GrPlatform) #define LIB_SUFFIX
+INCLUDE(GrMiscUtils)
 
-add_library(gnuradio-osmosdr SHARED
-    osmosdr_ranges.cc
-    osmosdr_sink_c_impl.cc
+########################################################################
+# Helpful Macros
+########################################################################
+MACRO(GR_OSMOSDR_APPEND_SRCS)
+    LIST(APPEND gr_osmosdr_srcs ${ARGV})
+ENDMACRO(GR_OSMOSDR_APPEND_SRCS)
+
+MACRO(GR_OSMOSDR_APPEND_LIBS)
+    LIST(APPEND gr_osmosdr_libs ${ARGV})
+ENDMACRO(GR_OSMOSDR_APPEND_LIBS)
+
+GR_OSMOSDR_APPEND_SRCS(
     osmosdr_source_c_impl.cc
-    rtl_source_c.cc
+    osmosdr_sink_c_impl.cc
+    osmosdr_ranges.cc
 )
 
-target_link_libraries(gnuradio-osmosdr
+GR_OSMOSDR_APPEND_LIBS(
     ${Boost_LIBRARIES}
     ${GRUEL_LIBRARIES}
     ${GNURADIO_CORE_LIBRARIES}
-#    ${GNURADIO_AUDIO_LIBRARIES}
-    ${LIBRTLSDR_LIBRARIES}
 )
 
-set_target_properties(gnuradio-osmosdr PROPERTIES DEFINE_SYMBOL "gnuradio_osmosdr_EXPORTS")
+########################################################################
+# Setup OsmoSDR component
+########################################################################
+include(GrComponent)
+GR_REGISTER_COMPONENT("Sysmocom OsmoSDR" ENABLE_OSMOSDR)
+
+if(ENABLE_OSMOSDR)
+GR_INCLUDE_SUBDIRECTORY(osmosdr)
+endif(ENABLE_OSMOSDR)
 
 ########################################################################
-# Install built library files
+# Setup FCD component
 ########################################################################
-install(TARGETS gnuradio-osmosdr
+include(GrComponent)
+GR_REGISTER_COMPONENT("FunCube Dongle" ENABLE_FCD GNURADIO_FCD_FOUND)
+
+if(ENABLE_FCD)
+GR_INCLUDE_SUBDIRECTORY(fcd)
+endif(ENABLE_FCD)
+
+########################################################################
+# Setup RTL component
+########################################################################
+include(GrComponent)
+GR_REGISTER_COMPONENT("Osmocom RTLSDR" ENABLE_RTL LIBRTLSDR_FOUND)
+
+if(ENABLE_RTL)
+GR_INCLUDE_SUBDIRECTORY(rtl)
+endif(ENABLE_RTL)
+
+########################################################################
+# Setup UHD component
+########################################################################
+include(GrComponent)
+GR_REGISTER_COMPONENT("Ettus UHD" ENABLE_UHD GNURADIO_UHD_FOUND)
+
+if(ENABLE_UHD)
+GR_INCLUDE_SUBDIRECTORY(uhd)
+endif(ENABLE_UHD)
+
+########################################################################
+# Setup configuration file
+########################################################################
+ADD_DEFINITIONS(-DHAVE_CONFIG_H=1)
+include_directories(APPEND ${CMAKE_CURRENT_BINARY_DIR})
+CONFIGURE_FILE(
+    ${CMAKE_CURRENT_SOURCE_DIR}/config.h.in
+    ${CMAKE_CURRENT_BINARY_DIR}/config.h
+@ONLY)
+
+########################################################################
+# Setup libgnuradio-osmosdr library
+########################################################################
+ADD_LIBRARY(gnuradio-osmosdr SHARED ${gr_osmosdr_srcs})
+TARGET_LINK_LIBRARIES(gnuradio-osmosdr ${gr_osmosdr_libs})
+SET_TARGET_PROPERTIES(gnuradio-osmosdr PROPERTIES DEFINE_SYMBOL "gnuradio_osmosdr_EXPORTS")
+SET_TARGET_PROPERTIES(gnuradio-osmosdr PROPERTIES SOVERSION "${MAJOR_VERSION}")
+SET_TARGET_PROPERTIES(gnuradio-osmosdr PROPERTIES VERSION "${MAJOR_VERSION}.${MINOR_VERSION}")
+IF(DEFINED GR_OSMOSDR_OUTPUT_NAME)
+    SET_TARGET_PROPERTIES(uhd PROPERTIES OUTPUT_NAME ${GR_OSMOSDR_OUTPUT_NAME})
+ENDIF(DEFINED GR_OSMOSDR_OUTPUT_NAME)
+
+########################################################################
+# Install libgnuradio-osmosdr library
+########################################################################
+INSTALL(TARGETS gnuradio-osmosdr
     LIBRARY DESTINATION lib${LIB_SUFFIX} # .so/.dylib file
     ARCHIVE DESTINATION lib${LIB_SUFFIX} # .lib file
     RUNTIME DESTINATION bin              # .dll file
 )
-
-########################################################################
-# Add subdirectories
-########################################################################
-#add_subdirectory(fcd)
-#add_subdirectory(osmosdr)
-#add_subdirectory(rtl)
-#add_subdirectory(uhd)

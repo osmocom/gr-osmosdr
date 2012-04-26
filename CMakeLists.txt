@@ -1,4 +1,4 @@
-# Copyright 2011 Free Software Foundation, Inc.
+# Copyright 2012 Free Software Foundation, Inc.
 #
 # This file is part of GNU Radio
 #
@@ -17,13 +17,14 @@
 # the Free Software Foundation, Inc., 51 Franklin Street,
 # Boston, MA 02110-1301, USA.
 
-
 ########################################################################
 # Project setup
 ########################################################################
 cmake_minimum_required(VERSION 2.6)
 project(gr-osmosdr CXX C)
 enable_testing()
+
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/Modules)
 
 #select the release build type by default to get optimization flags
 if(NOT CMAKE_BUILD_TYPE)
@@ -32,22 +33,44 @@ if(NOT CMAKE_BUILD_TYPE)
 endif(NOT CMAKE_BUILD_TYPE)
 set(CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE} CACHE STRING "")
 
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/Modules)
+# Set the version information here
+set(VERSION_INFO_MAJOR_VERSION 0)
+set(VERSION_INFO_API_COMPAT    0)
+set(VERSION_INFO_MINOR_VERSION 1)
+set(VERSION_INFO_MAINT_VERSION git)
+include(GrVersion) #setup version info
 
 ########################################################################
 # Compiler specific setup
 ########################################################################
-if(CMAKE_COMPILER_IS_GNUCXX AND NOT WIN32)
-    #http://gcc.gnu.org/wiki/Visibility
-    add_definitions(-fvisibility=hidden)
-endif()
+IF(CMAKE_COMPILER_IS_GNUCXX)
+    ADD_DEFINITIONS(-Wall)
+    ADD_DEFINITIONS(-Wextra)
+    ADD_DEFINITIONS(-Wno-unused)
+    ADD_DEFINITIONS(-Wsign-compare)
+    #ADD_DEFINITIONS(-Wconversion)
+    #ADD_DEFINITIONS(-pedantic)
+    #ADD_DEFINITIONS(-ansi)
+    IF(NOT WIN32)
+        #only export symbols that are declared to be part of the api (non dll platforms)
+        ADD_DEFINITIONS(-fvisibility=hidden)
+        ADD_DEFINITIONS(-fvisibility-inlines-hidden)
+    ENDIF(NOT WIN32)
+ENDIF(CMAKE_COMPILER_IS_GNUCXX)
 
 ########################################################################
-# Find boost
+# Setup boost
 ########################################################################
+MESSAGE(STATUS "Configuring Boost C++ Libraries...")
+
+SET(BOOST_REQUIRED_COMPONENTS
+    thread
+)
+
 if(UNIX AND EXISTS "/usr/lib64")
     list(APPEND BOOST_LIBRARYDIR "/usr/lib64") #fedora 64-bit fix
 endif(UNIX AND EXISTS "/usr/lib64")
+
 set(Boost_ADDITIONAL_VERSIONS
     "1.35.0" "1.35" "1.36.0" "1.36" "1.37.0" "1.37" "1.38.0" "1.38" "1.39.0" "1.39"
     "1.40.0" "1.40" "1.41.0" "1.41" "1.42.0" "1.42" "1.43.0" "1.43" "1.44.0" "1.44"
@@ -57,7 +80,7 @@ set(Boost_ADDITIONAL_VERSIONS
     "1.60.0" "1.60" "1.61.0" "1.61" "1.62.0" "1.62" "1.63.0" "1.63" "1.64.0" "1.64"
     "1.65.0" "1.65" "1.66.0" "1.66" "1.67.0" "1.67" "1.68.0" "1.68" "1.69.0" "1.69"
 )
-find_package(Boost 1.35 COMPONENTS thread )
+find_package(Boost 1.35 COMPONENTS ${BOOST_REQUIRED_COMPONENTS})
 
 if(NOT Boost_FOUND)
     message(FATAL_ERROR "Boost required to compile osmosdr")
@@ -85,7 +108,9 @@ set(GRC_BLOCKS_DIR      ${GR_PKG_DATA_DIR}/grc/blocks)
 ########################################################################
 find_package(Gruel)
 find_package(GnuradioCore)
-#find_package(GnuradioAudio)
+find_package(GnuradioAudio)
+find_package(GnuradioUHD)
+find_package(GnuradioFCD)
 #find_package(LibUSB)
 find_package(LibRTLSDR)
 
@@ -97,17 +122,13 @@ if(NOT GNURADIO_CORE_FOUND)
     message(FATAL_ERROR "GnuRadio Core required to compile osmosdr")
 endif()
 
-#if(NOT GNURADIO_AUDIO_FOUND)
-#    message(FATAL_ERROR "GnuRadio Audio required to compile osmosdr")
-#endif()
+if(NOT GNURADIO_AUDIO_FOUND)
+    message(FATAL_ERROR "GnuRadio Audio required to compile osmosdr")
+endif()
 
 #if(NOT LIBUSB_FOUND)
 #    message(FATAL_ERROR "LibUSB 1.0 required to compile osmosdr")
 #endif()
-
-if(NOT LIBRTLSDR_FOUND)
-    message(FATAL_ERROR "LibRTLSDR required to compile osmosdr")
-endif()
 
 ########################################################################
 # Setup the include and linker paths
@@ -119,7 +140,6 @@ include_directories(
     ${GRUEL_INCLUDE_DIRS}
     ${GNURADIO_CORE_INCLUDE_DIRS}
 #    ${LIBUSB_INCLUDE_DIR}
-    ${LIBRTLSDR_INCLUDE_DIR}
 )
 
 link_directories(
@@ -127,7 +147,6 @@ link_directories(
     ${GRUEL_LIBRARY_DIRS}
     ${GNURADIO_CORE_LIBRARY_DIRS}
 #    ${LIBUSB_LIBRARY_DIRS}
-    ${LIBRTLSDR_LIBRARIES}
 )
 
 # Set component parameters
@@ -156,3 +175,42 @@ add_subdirectory(python)
 add_subdirectory(grc)
 add_subdirectory(apps)
 add_subdirectory(docs)
+
+########################################################################
+# Create Pkg Config File
+########################################################################
+FOREACH(inc ${Boost_INCLUDE_DIRS})
+    LIST(APPEND GR_OSMOSDR_PC_CFLAGS "-I${inc}")
+ENDFOREACH(inc)
+
+FOREACH(lib ${Boost_LIBRARY_DIRS})
+    LIST(APPEND GR_OSMOSDR_PC_LIBS "-L${lib}")
+ENDFOREACH(lib)
+
+# use space-separation format for the pc file
+STRING(REPLACE ";" " " GR_OSMOSDR_PC_REQUIRES "${GR_OSMOSDR_PC_REQUIRES}")
+STRING(REPLACE ";" " " GR_OSMOSDR_PC_CFLAGS "${GR_OSMOSDR_PC_CFLAGS}")
+STRING(REPLACE ";" " " GR_OSMOSDR_PC_LIBS "${GR_OSMOSDR_PC_LIBS}")
+
+# unset these vars to avoid hard-coded paths to cross environment
+IF(CMAKE_CROSSCOMPILING)
+    UNSET(GR_OSMOSDR_PC_CFLAGS)
+    UNSET(GR_OSMOSDR_PC_LIBS)
+ENDIF(CMAKE_CROSSCOMPILING)
+
+CONFIGURE_FILE(
+    ${CMAKE_CURRENT_SOURCE_DIR}/gnuradio-osmosdr.pc.in
+    ${CMAKE_CURRENT_BINARY_DIR}/gnuradio-osmosdr.pc
+@ONLY)
+
+INSTALL(
+    FILES ${CMAKE_CURRENT_BINARY_DIR}/gnuradio-osmosdr.pc
+    DESTINATION ${GR_LIBRARY_DIR}/pkgconfig
+)
+
+########################################################################
+# Print Summary
+########################################################################
+GR_PRINT_COMPONENT_SUMMARY()
+MESSAGE(STATUS "Building for version: ${VERSION} / ${LIBVER}")
+MESSAGE(STATUS "Using install prefix: ${CMAKE_INSTALL_PREFIX}")

@@ -1,0 +1,9 @@
+#ifndef CONFIG_H_IN
+#define CONFIG_H_IN
+
+#cmakedefine ENABLE_OSMOSDR
+#cmakedefine ENABLE_FCD
+#cmakedefine ENABLE_RTL
+#cmakedefine ENABLE_UHD
+
+#endif // CONFIG_H_IN
