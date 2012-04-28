@@ -30,12 +30,12 @@ using namespace boost::assign;
 
 osmosdr_control::osmosdr_control(const std::string &args)
 {
-    /* lookup acm control channel device name for a given alsa device name */
+  /* lookup acm control channel device name for a given alsa device name */
 
-    /*
-        if (args.empty())
-            pick first available device or throw an exception();
-    */
+  /*
+  if (args.empty())
+    pick first available device or throw an exception();
+  */
 }
 
 osmosdr_control::~osmosdr_control()
@@ -48,46 +48,46 @@ osmosdr_control::~osmosdr_control()
 */
 std::vector< std::string > osmosdr_control::find_devices()
 {
-    std::vector< std::string > devices;
+  std::vector< std::string > devices;
 
-    std::string line;
-    std::ifstream cards( "/proc/asound/cards" );
-    if ( cards.is_open() )
+  std::string line;
+  std::ifstream cards( "/proc/asound/cards" );
+  if ( cards.is_open() )
+  {
+    while ( cards.good() )
     {
-        while ( cards.good() )
-        {
-            getline (cards, line);
+      getline (cards, line);
 
-            if ( line.find( "USB-Audio - OsmoSDR" ) != std::string::npos )
-            {
-                int id;
-                std::istringstream( line ) >> id;
+      if ( line.find( "USB-Audio - OsmoSDR" ) != std::string::npos )
+      {
+        int id;
+        std::istringstream( line ) >> id;
 
-                std::ostringstream hw_id;
-                hw_id << "hw:" << id; // build alsa identifier
+        std::ostringstream hw_id;
+        hw_id << "hw:" << id; // build alsa identifier
 
-                devices += hw_id.str();
-            }
-        }
-
-        cards.close();
+        devices += hw_id.str();
+      }
     }
 
-    return devices;
+    cards.close();
+  }
+
+  return devices;
 }
 
 std::string osmosdr_control::audio_dev_name()
 {
-    return "hw:1";
+  return "hw:1";
 }
 
 std::string osmosdr_control::control_dev_name()
 {
-    return "/dev/ttyUSB0";
+  return "/dev/ttyUSB0";
 }
 
 osmosdr_rx_control::osmosdr_rx_control(const std::string &args) :
-    osmosdr_control(args)
+  osmosdr_control(args)
 {
 }
 
@@ -96,7 +96,7 @@ osmosdr_rx_control::~osmosdr_rx_control()
 }
 
 osmosdr_tx_control::osmosdr_tx_control(const std::string &args) :
-    osmosdr_control(args)
+  osmosdr_control(args)
 {
 }
 

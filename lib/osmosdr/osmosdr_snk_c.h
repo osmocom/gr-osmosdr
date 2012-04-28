@@ -54,8 +54,9 @@ OSMOSDR_API osmosdr_snk_c_sptr osmosdr_make_snk_c (const std::string & args = ""
  *
  * This uses the preferred technique: subclassing gr_hier_block2.
  */
-class OSMOSDR_API osmosdr_snk_c : public gr_hier_block2,
-                                   public osmosdr_tx_control
+class OSMOSDR_API osmosdr_snk_c :
+    public gr_hier_block2,
+    public osmosdr_tx_control
 {
 private:
   // The friend declaration allows osmosdr_make_snk_c to

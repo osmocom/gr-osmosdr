@@ -47,12 +47,12 @@ osmosdr_make_sink_c (const std::string &args)
  * output signatures are used by the runtime system to
  * check that a valid number and type of inputs and outputs
  * are connected to this block.  In this case, we accept
- * only 1 input and 1 output.
+ * only 1 input and 0 output.
  */
-static const int MIN_IN = 0;	// mininum number of input streams
-static const int MAX_IN = 0;	// maximum number of input streams
-static const int MIN_OUT = 1;	// minimum number of output streams
-static const int MAX_OUT = 1;	// maximum number of output streams
+static const int MIN_IN = 1;	// mininum number of input streams
+static const int MAX_IN = 1;	// maximum number of input streams
+static const int MIN_OUT = 0;	// minimum number of output streams
+static const int MAX_OUT = 0;	// maximum number of output streams
 
 /*
  * The private constructor

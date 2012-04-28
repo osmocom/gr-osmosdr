@@ -27,7 +27,7 @@
 #include "config.h"
 #endif
 
-#include <osmosdr_snk_c.h>
+#include "osmosdr_snk_c.h"
 #include <gr_io_signature.h>
 #include <gr_audio_sink.h>
 #include <gr_complex_to_xxx.h>
@@ -49,7 +49,7 @@ osmosdr_make_snk_c (const std::string &args)
  * output signatures are used by the runtime system to
  * check that a valid number and type of inputs and outputs
  * are connected to this block.  In this case, we accept
- * only 1 input and 1 output.
+ * only 1 input and 0 output.
  */
 static const int MIN_IN = 1;	// mininum number of input streams
 static const int MAX_IN = 1;	// maximum number of input streams
@@ -65,18 +65,18 @@ osmosdr_snk_c::osmosdr_snk_c (const std::string & args)
         gr_make_io_signature (MIN_OUT, MAX_OUT, sizeof (gr_complex))),
     osmosdr_tx_control(args)
 {
-    throw std::runtime_error("FIXME: OsmoSDR sink is not yet implemented");
+  throw std::runtime_error("FIXME: OsmoSDR sink is not yet implemented");
 
-    /* Audio sink; sample rate is 96kHz by default */
-    audio_sink::sptr snk = audio_make_sink(96000, audio_dev_name(), true);
+  /* Audio sink; sample rate is 96kHz by default */
+  audio_sink::sptr snk = audio_make_sink(96000, audio_dev_name(), true);
 
-    gr_complex_to_real_sptr real_part = gr_make_complex_to_real(1);
-    gr_complex_to_imag_sptr imag_part = gr_make_complex_to_imag(1);
+  gr_complex_to_real_sptr real_part = gr_make_complex_to_real(1);
+  gr_complex_to_imag_sptr imag_part = gr_make_complex_to_imag(1);
 
-    connect(self(), 0, real_part, 0);
-    connect(self(), 0, imag_part, 0);
-    connect(imag_part, 0, snk, 0); /* Left is I */
-    connect(real_part, 0, snk, 1); /* Right is Q */
+  connect(self(), 0, real_part, 0);
+  connect(self(), 0, imag_part, 0);
+  connect(imag_part, 0, snk, 0); /* Left is I */
+  connect(real_part, 0, snk, 1); /* Right is Q */
 }
 
 /*

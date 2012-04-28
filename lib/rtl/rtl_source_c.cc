@@ -38,6 +38,8 @@
 
 #include <rtl-sdr.h>
 
+#include <osmosdr_arg_helpers.h>
+
 using namespace boost::assign;
 
 #define BUF_SIZE (16 * 32 * 512)
@@ -59,7 +61,7 @@ make_rtl_source_c (const std::string &args)
  * output signatures are used by the runtime system to
  * check that a valid number and type of inputs and outputs
  * are connected to this block.  In this case, we accept
- * only 1 input and 1 output.
+ * only 0 input and 1 output.
  */
 static const int MIN_IN = 0;	// mininum number of input streams
 static const int MAX_IN = 0;	// maximum number of input streams
@@ -75,9 +77,12 @@ rtl_source_c::rtl_source_c (const std::string &args)
         gr_make_io_signature (MIN_OUT, MAX_OUT, sizeof (gr_complex)))
 {
   int ret;
-  unsigned int dev_index = atoi( args.c_str() );
+  unsigned int dev_index = 0;
 
-  std::cout << "'" << args << "'" << std::endl;
+  dict_t dict = params_to_dict(args);
+
+  if (dict.count("rtl"))
+    dev_index = boost::lexical_cast< unsigned int >( dict["rtl"] );
 
   _buf_num = 32;
   _buf = (unsigned short **) malloc(_buf_num * sizeof(unsigned short *));

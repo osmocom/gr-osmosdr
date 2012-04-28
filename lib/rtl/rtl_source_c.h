@@ -61,8 +61,9 @@ OSMOSDR_API rtl_source_c_sptr make_rtl_source_c (const std::string & args = "");
  * \ingroup block
  *
  */
-class OSMOSDR_API rtl_source_c : public gr_sync_block,
-                                 public osmosdr_src_iface
+class OSMOSDR_API rtl_source_c :
+    public gr_sync_block,
+    public osmosdr_src_iface
 {
 private:
   // The friend declaration allows make_rtl_source_c to

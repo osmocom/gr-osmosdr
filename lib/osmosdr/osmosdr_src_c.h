@@ -54,8 +54,9 @@ OSMOSDR_API osmosdr_src_c_sptr osmosdr_make_src_c (const std::string & args = ""
  *
  * \sa osmosdr_sink_c for a version that subclasses gr_hier_block2.
  */
-class OSMOSDR_API osmosdr_src_c : public gr_hier_block2,
-                                     public osmosdr_rx_control
+class OSMOSDR_API osmosdr_src_c :
+    public gr_hier_block2,
+    public osmosdr_rx_control
 {
 private:
   // The friend declaration allows osmosdr_make_src_c to

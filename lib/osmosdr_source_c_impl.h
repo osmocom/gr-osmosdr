@@ -23,7 +23,7 @@
 #include <osmosdr_api.h>
 #include <osmosdr_source_c.h>
 
-#include <rtl_source_c.h>
+#include <osmosdr_src_iface.h>
 
 class OSMOSDR_API osmosdr_source_c_impl : public osmosdr_source_c
 {
@@ -60,7 +60,7 @@ private:
   friend OSMOSDR_API osmosdr_source_c_sptr osmosdr_make_source_c (const std::string & args);
 
   size_t _nchan;
-  std::vector< rtl_source_c_sptr > _srcs;
+  std::vector< osmosdr_src_iface * > _srcs;
 };
 
 #endif /* INCLUDED_OSMOSDR_SOURCE_C_IMPL_H */

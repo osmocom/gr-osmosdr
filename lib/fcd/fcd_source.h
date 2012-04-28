@@ -32,8 +32,9 @@ typedef boost::shared_ptr< fcd_source > fcd_source_sptr;
 
 fcd_source_sptr make_fcd_source( const std::string & args = "" );
 
-class fcd_source : public gr_hier_block2,
-                     public osmosdr_src_iface
+class fcd_source :
+    public gr_hier_block2,
+    public osmosdr_src_iface
 {
 private:
   friend fcd_source_sptr make_fcd_source(const std::string &args);

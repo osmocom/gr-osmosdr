@@ -28,33 +28,38 @@
 
 #include <fcd_source.h>
 
+#include <osmosdr_arg_helpers.h>
+
 using namespace boost::assign;
 
 fcd_source_sptr make_fcd_source(const std::string &args)
 {
-    return gnuradio::get_initial_sptr(new fcd_source(args));
+  return gnuradio::get_initial_sptr(new fcd_source(args));
 }
 
 fcd_source::fcd_source(const std::string &args) :
-    gr_hier_block2("fcd_source",
-                   gr_make_io_signature (0, 0, 0),
-                   gr_make_io_signature (1, 1, sizeof (gr_complex)))
+  gr_hier_block2("fcd_source",
+                 gr_make_io_signature (0, 0, 0),
+                 gr_make_io_signature (1, 1, sizeof (gr_complex)))
 {
-    std::string device_name = args;
+  std::string dev_name;
+  unsigned int dev_index = 0;
 
-    if ( device_name.empty() )
-    {
-        std::vector< std::string > devices = fcd_source::get_devices();
+  dict_t dict = params_to_dict(args);
 
-        if ( devices.size() )
-            device_name = devices.front(); // pick first available device
-        else
-            throw std::runtime_error("no FUNcube Dongle device found");
-    }
+  if (dict.count("fcd"))
+    dev_index = boost::lexical_cast< unsigned int >( dict["fcd"] );
 
-    _src = fcd_make_source_c( device_name );
+  std::vector< std::string > devices = fcd_source::get_devices();
 
-    connect( _src, 0, self(), 0 );
+  if ( devices.size() )
+    dev_name = devices[dev_index];
+  else
+    throw std::runtime_error("No FunCube Dongle found.");
+
+  _src = fcd_make_source_c( dev_name );
+
+  connect( _src, 0, self(), 0 );
 }
 
 fcd_source::~fcd_source()
@@ -63,42 +68,42 @@ fcd_source::~fcd_source()
 
 std::vector< std::string > fcd_source::get_devices()
 {
-    std::vector< std::string > devices;
+  std::vector< std::string > devices;
 
-    std::string line;
-    std::ifstream cards( "/proc/asound/cards" );
-    if ( cards.is_open() )
+  std::string line;
+  std::ifstream cards( "/proc/asound/cards" );
+  if ( cards.is_open() )
+  {
+    while ( cards.good() )
     {
-        while ( cards.good() )
-        {
-            getline (cards, line);
+      getline (cards, line);
 
-            if ( line.find( "USB-Audio - FUNcube Dongle" ) != std::string::npos )
-            {
-                int id;
-                std::istringstream( line ) >> id;
+      if ( line.find( "USB-Audio - FUNcube Dongle" ) != std::string::npos )
+      {
+        int id;
+        std::istringstream( line ) >> id;
 
-                std::ostringstream hw_id;
-                hw_id << "hw:" << id; // build alsa identifier
+        std::ostringstream hw_id;
+        hw_id << "hw:" << id; // build alsa identifier
 
-                devices += hw_id.str();
-            }
-        }
-
-        cards.close();
+        devices += hw_id.str();
+      }
     }
 
-    return devices;
+    cards.close();
+  }
+
+  return devices;
 }
 
 gr_basic_block_sptr fcd_source::self()
 {
-    return gr_hier_block2::self();
+  return gr_hier_block2::self();
 }
 
 std::string fcd_source::name()
 {
-    return "FUNcube Dongle";
+  return "FUNcube Dongle";
 }
 
 size_t fcd_source::get_num_channels( void )
@@ -223,4 +228,3 @@ std::string fcd_source::get_antenna( size_t chan )
 {
   return "ANT";
 }
-

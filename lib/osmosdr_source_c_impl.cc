@@ -30,6 +30,22 @@
 #include <osmosdr_source_c_impl.h>
 #include <gr_io_signature.h>
 
+#ifdef ENABLE_OSMOSDR
+#include <osmosdr_src_c.h>
+#endif
+
+#ifdef ENABLE_FCD
+#include <fcd_source.h>
+#endif
+
+#ifdef ENABLE_RTL
+#include <rtl_source_c.h>
+#endif
+
+#ifdef ENABLE_UHD
+#include <uhd_source_c.h>
+#endif
+
 #include <osmosdr_arg_helpers.h>
 
 /*
@@ -50,34 +66,65 @@ osmosdr_source_c_impl::osmosdr_source_c_impl (const std::string &args)
         gr_make_io_signature (0, 0, 0),
         args_to_io_signature(args))
 {
-  std::vector< std::string > arg_list = args_to_vector(args);
+  size_t channel = 0;
 
-  std::cout << "arg_list.size: " << arg_list.size() << std::endl;
+  BOOST_FOREACH(std::string arg, args_to_vector(args)) {
 
-  BOOST_FOREACH(std::string arg, arg_list) {
     dict_t dict = params_to_dict(arg);
 
-    std::cout << "" << std::endl;
-    BOOST_FOREACH( dict_t::value_type &entry, dict )
-        std::cout << "'" << entry.first << "' '" << entry.second << "'" << std::endl;
+//    std::cout << std::endl;
+//    BOOST_FOREACH( dict_t::value_type &entry, dict )
+//      std::cout << "'" << entry.first << "' = '" << entry.second << "'" << std::endl;
+
+#ifdef ENABLE_OSMOSDR
+    if ( dict.count("osmosdr") ) {
+      osmosdr_src_c_sptr src = osmosdr_make_src_c( arg );
+
+//      for (size_t i = 0; i < src->get_num_channels(); i++)
+//        connect(src, i, self(), channel++);
+
+//      _srcs.push_back( (osmosdr_src_iface *)src.get() ); // FIXME: implement
+    }
+#endif
+
+#ifdef ENABLE_FCD
+    if ( dict.count("fcd") ) {
+      fcd_source_sptr src = make_fcd_source( arg );
+      connect(src, 0, self(), channel++);
+      _srcs.push_back( (osmosdr_src_iface *)src.get() );
+    }
+#endif
+
+#ifdef ENABLE_RTL
+    if ( dict.count("rtl") ) {
+      rtl_source_c_sptr src = make_rtl_source_c( arg );
+      connect(src, 0, self(), channel++);
+      _srcs.push_back( (osmosdr_src_iface *)src.get() );
+    }
+#endif
+
+#ifdef ENABLE_UHD
+    if ( dict.count("uhd") ) {
+      uhd_source_c_sptr src = make_uhd_source_c( arg );
+
+      for (size_t i = 0; i < src->get_num_channels(); i++)
+        connect(src, i, self(), channel++);
+
+      _srcs.push_back( (osmosdr_src_iface *)src.get() );
+    }
+#endif
   }
 
-  for ( int i = 0; i < 1; i++ ) {
-    std::string arg = boost::lexical_cast<std::string>(i);
-
-    rtl_source_c_sptr src = make_rtl_source_c( arg );
-
-    connect(src, 0, self(), i);
-
-    _srcs.push_back( src );
-  }
+  if (!_srcs.size())
+    throw std::runtime_error("No devices specified via device arguments.");
 }
 
 size_t osmosdr_source_c_impl::get_num_channels()
 {
   size_t channels = 0;
 
-  channels = _srcs[0]->get_num_channels();
+  BOOST_FOREACH( osmosdr_src_iface *dev, _srcs )
+    channels += dev->get_num_channels();
 
   return channels;
 }
@@ -89,8 +136,12 @@ osmosdr::meta_range_t osmosdr_source_c_impl::get_sample_rates()
 
 double osmosdr_source_c_impl::set_sample_rate(double rate)
 {
-  return _srcs[0]->set_sample_rate(rate);
-//  return rate;
+  double sample_rate = 0;
+
+  BOOST_FOREACH( osmosdr_src_iface *dev, _srcs )
+        sample_rate = dev->set_sample_rate(rate);
+
+  return sample_rate;
 }
 
 double osmosdr_source_c_impl::get_sample_rate()
@@ -100,76 +151,165 @@ double osmosdr_source_c_impl::get_sample_rate()
 
 osmosdr::freq_range_t osmosdr_source_c_impl::get_freq_range( size_t chan )
 {
-  return _srcs[chan]->get_freq_range( chan );
+  size_t channel = 0;
+  BOOST_FOREACH( osmosdr_src_iface *dev, _srcs )
+    for (size_t i = 0; i < dev->get_num_channels(); i++)
+      if ( chan == channel++ )
+        return _srcs[chan]->get_freq_range( chan );
+
+  return osmosdr::freq_range_t();
 }
 
 double osmosdr_source_c_impl::set_center_freq( double freq, size_t chan )
 {
-  return _srcs[chan]->set_center_freq( freq, chan );
-//  return freq;
+  size_t channel = 0;
+  BOOST_FOREACH( osmosdr_src_iface *dev, _srcs )
+    for (size_t i = 0; i < dev->get_num_channels(); i++)
+      if ( chan == channel++ )
+        return _srcs[chan]->set_center_freq( freq, chan );
+
+  return 0;
 }
 
 double osmosdr_source_c_impl::get_center_freq( size_t chan )
 {
-  return _srcs[chan]->get_center_freq( chan );
+  size_t channel = 0;
+  BOOST_FOREACH( osmosdr_src_iface *dev, _srcs )
+    for (size_t i = 0; i < dev->get_num_channels(); i++)
+      if ( chan == channel++ )
+        return _srcs[chan]->get_center_freq( chan );
+
+  return 0;
 }
 
 double osmosdr_source_c_impl::set_freq_corr( double ppm, size_t chan )
 {
-  return _srcs[chan]->set_freq_corr( ppm, chan );
+  size_t channel = 0;
+  BOOST_FOREACH( osmosdr_src_iface *dev, _srcs )
+    for (size_t i = 0; i < dev->get_num_channels(); i++)
+      if ( chan == channel++ )
+        return _srcs[chan]->set_freq_corr( ppm, chan );
+
+  return 0;
 }
 
 double osmosdr_source_c_impl::get_freq_corr( size_t chan )
 {
-  return _srcs[chan]->get_freq_corr( chan );
+  size_t channel = 0;
+  BOOST_FOREACH( osmosdr_src_iface *dev, _srcs )
+    for (size_t i = 0; i < dev->get_num_channels(); i++)
+      if ( chan == channel++ )
+        return _srcs[chan]->get_freq_corr( chan );
+
+  return 0;
 }
 
 std::vector<std::string> osmosdr_source_c_impl::get_gain_names( size_t chan )
 {
-  return _srcs[chan]->get_gain_names( chan );
+  size_t channel = 0;
+  BOOST_FOREACH( osmosdr_src_iface *dev, _srcs )
+    for (size_t i = 0; i < dev->get_num_channels(); i++)
+      if ( chan == channel++ )
+        return _srcs[chan]->get_gain_names( chan );
+
+  return std::vector< std::string >();
 }
 
 osmosdr::gain_range_t osmosdr_source_c_impl::get_gain_range( size_t chan )
 {
-  return _srcs[chan]->get_gain_range( chan );
+  size_t channel = 0;
+  BOOST_FOREACH( osmosdr_src_iface *dev, _srcs )
+    for (size_t i = 0; i < dev->get_num_channels(); i++)
+      if ( chan == channel++ )
+        return _srcs[chan]->get_gain_range( chan );
+
+  return osmosdr::gain_range_t();
 }
 
 osmosdr::gain_range_t osmosdr_source_c_impl::get_gain_range( const std::string & name, size_t chan )
 {
-  return _srcs[chan]->get_gain_range( name, chan );
+  size_t channel = 0;
+  BOOST_FOREACH( osmosdr_src_iface *dev, _srcs )
+    for (size_t i = 0; i < dev->get_num_channels(); i++)
+      if ( chan == channel++ )
+        return _srcs[chan]->get_gain_range( name, chan );
+
+  return osmosdr::gain_range_t();
 }
 
 double osmosdr_source_c_impl::set_gain( double gain, size_t chan )
 {
-  return _srcs[chan]->set_gain( gain, chan );
+  size_t channel = 0;
+  BOOST_FOREACH( osmosdr_src_iface *dev, _srcs )
+    for (size_t i = 0; i < dev->get_num_channels(); i++)
+      if ( chan == channel++ )
+        return _srcs[chan]->set_gain( gain, chan );
+
+  return 0;
 }
 
 double osmosdr_source_c_impl::set_gain( double gain, const std::string & name, size_t chan)
 {
-  return _srcs[chan]->set_gain( gain, name, chan );
+  size_t channel = 0;
+  BOOST_FOREACH( osmosdr_src_iface *dev, _srcs )
+    for (size_t i = 0; i < dev->get_num_channels(); i++)
+      if ( chan == channel++ )
+        return _srcs[chan]->set_gain( gain, name, chan );
+
+  return 0;
 }
 
 double osmosdr_source_c_impl::get_gain( size_t chan )
 {
-  return _srcs[chan]->get_gain( chan );
+  size_t channel = 0;
+  BOOST_FOREACH( osmosdr_src_iface *dev, _srcs )
+    for (size_t i = 0; i < dev->get_num_channels(); i++)
+      if ( chan == channel++ )
+        return _srcs[chan]->get_gain( chan );
+
+  return 0;
 }
 
 double osmosdr_source_c_impl::get_gain( const std::string & name, size_t chan )
 {
-  return _srcs[chan]->get_gain( name, chan );
+  size_t channel = 0;
+  BOOST_FOREACH( osmosdr_src_iface *dev, _srcs )
+    for (size_t i = 0; i < dev->get_num_channels(); i++)
+      if ( chan == channel++ )
+        return _srcs[chan]->get_gain( name, chan );
+
+  return 0;
 }
 
 std::vector< std::string > osmosdr_source_c_impl::get_antennas( size_t chan )
 {
-  return _srcs[chan]->get_antennas( chan );
+  size_t channel = 0;
+  BOOST_FOREACH( osmosdr_src_iface *dev, _srcs )
+    for (size_t i = 0; i < dev->get_num_channels(); i++)
+      if ( chan == channel++ )
+        return _srcs[chan]->get_antennas( chan );
+
+  return std::vector< std::string >();
 }
 
 std::string osmosdr_source_c_impl::set_antenna( const std::string & antenna, size_t chan )
 {
-  return _srcs[chan]->set_antenna( antenna, chan );
+  size_t channel = 0;
+  BOOST_FOREACH( osmosdr_src_iface *dev, _srcs )
+    for (size_t i = 0; i < dev->get_num_channels(); i++)
+      if ( chan == channel++ )
+        return _srcs[chan]->set_antenna( antenna, chan );
+
+  return "";
 }
 
 std::string osmosdr_source_c_impl::get_antenna( size_t chan )
 {
-  return _srcs[chan]->get_antenna( chan );
+  size_t channel = 0;
+  BOOST_FOREACH( osmosdr_src_iface *dev, _srcs )
+    for (size_t i = 0; i < dev->get_num_channels(); i++)
+      if ( chan == channel++ )
+        return _srcs[chan]->get_antenna( chan );
+
+  return "";
 }

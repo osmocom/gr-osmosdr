@@ -25,23 +25,38 @@
 
 #include <gr_io_signature.h>
 
+#include <osmosdr_arg_helpers.h>
+
 #include "uhd_source_c.h"
 
 using namespace boost::assign;
 
 uhd_source_c_sptr make_uhd_source_c(const std::string &args)
 {
-    return gnuradio::get_initial_sptr(new uhd_source_c(args));
+  return gnuradio::get_initial_sptr(new uhd_source_c(args));
 }
 
 uhd_source_c::uhd_source_c(const std::string &args) :
     gr_hier_block2("uhd_source_c",
                    gr_make_io_signature (0, 0, 0),
-                   gr_make_io_signature (1, 1, sizeof (gr_complex)))
+                   args_to_io_signature(args))
 {
-    _src = uhd_make_usrp_source( args, uhd::io_type_t::COMPLEX_FLOAT32, 1 );
+  size_t num_channels = 1;
 
-    connect( _src, 0, self(), 0 );
+  dict_t dict = params_to_dict(args);
+
+  if (dict.count("nchan"))
+    num_channels = boost::lexical_cast< unsigned int >( dict["nchan"] );
+
+  _src = uhd_make_usrp_source( args,
+                               uhd::io_type_t::COMPLEX_FLOAT32,
+                               num_channels );
+
+  if (dict.count("subdev"))
+    _src->set_subdev_spec( dict["subdev"] );
+
+  for ( size_t i = 0; i < num_channels; i++ )
+    connect( _src, i, self(), i );
 }
 
 uhd_source_c::~uhd_source_c()
@@ -50,18 +65,18 @@ uhd_source_c::~uhd_source_c()
 
 std::vector< std::string > uhd_source_c::get_devices()
 {
-    std::vector< std::string > devices;
+  std::vector< std::string > devices;
 
-    uhd::device_addr_t hint;
-    BOOST_FOREACH(uhd::device_addr_t device, uhd::device::find(hint))
-        devices += device.to_string();
+  uhd::device_addr_t hint;
+  BOOST_FOREACH(uhd::device_addr_t device, uhd::device::find(hint))
+    devices += device.to_string();
 
-    return devices;
+  return devices;
 }
 
 gr_basic_block_sptr uhd_source_c::self()
 {
-    return gr_hier_block2::self();
+  return gr_hier_block2::self();
 }
 
 std::string uhd_source_c::name()
@@ -132,7 +147,7 @@ double uhd_source_c::set_freq_corr( double ppm, size_t chan )
 
 double uhd_source_c::get_freq_corr( size_t chan )
 {
-  throw std::runtime_error( "frequency correction is not supported with UHD" );
+  return 0; // frequency correction is not supported with UHD
 }
 
 std::vector<std::string> uhd_source_c::get_gain_names( size_t chan )
