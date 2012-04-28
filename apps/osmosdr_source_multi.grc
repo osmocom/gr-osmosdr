@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='ASCII'?>
 <flow_graph>
-  <timestamp>Sat Apr 28 19:58:05 2012</timestamp>
+  <timestamp>Sat Apr 28 20:02:00 2012</timestamp>
   <block>
     <key>options</key>
     <param>
@@ -135,6 +135,116 @@
     </param>
   </block>
   <block>
+    <key>variable_slider</key>
+    <param>
+      <key>id</key>
+      <value>freq</value>
+    </param>
+    <param>
+      <key>_enabled</key>
+      <value>True</value>
+    </param>
+    <param>
+      <key>label</key>
+      <value></value>
+    </param>
+    <param>
+      <key>value</key>
+      <value>394e6</value>
+    </param>
+    <param>
+      <key>min</key>
+      <value>50e6</value>
+    </param>
+    <param>
+      <key>max</key>
+      <value>2.2e9</value>
+    </param>
+    <param>
+      <key>num_steps</key>
+      <value>1000</value>
+    </param>
+    <param>
+      <key>style</key>
+      <value>wx.SL_HORIZONTAL</value>
+    </param>
+    <param>
+      <key>converver</key>
+      <value>float_converter</value>
+    </param>
+    <param>
+      <key>grid_pos</key>
+      <value></value>
+    </param>
+    <param>
+      <key>notebook</key>
+      <value></value>
+    </param>
+    <param>
+      <key>_coordinate</key>
+      <value>(268, 65)</value>
+    </param>
+    <param>
+      <key>_rotation</key>
+      <value>0</value>
+    </param>
+  </block>
+  <block>
+    <key>variable_slider</key>
+    <param>
+      <key>id</key>
+      <value>samplerate</value>
+    </param>
+    <param>
+      <key>_enabled</key>
+      <value>True</value>
+    </param>
+    <param>
+      <key>label</key>
+      <value></value>
+    </param>
+    <param>
+      <key>value</key>
+      <value>2048e3</value>
+    </param>
+    <param>
+      <key>min</key>
+      <value>1e6</value>
+    </param>
+    <param>
+      <key>max</key>
+      <value>3.2e6</value>
+    </param>
+    <param>
+      <key>num_steps</key>
+      <value>100</value>
+    </param>
+    <param>
+      <key>style</key>
+      <value>wx.SL_HORIZONTAL</value>
+    </param>
+    <param>
+      <key>converver</key>
+      <value>float_converter</value>
+    </param>
+    <param>
+      <key>grid_pos</key>
+      <value></value>
+    </param>
+    <param>
+      <key>notebook</key>
+      <value></value>
+    </param>
+    <param>
+      <key>_coordinate</key>
+      <value>(38, 280)</value>
+    </param>
+    <param>
+      <key>_rotation</key>
+      <value>0</value>
+    </param>
+  </block>
+  <block>
     <key>wxgui_fftsink2</key>
     <param>
       <key>id</key>
@@ -214,7 +324,7 @@
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(724, 129)</value>
+      <value>(717, 114)</value>
     </param>
     <param>
       <key>_rotation</key>
@@ -222,65 +332,10 @@
     </param>
   </block>
   <block>
-    <key>variable_slider</key>
+    <key>wxgui_fftsink2</key>
     <param>
       <key>id</key>
-      <value>freq</value>
-    </param>
-    <param>
-      <key>_enabled</key>
-      <value>True</value>
-    </param>
-    <param>
-      <key>label</key>
-      <value></value>
-    </param>
-    <param>
-      <key>value</key>
-      <value>394.4e6</value>
-    </param>
-    <param>
-      <key>min</key>
-      <value>50e6</value>
-    </param>
-    <param>
-      <key>max</key>
-      <value>2.2e9</value>
-    </param>
-    <param>
-      <key>num_steps</key>
-      <value>1000</value>
-    </param>
-    <param>
-      <key>style</key>
-      <value>wx.SL_HORIZONTAL</value>
-    </param>
-    <param>
-      <key>converver</key>
-      <value>float_converter</value>
-    </param>
-    <param>
-      <key>grid_pos</key>
-      <value></value>
-    </param>
-    <param>
-      <key>notebook</key>
-      <value></value>
-    </param>
-    <param>
-      <key>_coordinate</key>
-      <value>(268, 65)</value>
-    </param>
-    <param>
-      <key>_rotation</key>
-      <value>0</value>
-    </param>
-  </block>
-  <block>
-    <key>wxgui_waterfallsink2</key>
-    <param>
-      <key>id</key>
-      <value>wxgui_waterfallsink2_0</value>
+      <value>wxgui_fftsink2_0_0</value>
     </param>
     <param>
       <key>_enabled</key>
@@ -292,7 +347,7 @@
     </param>
     <param>
       <key>title</key>
-      <value>Waterfall Plot</value>
+      <value>FFT Plot</value>
     </param>
     <param>
       <key>samp_rate</key>
@@ -303,8 +358,12 @@
       <value>freq</value>
     </param>
     <param>
-      <key>dynamic_range</key>
-      <value>100</value>
+      <key>y_per_div</key>
+      <value>10</value>
+    </param>
+    <param>
+      <key>y_divs</key>
+      <value>10</value>
     </param>
     <param>
       <key>ref_level</key>
@@ -316,11 +375,15 @@
     </param>
     <param>
       <key>fft_size</key>
-      <value>512</value>
+      <value>1024</value>
     </param>
     <param>
       <key>fft_rate</key>
       <value>15</value>
+    </param>
+    <param>
+      <key>peak_hold</key>
+      <value>False</value>
     </param>
     <param>
       <key>average</key>
@@ -348,62 +411,7 @@
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(724, 320)</value>
-    </param>
-    <param>
-      <key>_rotation</key>
-      <value>0</value>
-    </param>
-  </block>
-  <block>
-    <key>variable_slider</key>
-    <param>
-      <key>id</key>
-      <value>samplerate</value>
-    </param>
-    <param>
-      <key>_enabled</key>
-      <value>True</value>
-    </param>
-    <param>
-      <key>label</key>
-      <value></value>
-    </param>
-    <param>
-      <key>value</key>
-      <value>2048e3</value>
-    </param>
-    <param>
-      <key>min</key>
-      <value>1e6</value>
-    </param>
-    <param>
-      <key>max</key>
-      <value>3.2e6</value>
-    </param>
-    <param>
-      <key>num_steps</key>
-      <value>100</value>
-    </param>
-    <param>
-      <key>style</key>
-      <value>wx.SL_HORIZONTAL</value>
-    </param>
-    <param>
-      <key>converver</key>
-      <value>float_converter</value>
-    </param>
-    <param>
-      <key>grid_pos</key>
-      <value></value>
-    </param>
-    <param>
-      <key>notebook</key>
-      <value></value>
-    </param>
-    <param>
-      <key>_coordinate</key>
-      <value>(38, 280)</value>
+      <value>(718, 318)</value>
     </param>
     <param>
       <key>_rotation</key>
@@ -426,11 +434,11 @@
     </param>
     <param>
       <key>args</key>
-      <value>rtl=0</value>
+      <value>rtl=0 rtl=1</value>
     </param>
     <param>
       <key>nchan</key>
-      <value>1</value>
+      <value>2</value>
     </param>
     <param>
       <key>sample_rate</key>
@@ -518,7 +526,7 @@
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(277, 277)</value>
+      <value>(277, 223)</value>
     </param>
     <param>
       <key>_rotation</key>
@@ -533,8 +541,8 @@
   </connection>
   <connection>
     <source_block_id>osmosdr_source_c_0</source_block_id>
-    <sink_block_id>wxgui_waterfallsink2_0</sink_block_id>
-    <source_key>0</source_key>
+    <sink_block_id>wxgui_fftsink2_0_0</sink_block_id>
+    <source_key>1</source_key>
     <sink_key>0</sink_key>
   </connection>
 </flow_graph>

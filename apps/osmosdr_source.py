@@ -20,7 +20,10 @@ class osmosdr_source_c(grc_wxgui.top_block_gui):
 	def __init__(self):
 		grc_wxgui.top_block_gui.__init__(self, title="OsmoSDR Source")
 
-		self.src = osmosdr.source_c()
+		#self.src = osmosdr.source_c()
+		self.src = osmosdr.source_c("rtl=0")
+		#self.src = osmosdr.source_c("fcd=0")
+		#self.src = osmosdr.source_c("uhd=0")
 
 		self.src.set_sample_rate(1024000)
 		self.src.set_center_freq(394.5e6)
@@ -54,6 +57,7 @@ class osmosdr_source_c(grc_wxgui.top_block_gui):
 		# Connections
 		##################################################
 		self.connect((self.src, 0), (self.sink, 0))
+
 
 	def set_sample_rate(self, sample_rate):
 		self.sample_rate = sample_rate

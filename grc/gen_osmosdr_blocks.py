@@ -25,7 +25,7 @@ MAIN_TMPL = """\
 	<key>osmosdr_$(sourk)_c</key>
 	<throttle>1</throttle>
 	<import>import osmosdr</import>
-	<make>osmosdr.$(sourk)_c( args='nchan=' + str(\$nchan) + ' ' + \$args  )
+	<make>osmosdr.$(sourk)_c( args="nchan=" + str(\$nchan) + " " + \$args  )
 self.\$(id).set_sample_rate(\$sample_rate)
 #for $n in range($max_nchan)
 \#if \$nchan() > $n
@@ -108,8 +108,8 @@ of devices. If left blank, the first device found will be used.
 Examples:
   fcd=0 fcd=1 fcd=2 ...
   rtl=0 rtl=1 rtl=2 ...
-  uhd=0|name,mcr=52e6,chans=2 ...
-  osmo=0|name,mcr=64e6,chans=5,port=/dev/ttyUSB0 ...
+  uhd=0|name,mcr=52e6,nchan=2,subdev='\\\\'B:0 A:0'\\\\' ...
+  osmosdr=0|name,mcr=64e6,nchan=5,port=/dev/ttyUSB0 ...
 
 Num Channels:
 Selects the total number of channels in this multi-device configuration.
