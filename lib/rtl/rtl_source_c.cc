@@ -31,6 +31,7 @@
 #include <gr_io_signature.h>
 
 #include <boost/assign.hpp>
+#include <boost/format.hpp>
 
 #include <stdexcept>
 #include <iostream>
@@ -77,12 +78,18 @@ rtl_source_c::rtl_source_c (const std::string &args)
         gr_make_io_signature (MIN_OUT, MAX_OUT, sizeof (gr_complex)))
 {
   int ret;
-  unsigned int dev_index = 0;
+  unsigned int dev_index = 0, rtl_freq = 0, tuner_freq = 0;
 
   dict_t dict = params_to_dict(args);
 
   if (dict.count("rtl"))
     dev_index = boost::lexical_cast< unsigned int >( dict["rtl"] );
+
+  if (dict.count("rtl_xtal"))
+    rtl_freq = (unsigned int)boost::lexical_cast< double >( dict["rtl_xtal"] );
+
+  if (dict.count("tuner_xtal"))
+    tuner_freq = (unsigned int)boost::lexical_cast< double >( dict["tuner_xtal"] );
 
   _buf_num = 32;
   _buf = (unsigned short **) malloc(_buf_num * sizeof(unsigned short *));
@@ -115,6 +122,18 @@ rtl_source_c::rtl_source_c (const std::string &args)
   ret = rtlsdr_open( &_dev, dev_index );
   if (ret < 0)
       throw std::runtime_error("Failed to open rtlsdr device.");
+
+  if (rtl_freq > 0 || tuner_freq > 0) {
+    if (rtl_freq)
+      std::cerr << "Setting rtl clock to " << rtl_freq << " Hz." << std::endl;
+    if (tuner_freq)
+      std::cerr << "Setting tuner clock to " << tuner_freq << " Hz." << std::endl;
+
+    ret = rtlsdr_set_xtal_freq( _dev, rtl_freq, tuner_freq );
+    if (ret < 0)
+        throw std::runtime_error(
+          str(boost::format("Failed to set xtal frequencies. Error %d.") % ret ));
+  }
 
   ret = rtlsdr_set_sample_rate( _dev, 1024000 );
   if (ret < 0)
