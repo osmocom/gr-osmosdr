@@ -67,6 +67,16 @@ GR_INCLUDE_SUBDIRECTORY(fcd)
 endif(ENABLE_FCD)
 
 ########################################################################
+# Setup File component
+########################################################################
+include(GrComponent)
+GR_REGISTER_COMPONENT("File Source" ENABLE_FILE GNURADIO_CORE_FOUND)
+
+if(ENABLE_FILE)
+GR_INCLUDE_SUBDIRECTORY(file)
+endif(ENABLE_FILE)
+
+########################################################################
 # Setup RTL component
 ########################################################################
 include(GrComponent)

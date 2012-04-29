@@ -3,6 +3,7 @@
 
 #cmakedefine ENABLE_OSMOSDR
 #cmakedefine ENABLE_FCD
+#cmakedefine ENABLE_FILE
 #cmakedefine ENABLE_RTL
 #cmakedefine ENABLE_UHD
 

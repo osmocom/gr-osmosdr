@@ -38,6 +38,10 @@
 #include <fcd_source.h>
 #endif
 
+#ifdef ENABLE_FILE
+#include <file_source_c.h>
+#endif
+
 #ifdef ENABLE_RTL
 #include <rtl_source_c.h>
 #endif
@@ -90,6 +94,14 @@ osmosdr_source_c_impl::osmosdr_source_c_impl (const std::string &args)
 #ifdef ENABLE_FCD
     if ( dict.count("fcd") ) {
       fcd_source_sptr src = make_fcd_source( arg );
+      connect(src, 0, self(), channel++);
+      _srcs.push_back( (osmosdr_src_iface *)src.get() );
+    }
+#endif
+
+#ifdef ENABLE_FILE
+    if ( dict.count("file") ) {
+      file_source_c_sptr src = make_file_source_c( arg );
       connect(src, 0, self(), channel++);
       _srcs.push_back( (osmosdr_src_iface *)src.get() );
     }
