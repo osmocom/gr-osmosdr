@@ -1,13 +1,13 @@
 prefix=@CMAKE_INSTALL_PREFIX@
 exec_prefix=${prefix}
-libdir=${exec_prefix}/@LIBRARY_DIR@
-includedir=${prefix}/@INCLUDE_DIR@
+libdir=${exec_prefix}/@GR_LIBRARY_DIR@
+includedir=${prefix}/@GR_INCLUDE_DIR@/osmosdr
 
 Name: @CPACK_PACKAGE_NAME@
 Description: @CPACK_PACKAGE_DESCRIPTION_SUMMARY@
 URL: http://sdr.osmocom.org/trac/
 Version: @CPACK_PACKAGE_VERSION@
-Requires:
+Requires: gnuradio-core
 Requires.private: @GR_OSMOSDR_PC_REQUIRES@
 Conflicts:
 Cflags: -I${includedir} @GR_OSMOSDR_PC_CFLAGS@
