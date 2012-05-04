@@ -32,6 +32,7 @@ self.\$(id).set_sample_rate(\$sample_rate)
 self.\$(id).set_center_freq(\$freq$(n), $n)
 self.\$(id).set_freq_corr(\$corr$(n), $n)
 self.\$(id).set_gain(\$gain$(n), $n)
+self.\$(id).set_gain_mode(\$gain_mode$(n), $n)
 \#if \$ant$(n)()
 self.\$(id).set_antenna(\$ant$(n), $n)
 \#end if
@@ -43,6 +44,7 @@ self.\$(id).set_antenna(\$ant$(n), $n)
 	<callback>set_center_freq(\$freq$(n), $n)</callback>
 	<callback>set_freq_corr(\$corr$(n), $n)</callback>
 	<callback>set_gain(\$gain$(n), $n)</callback>
+	<callback>set_gain_mode(\$gain_mode$(n), $n)</callback>
 	<callback>set_antenna(\$ant$(n), $n)</callback>
 	#end for
 	<param>
@@ -125,7 +127,11 @@ Freq. Corr.:
 The frequency correction factor in parts per million (ppm). Leave 0 if unknown.
 
 Gain:
-Overall gain of the device's signal path.
+Overall gain of the device's signal path. For the gain setting to apply the
+manual gain mode must be enabled first for some devices (namely rtlsdr).
+
+Gain Mode:
+Chooses between the automatic (default) and manual gain mode where appropriate.
 
 Antenna:
 For devices with only one antenna, this may be left blank.
@@ -158,6 +164,21 @@ PARAMS_TMPL = """
 		<value>0</value>
 		<type>real</type>
 		<hide>\#if \$nchan() > $n then 'none' else 'all'#</hide>
+	</param>
+	<param>
+		<name>Ch$(n): Gain Mode</name>
+		<key>gain_mode$(n)</key>
+		<value></value>
+		<type>enum</type>
+		<hide>\#if \$nchan() > $n then 'none' else 'all'#</hide>
+		<option>
+			<name>Auto</name>
+			<key>0</key>
+		</option>
+		<option>
+			<name>Manual</name>
+			<key>1</key>
+		</option>
 	</param>
 	<param>
 		<name>Ch$(n): Antenna</name>

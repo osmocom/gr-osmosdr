@@ -175,6 +175,16 @@ osmosdr::gain_range_t uhd_source_c::get_gain_range( const std::string & name, si
   return range;
 }
 
+bool uhd_source_c::set_gain_mode( bool mode, size_t chan )
+{
+  return get_gain_mode(chan);
+}
+
+bool uhd_source_c::get_gain_mode( size_t chan )
+{
+  return true;
+}
+
 double uhd_source_c::set_gain( double gain, size_t chan )
 {
   _src->set_gain(gain, chan);

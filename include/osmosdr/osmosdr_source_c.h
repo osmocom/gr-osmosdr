@@ -146,6 +146,22 @@ public:
                                                 size_t chan = 0 ) = 0;
 
   /*!
+   * Set the gain mode for the underlying radio hardware.
+   * This might be supported only for certain hardware types.
+   * \param mode the gain mode (true means manual gain mode)
+   * \param chan the channel index 0 to N-1
+   * \return the actual gain mode
+   */
+  virtual bool set_gain_mode( bool mode, size_t chan = 0 ) = 0;
+
+  /*!
+   * Get the gain mode selected for the underlying radio hardware.
+   * \param chan the channel index 0 to N-1
+   * \return the actual gain mode
+   */
+  virtual bool get_gain_mode( size_t chan = 0 ) = 0;
+
+  /*!
    * Set the gain for the underlying radio hardware.
    * This function will automatically distribute the desired gain value over
    * available gain stages in an appropriate way and return the actual value.
