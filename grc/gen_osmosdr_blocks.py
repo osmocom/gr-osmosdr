@@ -31,8 +31,8 @@ self.\$(id).set_sample_rate(\$sample_rate)
 \#if \$nchan() > $n
 self.\$(id).set_center_freq(\$freq$(n), $n)
 self.\$(id).set_freq_corr(\$corr$(n), $n)
-self.\$(id).set_gain(\$gain$(n), $n)
 self.\$(id).set_gain_mode(\$gain_mode$(n), $n)
+self.\$(id).set_gain(\$gain$(n), $n)
 \#if \$ant$(n)()
 self.\$(id).set_antenna(\$ant$(n), $n)
 \#end if
@@ -43,8 +43,8 @@ self.\$(id).set_antenna(\$ant$(n), $n)
 	#for $n in range($max_nchan)
 	<callback>set_center_freq(\$freq$(n), $n)</callback>
 	<callback>set_freq_corr(\$corr$(n), $n)</callback>
-	<callback>set_gain(\$gain$(n), $n)</callback>
 	<callback>set_gain_mode(\$gain_mode$(n), $n)</callback>
+	<callback>set_gain(\$gain$(n), $n)</callback>
 	<callback>set_antenna(\$ant$(n), $n)</callback>
 	#end for
 	<param>
