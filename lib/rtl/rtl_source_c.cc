@@ -435,10 +435,31 @@ bool rtl_source_c::get_gain_mode( size_t chan )
   return _auto_gain;
 }
 
+double pick_closest_gain(osmosdr::gain_range_t &gains, double required)
+{
+  double result = required;
+  double distance = 100;
+
+  BOOST_FOREACH(osmosdr::range_t gain, gains)
+  {
+    double diff = fabs(gain.start() - required);
+
+    if (diff < distance) {
+      distance = diff;
+      result = gain.start();
+    }
+  }
+
+  return result;
+}
+
 double rtl_source_c::set_gain( double gain, size_t chan )
 {
+  osmosdr::gain_range_t gains = rtl_source_c::get_gain_range( chan );
+  double picked_gain = pick_closest_gain( gains, gain );
+
   if (_dev)
-    rtlsdr_set_tuner_gain( _dev, int(gain * 10.0) );
+    rtlsdr_set_tuner_gain( _dev, int(picked_gain * 10.0) );
 
   return get_gain( chan );
 }
