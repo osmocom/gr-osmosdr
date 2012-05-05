@@ -42,13 +42,22 @@ uhd_source_c::uhd_source_c(const std::string &args) :
                    args_to_io_signature(args))
 {
   size_t num_channels = 1;
+  std::string arguments = args;
 
   dict_t dict = params_to_dict(args);
 
   if (dict.count("nchan"))
     num_channels = boost::lexical_cast< unsigned int >( dict["nchan"] );
 
-  _src = uhd_make_usrp_source( args,
+  arguments.clear(); // rebuild argument string without uhd= prefix
+  BOOST_FOREACH( dict_t::value_type &entry, dict ) {
+    if ( "uhd" == entry.first )
+      arguments += entry.second;
+    else
+      arguments += entry.first + "=" + entry.second + ",";
+  }
+
+  _src = uhd_make_usrp_source( arguments,
                                uhd::io_type_t::COMPLEX_FLOAT32,
                                num_channels );
 
@@ -69,7 +78,7 @@ std::vector< std::string > uhd_source_c::get_devices()
 
   uhd::device_addr_t hint;
   BOOST_FOREACH(uhd::device_addr_t device, uhd::device::find(hint))
-    devices += device.to_string();
+    devices += "uhd=" + device.to_string();
 
   return devices;
 }

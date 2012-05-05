@@ -23,6 +23,7 @@
 #include <sstream>
 
 #include <boost/assign.hpp>
+#include <boost/foreach.hpp>
 
 #include <gr_io_signature.h>
 
@@ -37,36 +38,7 @@ fcd_source_sptr make_fcd_source(const std::string &args)
   return gnuradio::get_initial_sptr(new fcd_source(args));
 }
 
-fcd_source::fcd_source(const std::string &args) :
-  gr_hier_block2("fcd_source",
-                 gr_make_io_signature (0, 0, 0),
-                 gr_make_io_signature (1, 1, sizeof (gr_complex)))
-{
-  std::string dev_name;
-  unsigned int dev_index = 0;
-
-  dict_t dict = params_to_dict(args);
-
-  if (dict.count("fcd"))
-    dev_index = boost::lexical_cast< unsigned int >( dict["fcd"] );
-
-  std::vector< std::string > devices = fcd_source::get_devices();
-
-  if ( devices.size() )
-    dev_name = devices[dev_index];
-  else
-    throw std::runtime_error("No FunCube Dongle found.");
-
-  _src = fcd_make_source_c( dev_name );
-
-  connect( _src, 0, self(), 0 );
-}
-
-fcd_source::~fcd_source()
-{
-}
-
-std::vector< std::string > fcd_source::get_devices()
+static std::vector< std::string > _get_devices()
 {
   std::vector< std::string > devices;
 
@@ -92,6 +64,46 @@ std::vector< std::string > fcd_source::get_devices()
 
     cards.close();
   }
+
+  return devices;
+}
+
+fcd_source::fcd_source(const std::string &args) :
+  gr_hier_block2("fcd_source",
+                 gr_make_io_signature (0, 0, 0),
+                 gr_make_io_signature (1, 1, sizeof (gr_complex)))
+{
+  std::string dev_name;
+  unsigned int dev_index = 0;
+
+  dict_t dict = params_to_dict(args);
+
+  if (dict.count("fcd"))
+    dev_index = boost::lexical_cast< unsigned int >( dict["fcd"] );
+
+  std::vector< std::string > devices = _get_devices();
+
+  if ( devices.size() )
+    dev_name = devices[dev_index];
+  else
+    throw std::runtime_error("No FunCube Dongle found.");
+
+  _src = fcd_make_source_c( dev_name );
+
+  connect( _src, 0, self(), 0 );
+}
+
+fcd_source::~fcd_source()
+{
+}
+
+std::vector< std::string > fcd_source::get_devices()
+{
+  int id = 0;
+  std::vector< std::string > devices;
+
+  BOOST_FOREACH( std::string dev, _get_devices() )
+    devices.push_back( "fcd=" + boost::lexical_cast< std::string >( id++ ) );
 
   return devices;
 }

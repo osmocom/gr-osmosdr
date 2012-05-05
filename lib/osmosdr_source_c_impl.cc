@@ -71,14 +71,58 @@ osmosdr_source_c_impl::osmosdr_source_c_impl (const std::string &args)
         args_to_io_signature(args))
 {
   size_t channel = 0;
+  bool device_specified = false;
 
-  BOOST_FOREACH(std::string arg, args_to_vector(args)) {
+  std::vector< std::string > arg_list = args_to_vector(args);
+
+  BOOST_FOREACH(std::string arg, arg_list) {
 
     dict_t dict = params_to_dict(arg);
 
-//    std::cout << std::endl;
+    if ( dict.count("osmosdr") |
+         dict.count("fcd") |
+         dict.count("file") |
+         dict.count("rtl") |
+         dict.count("uhd") )
+    {
+      device_specified = true;
+    }
+  }
+
+  std::vector< std::string > dev_list;
+#ifdef ENABLE_OSMOSDR
+  // TODO: implement
+#endif
+#ifdef ENABLE_FCD
+  BOOST_FOREACH( std::string dev, fcd_source::get_devices() )
+    dev_list.push_back( dev );
+#endif
+#ifdef ENABLE_RTL
+  BOOST_FOREACH( std::string dev, rtl_source_c::get_devices() )
+    dev_list.push_back( dev );
+#endif
+#ifdef ENABLE_UHD
+  BOOST_FOREACH( std::string dev, uhd_source_c::get_devices() )
+    dev_list.push_back( dev );
+#endif
+//  std::cerr << std::endl;
+//  BOOST_FOREACH( std::string dev, dev_list )
+//    std::cerr << "'" << dev << "'" << std::endl;
+
+  if (!device_specified) {
+    if ( dev_list.size() )
+      arg_list.push_back( dev_list.front() );
+    else
+      throw std::runtime_error("No supported devices found to pick from.");
+  }
+
+  BOOST_FOREACH(std::string arg, arg_list) {
+
+    dict_t dict = params_to_dict(arg);
+
+//    std::cerr << std::endl;
 //    BOOST_FOREACH( dict_t::value_type &entry, dict )
-//      std::cout << "'" << entry.first << "' = '" << entry.second << "'" << std::endl;
+//      std::cerr << "'" << entry.first << "' = '" << entry.second << "'" << std::endl;
 
 #ifdef ENABLE_OSMOSDR
     if ( dict.count("osmosdr") ) {
@@ -143,12 +187,12 @@ size_t osmosdr_source_c_impl::get_num_channels()
 
 osmosdr::meta_range_t osmosdr_source_c_impl::get_sample_rates()
 {
-  return _devs[0]->get_sample_rates();
+  return _devs[0]->get_sample_rates(); // assume same devices used in the group
 }
 
 double osmosdr_source_c_impl::set_sample_rate(double rate)
 {
-  double sample_rate = _sample_rate;
+  double sample_rate = 0;
 
   if (_sample_rate != rate) {
     BOOST_FOREACH( osmosdr_src_iface *dev, _devs )
@@ -162,7 +206,7 @@ double osmosdr_source_c_impl::set_sample_rate(double rate)
 
 double osmosdr_source_c_impl::get_sample_rate()
 {
-  return _devs[0]->get_sample_rate();
+  return _devs[0]->get_sample_rate(); // assume same devices used in the group
 }
 
 osmosdr::freq_range_t osmosdr_source_c_impl::get_freq_range( size_t chan )

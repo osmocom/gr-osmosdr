@@ -280,6 +280,16 @@ int rtl_source_c::work( int noutput_items,
   return noutput_items;
 }
 
+std::vector<std::string> rtl_source_c::get_devices()
+{
+  std::vector<std::string> result;
+
+  for (unsigned int i = 0; i < rtlsdr_get_device_count(); i++)
+    result.push_back( "rtl=" + boost::lexical_cast< std::string >( i ) );
+
+  return result;
+}
+
 size_t rtl_source_c::get_num_channels()
 {
   return 1;
