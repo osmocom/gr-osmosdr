@@ -5,6 +5,7 @@
 #cmakedefine ENABLE_FCD
 #cmakedefine ENABLE_FILE
 #cmakedefine ENABLE_RTL
+#cmakedefine ENABLE_RTL_TCP
 #cmakedefine ENABLE_UHD
 
 #endif // CONFIG_H_IN

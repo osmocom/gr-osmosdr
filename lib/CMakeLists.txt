@@ -87,6 +87,16 @@ GR_INCLUDE_SUBDIRECTORY(rtl)
 endif(ENABLE_RTL)
 
 ########################################################################
+# Setup RTL_TCP component
+########################################################################
+include(GrComponent)
+GR_REGISTER_COMPONENT("Osmocom RTLSDR TCP Client" ENABLE_RTL_TCP GNURADIO_CORE_FOUND)
+
+if(ENABLE_RTL_TCP)
+GR_INCLUDE_SUBDIRECTORY(rtl_tcp)
+endif(ENABLE_RTL_TCP)
+
+########################################################################
 # Setup UHD component
 ########################################################################
 include(GrComponent)

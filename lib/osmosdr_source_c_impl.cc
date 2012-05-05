@@ -46,6 +46,10 @@
 #include <rtl_source_c.h>
 #endif
 
+#ifdef ENABLE_RTL_TCP
+#include <rtl_tcp_source_c.h>
+#endif
+
 #ifdef ENABLE_UHD
 #include <uhd_source_c.h>
 #endif
@@ -83,6 +87,7 @@ osmosdr_source_c_impl::osmosdr_source_c_impl (const std::string &args)
          dict.count("fcd") |
          dict.count("file") |
          dict.count("rtl") |
+         dict.count("rtl_tcp") |
          dict.count("uhd") )
     {
       device_specified = true;
@@ -154,6 +159,14 @@ osmosdr_source_c_impl::osmosdr_source_c_impl (const std::string &args)
 #ifdef ENABLE_RTL
     if ( dict.count("rtl") ) {
       rtl_source_c_sptr src = make_rtl_source_c( arg );
+      connect(src, 0, self(), channel++);
+      _devs.push_back( src.get() );
+    }
+#endif
+
+#ifdef ENABLE_RTL_TCP
+    if ( dict.count("rtl_tcp") ) {
+      rtl_tcp_source_c_sptr src = make_rtl_tcp_source_c( arg );
       connect(src, 0, self(), channel++);
       _devs.push_back( src.get() );
     }
