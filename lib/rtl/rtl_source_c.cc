@@ -43,7 +43,8 @@
 
 using namespace boost::assign;
 
-#define BUF_SIZE (16 * 32 * 512)
+#define BUF_SIZE  (16 * 32 * 512)
+#define BUF_NUM   32
 
 /*
  * Create a new instance of rtl_source_c and return
@@ -91,7 +92,16 @@ rtl_source_c::rtl_source_c (const std::string &args)
   if (dict.count("tuner_xtal"))
     tuner_freq = (unsigned int)boost::lexical_cast< double >( dict["tuner_xtal"] );
 
-  _buf_num = 32;
+  _buf_num = BUF_NUM;
+
+  if (dict.count("buffers")) {
+    _buf_num = (unsigned int)boost::lexical_cast< double >( dict["buffers"] );
+    if (0 == _buf_num)
+      _buf_num = BUF_NUM;
+    std::cerr << "Using " << _buf_num << " buffers of size " << BUF_SIZE << "."
+              << std::endl;
+  }
+
   _buf = (unsigned short **) malloc(_buf_num * sizeof(unsigned short *));
 
   for(unsigned int i = 0; i < _buf_num; ++i)
@@ -112,7 +122,7 @@ rtl_source_c::rtl_source_c (const std::string &args)
   }
 
   if ( dev_index >= rtlsdr_get_device_count() )
-    throw std::runtime_error("Device index out of bounds for rtlsdr.");
+    throw std::runtime_error("Wrong rtlsdr device index given.");
 
   std::cerr << "Using device #" << dev_index << " "
             << "(" << rtlsdr_get_device_name(dev_index) << ")"

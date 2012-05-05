@@ -99,6 +99,11 @@ self.\$(id).set_antenna(\$ant$(n), $n)
 	<doc>
 The OsmoSDR $sourk.title() block:
 
+While primarily being developed for the OsmoSDR hardware, this block also
+supports the FunCube Dongle, Ettus UHD, rtl-sdr radios and cfile source.
+By using the OsmoSDR block you can take advantage of a common software api in
+your application(s) independent of the underlying radio hardware.
+
 Output Type:
 This parameter controls the data type of the stream in gnuradio.
 
@@ -109,7 +114,7 @@ of devices. If left blank, the first device found will be used.
 
 Examples:
   fcd=0 fcd=1 fcd=2 ...
-  rtl=0 rtl=1 rtl=2,rtl_xtal=28.80001e6,tuner_xtal=26e6 ...
+  rtl=0 rtl=1 rtl=2,rtl_xtal=28.80001e6,tuner_xtal=26e6,buffers=64 ...
   uhd=0|name,mcr=52e6,nchan=2,subdev='\\\\'B:0 A:0'\\\\' ...
   osmosdr=0|name,mcr=64e6,nchan=5,port=/dev/ttyUSB0 ...
   file=/path/to/file.ext,freq=428e6,rate=1e6,repeat=true,throttle=true
@@ -127,19 +132,20 @@ Freq. Corr.:
 The frequency correction factor in parts per million (ppm). Leave 0 if unknown.
 
 Gain:
-Overall gain of the device's signal path. For the gain setting to apply the
-manual gain mode must be enabled first for some devices (namely rtlsdr).
+Overall gain of the device's signal path. For the new gain value to be applied,
+the manual gain mode must be enabled first.
 
 Gain Mode:
-Chooses between the manual (default) and automatc gain mode where appropriate.
+Chooses between the manual (default) and automatic gain mode where appropriate.
 Currently, only rtlsdr devices support automatic gain mode.
 
 Antenna:
 For devices with only one antenna, this may be left blank.
 Otherwise, the user should specify one of the possible antenna choices.
 
-See the OsmoSDR manual for more detailed documentation:
+See the OsmoSDR project page for more detailed documentation:
 http://sdr.osmocom.org/trac/
+http://sdr.osmocom.org/trac/wiki/GrOsmoSDR
 	</doc>
 </block>
 """
