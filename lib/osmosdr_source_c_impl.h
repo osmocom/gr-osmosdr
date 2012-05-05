@@ -25,6 +25,8 @@
 
 #include <osmosdr_src_iface.h>
 
+#include <map>
+
 class OSMOSDR_API osmosdr_source_c_impl : public osmosdr_source_c
 {
 public:
@@ -61,8 +63,13 @@ private:
   // access the private constructor.
   friend OSMOSDR_API osmosdr_source_c_sptr osmosdr_make_source_c (const std::string & args);
 
-  size_t _nchan;
-  std::vector< osmosdr_src_iface * > _srcs;
+  double _sample_rate;
+  std::map< size_t, double > _center_freq;
+  std::map< size_t, double > _freq_corr;
+  std::map< size_t, bool > _gain_mode;
+  std::map< size_t, double > _gain;
+  std::map< size_t, std::string > _antenna;
+  std::vector< osmosdr_src_iface * > _devs;
 };
 
 #endif /* INCLUDED_OSMOSDR_SOURCE_C_IMPL_H */
