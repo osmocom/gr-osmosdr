@@ -148,7 +148,7 @@ public:
   /*!
    * Set the gain mode for the underlying radio hardware.
    * This might be supported only for certain hardware types.
-   * \param mode the gain mode (true means manual gain mode)
+   * \param mode the gain mode (true means automatic gain mode)
    * \param chan the channel index 0 to N-1
    * \return the actual gain mode
    */

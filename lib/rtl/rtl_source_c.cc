@@ -153,9 +153,13 @@ rtl_source_c::rtl_source_c (const std::string &args)
   if (ret < 0)
       throw std::runtime_error("Failed to reset usb buffers.");
 
+  ret = rtlsdr_set_tuner_gain_mode(_dev, 1);
+  if (ret < 0)
+      throw std::runtime_error("Failed to enable manual gain mode.");
+
   _running = true;
 
-  _manual_gain = false;
+  _auto_gain = false;
 
   _thread = gruel::thread(_rtlsdr_wait, this);
 }
@@ -418,8 +422,8 @@ osmosdr::gain_range_t rtl_source_c::get_gain_range( const std::string & name, si
 bool rtl_source_c::set_gain_mode( bool mode, size_t chan )
 {
   if (_dev) {
-    if (!rtlsdr_set_tuner_gain_mode(_dev, int(mode))) {
-      _manual_gain = mode;
+    if (!rtlsdr_set_tuner_gain_mode(_dev, int(!mode))) {
+      _auto_gain = mode;
     }
   }
 
@@ -428,7 +432,7 @@ bool rtl_source_c::set_gain_mode( bool mode, size_t chan )
 
 bool rtl_source_c::get_gain_mode( size_t chan )
 {
-  return _manual_gain;
+  return _auto_gain;
 }
 
 double rtl_source_c::set_gain( double gain, size_t chan )

@@ -132,7 +132,7 @@ private:
   unsigned int _buf_offset;
   unsigned int _samp_avail;
 
-  bool _manual_gain;
+  bool _auto_gain;
 };
 
 #endif /* INCLUDED_RTLSDR_SOURCE_C_H */

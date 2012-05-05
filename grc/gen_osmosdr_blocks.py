@@ -180,11 +180,11 @@ PARAMS_TMPL = """
 		<hide>\#if \$nchan() > $n then 'none' else 'all'#</hide>
 		<option>
 			<name>Manual</name>
-			<key>1</key>
+			<key>0</key>
 		</option>
 		<option>
 			<name>Auto</name>
-			<key>0</key>
+			<key>1</key>
 		</option>
 	</param>
 	<param>

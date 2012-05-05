@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='ASCII'?>
 <flow_graph>
-  <timestamp>Sat May  5 14:59:24 2012</timestamp>
+  <timestamp>Sat May  5 21:04:19 2012</timestamp>
   <block>
     <key>options</key>
     <param>
@@ -426,7 +426,7 @@
     </param>
     <param>
       <key>args</key>
-      <value>rtl=0</value>
+      <value></value>
     </param>
     <param>
       <key>nchan</key>
@@ -450,7 +450,7 @@
     </param>
     <param>
       <key>gain_mode0</key>
-      <value>1</value>
+      <value>0</value>
     </param>
     <param>
       <key>ant0</key>
@@ -470,7 +470,7 @@
     </param>
     <param>
       <key>gain_mode1</key>
-      <value>1</value>
+      <value>0</value>
     </param>
     <param>
       <key>ant1</key>
