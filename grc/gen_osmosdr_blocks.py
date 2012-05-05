@@ -109,15 +109,15 @@ This parameter controls the data type of the stream in gnuradio.
 
 Device Arguments:
 The device argument is a delimited string used to locate devices on your system.
-Use the device id or name (if applicable) to specify a specific device or list
+Use the device id or name (if applicable) to specify a certain device or list
 of devices. If left blank, the first device found will be used.
 
 Examples:
-  fcd=0 fcd=1 fcd=2 ...
-  rtl=0 rtl=1 rtl=2,rtl_xtal=28.80001e6,tuner_xtal=26e6,buffers=64 ...
+  fcd=0
+  rtl=0,rtl_xtal=28.80001e6,tuner_xtal=26e6,buffers=64 ...
   uhd=0|name,mcr=52e6,nchan=2,subdev='\\\\'B:0 A:0'\\\\' ...
   osmosdr=0|name,mcr=64e6,nchan=5,port=/dev/ttyUSB0 ...
-  file=/path/to/file.ext,freq=428e6,rate=1e6,repeat=true,throttle=true
+  file=/path/to/file.ext,freq=428e6,rate=1e6,repeat=true,throttle=true ...
 
 Num Channels:
 Selects the total number of channels in this multi-device configuration.
