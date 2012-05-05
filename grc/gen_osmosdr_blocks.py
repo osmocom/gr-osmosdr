@@ -131,7 +131,8 @@ Overall gain of the device's signal path. For the gain setting to apply the
 manual gain mode must be enabled first for some devices (namely rtlsdr).
 
 Gain Mode:
-Chooses between the automatic (default) and manual gain mode where appropriate.
+Chooses between the manual (default) and automatc gain mode where appropriate.
+Currently, only rtlsdr devices support automatic gain mode.
 
 Antenna:
 For devices with only one antenna, this may be left blank.
@@ -172,12 +173,12 @@ PARAMS_TMPL = """
 		<type>enum</type>
 		<hide>\#if \$nchan() > $n then 'none' else 'all'#</hide>
 		<option>
-			<name>Auto</name>
-			<key>0</key>
-		</option>
-		<option>
 			<name>Manual</name>
 			<key>1</key>
+		</option>
+		<option>
+			<name>Auto</name>
+			<key>0</key>
 		</option>
 	</param>
 	<param>
