@@ -46,12 +46,12 @@ rtl_tcp_source_c::rtl_tcp_source_c(const std::string &args) :
 {
   std::string host = "127.0.0.1";
   unsigned short port = 1234;
-  bool eof = false;
-  bool wait = true;
   int payload_size = 16384;
 
   _freq = 0;
   _rate = 0;
+  _gain = 0;
+  _auto_gain = false;
 
   dict_t dict = params_to_dict(args);
 
@@ -60,12 +60,6 @@ rtl_tcp_source_c::rtl_tcp_source_c(const std::string &args) :
 
   if (dict.count("port"))
     port = boost::lexical_cast< unsigned short >( dict["port"] );
-
-  if (dict.count("eof"))
-    eof = "true" == dict["eof"] ? true : false;
-
-  if (dict.count("wait"))
-    wait = "true" == dict["wait"] ? true : false;
 
   if (dict.count("psize"))
     payload_size = boost::lexical_cast< int >( dict["psize"] );
@@ -80,7 +74,9 @@ rtl_tcp_source_c::rtl_tcp_source_c(const std::string &args) :
     payload_size = 16384;
 
   _src = make_rtl_tcp_source_f(sizeof(float), host.c_str(), port, payload_size,
-                               eof, wait);
+                               false, false);
+
+  set_gain_mode(false); // enable manual gain mode by default
 
   /* rtl tcp source provides a stream of interleaved IQ floats */
   gr_deinterleave_sptr deinterleave = gr_make_deinterleave(sizeof(float));
@@ -117,13 +113,24 @@ osmosdr::meta_range_t rtl_tcp_source_c::get_sample_rates( void )
 {
   osmosdr::meta_range_t range;
 
-  range += osmosdr::range_t( get_sample_rate() );
+  range += osmosdr::range_t( 1024000 ); // known to work
+  range += osmosdr::range_t( 1800000 ); // known to work
+  range += osmosdr::range_t( 2048000 ); // known to work
+  range += osmosdr::range_t( 2400000 ); // may work
+  range += osmosdr::range_t( 2600000 ); // may work
+  range += osmosdr::range_t( 2800000 ); // may work
+  range += osmosdr::range_t( 3000000 ); // may work
+  range += osmosdr::range_t( 3200000 ); // max rate, may work
 
   return range;
 }
 
 double rtl_tcp_source_c::set_sample_rate( double rate )
 {
+  _src->set_sample_rate( int(rate) );
+
+  _rate = rate;
+
   return get_sample_rate();
 }
 
@@ -170,7 +177,26 @@ std::vector<std::string> rtl_tcp_source_c::get_gain_names( size_t chan )
 
 osmosdr::gain_range_t rtl_tcp_source_c::get_gain_range( size_t chan )
 {
-  osmosdr::gain_range_t range(0, 0);
+  osmosdr::gain_range_t range;
+
+  range += osmosdr::range_t( -1.0 );
+  range += osmosdr::range_t( 1.5 );
+  range += osmosdr::range_t( 4.0 );
+  range += osmosdr::range_t( 6.5 );
+  range += osmosdr::range_t( 9.0 );
+  range += osmosdr::range_t( 11.5 );
+  range += osmosdr::range_t( 14.0 );
+  range += osmosdr::range_t( 16.5 );
+  range += osmosdr::range_t( 19.0 );
+  range += osmosdr::range_t( 21.5 );
+  range += osmosdr::range_t( 24.0 );
+  range += osmosdr::range_t( 29.0 );
+  range += osmosdr::range_t( 34.0 );
+  range += osmosdr::range_t( 42.0 );
+  range += osmosdr::range_t( 43.0 );
+  range += osmosdr::range_t( 45.0 );
+  range += osmosdr::range_t( 47.0 );
+  range += osmosdr::range_t( 49.0 );
 
   return range;
 }
@@ -182,16 +208,45 @@ osmosdr::gain_range_t rtl_tcp_source_c::get_gain_range( const std::string & name
 
 bool rtl_tcp_source_c::set_gain_mode( bool mode, size_t chan )
 {
+  _src->set_gain_mode(int(!mode));
+
+  _auto_gain = mode;
+
   return get_gain_mode(chan);
 }
 
 bool rtl_tcp_source_c::get_gain_mode( size_t chan )
 {
-  return true;
+  return _auto_gain;
+}
+
+static double pick_closest_gain(osmosdr::gain_range_t &gains, double required)
+{
+  double result = required;
+  double distance = 100;
+
+  BOOST_FOREACH(osmosdr::range_t gain, gains)
+  {
+    double diff = fabs(gain.start() - required);
+
+    if (diff < distance) {
+      distance = diff;
+      result = gain.start();
+    }
+  }
+
+  return result;
 }
 
 double rtl_tcp_source_c::set_gain( double gain, size_t chan )
 {
+  osmosdr::gain_range_t gains = rtl_tcp_source_c::get_gain_range( chan );
+  double picked_gain = pick_closest_gain( gains, gain );
+
+  _src->set_gain( int(picked_gain * 10.0) );
+
+  _gain = gain;
+
   return get_gain(chan);
 }
 

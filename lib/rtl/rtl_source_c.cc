@@ -435,7 +435,7 @@ bool rtl_source_c::get_gain_mode( size_t chan )
   return _auto_gain;
 }
 
-double pick_closest_gain(osmosdr::gain_range_t &gains, double required)
+static double pick_closest_gain(osmosdr::gain_range_t &gains, double required)
 {
   double result = required;
   double distance = 100;

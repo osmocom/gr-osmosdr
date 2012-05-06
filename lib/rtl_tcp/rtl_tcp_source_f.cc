@@ -82,9 +82,7 @@ rtl_tcp_source_f::rtl_tcp_source_f(size_t itemsize,
 	d_eof(eof),
   d_wait(wait),
   d_socket(-1),
-  d_residual(0),
-  d_temp_offset(0),
-  curr_freq(0)
+  d_temp_offset(0)
 {
 	int ret = 0;
 	struct sockaddr_in cliaddr;
@@ -248,12 +246,24 @@ struct command{
 
 void rtl_tcp_source_f::set_freq(int freq)
 {
-	struct command cmd;
-	
-	if (freq != curr_freq) {
-		cmd.cmd = 0x01;
-		cmd.param = freq;
-		send(d_socket, (const char*)&cmd, sizeof(cmd), 0);
-		curr_freq = freq;
-	}
+  struct command cmd = { 0x01, freq };
+  send(d_socket, (const char*)&cmd, sizeof(cmd), 0);
+}
+
+void rtl_tcp_source_f::set_sample_rate(int sample_rate)
+{
+  struct command cmd = { 0x02, sample_rate };
+  send(d_socket, (const char*)&cmd, sizeof(cmd), 0);
+}
+
+void rtl_tcp_source_f::set_gain_mode(int manual)
+{
+  struct command cmd = { 0x03, manual };
+  send(d_socket, (const char*)&cmd, sizeof(cmd), 0);
+}
+
+void rtl_tcp_source_f::set_gain(int gain)
+{
+  struct command cmd = { 0x04, gain };
+  send(d_socket, (const char*)&cmd, sizeof(cmd), 0);
 }

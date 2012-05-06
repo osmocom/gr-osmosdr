@@ -66,9 +66,7 @@ private:
   bool          d_wait;          // wait if data if not immediately available
   int           d_socket;        // handle to socket
   unsigned char *d_temp_buff;    // hold buffer between calls
-  ssize_t       d_residual;   // hold information about number of bytes stored in the temp buffer
-  size_t        d_temp_offset; // point to temp buffer location offset
-  int           curr_freq;
+  size_t        d_temp_offset;   // point to temp buffer location offset
   float         *d_LUT;
 
  private:
@@ -93,6 +91,9 @@ private:
 	   gr_vector_void_star &output_items);
 
   void set_freq(int freq);
+  void set_sample_rate(int sample_rate);
+  void set_gain_mode(int manual);
+  void set_gain(int gain);
 };
 
 

@@ -75,7 +75,8 @@ public:
   std::string get_antenna( size_t chan = 0 );
 
 private:
-  double _freq, _rate;
+  double _freq, _rate, _gain;
+  bool _auto_gain;
   rtl_tcp_source_f_sptr _src;
 };
 
