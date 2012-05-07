@@ -94,6 +94,7 @@ private:
   void set_sample_rate(int sample_rate);
   void set_gain_mode(int manual);
   void set_gain(int gain);
+  void set_freq_corr(int ppm);
 };
 
 

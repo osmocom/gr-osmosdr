@@ -267,3 +267,9 @@ void rtl_tcp_source_f::set_gain(int gain)
   struct command cmd = { 0x04, gain };
   send(d_socket, (const char*)&cmd, sizeof(cmd), 0);
 }
+
+void rtl_tcp_source_f::set_freq_corr(int ppm)
+{
+  struct command cmd = { 0x05, ppm };
+  send(d_socket, (const char*)&cmd, sizeof(cmd), 0);
+}

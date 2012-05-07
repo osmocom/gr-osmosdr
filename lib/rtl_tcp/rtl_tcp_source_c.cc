@@ -51,6 +51,7 @@ rtl_tcp_source_c::rtl_tcp_source_c(const std::string &args) :
   _freq = 0;
   _rate = 0;
   _gain = 0;
+  _corr = 0;
   _auto_gain = false;
 
   dict_t dict = params_to_dict(args);
@@ -162,12 +163,16 @@ double rtl_tcp_source_c::get_center_freq( size_t chan )
 
 double rtl_tcp_source_c::set_freq_corr( double ppm, size_t chan )
 {
+  _src->set_freq_corr( int(ppm) );
+
+  _corr = ppm;
+
   return get_freq_corr( chan );
 }
 
 double rtl_tcp_source_c::get_freq_corr( size_t chan )
 {
-  return 0;
+  return _corr;
 }
 
 std::vector<std::string> rtl_tcp_source_c::get_gain_names( size_t chan )
