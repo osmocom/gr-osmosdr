@@ -21,7 +21,7 @@
 # This file included, use CMake directory variables
 ########################################################################
 
-include_directories(APPEND ${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(APPEND ${CMAKE_CURRENT_SOURCE_DIR} ${GNURADIO_UHD_INCLUDE_DIRS})
 
 set(uhd_srcs
     ${CMAKE_CURRENT_SOURCE_DIR}/uhd_source_c.cc

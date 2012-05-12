@@ -21,7 +21,7 @@
 # This file included, use CMake directory variables
 ########################################################################
 
-include_directories(APPEND ${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(APPEND ${CMAKE_CURRENT_SOURCE_DIR} ${GNURADIO_FCD_INCLUDE_DIRS})
 
 set(fcd_srcs
     ${CMAKE_CURRENT_SOURCE_DIR}/fcd_source.cc
