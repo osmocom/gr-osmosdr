@@ -50,7 +50,7 @@ GR_OSMOSDR_APPEND_LIBS(
 # Setup OsmoSDR component
 ########################################################################
 include(GrComponent)
-GR_REGISTER_COMPONENT("Sysmocom OsmoSDR" ENABLE_OSMOSDR)
+GR_REGISTER_COMPONENT("Sysmocom OsmoSDR" ENABLE_OSMOSDR GNURADIO_AUDIO_FOUND)
 
 if(ENABLE_OSMOSDR)
 GR_INCLUDE_SUBDIRECTORY(osmosdr)
@@ -70,7 +70,7 @@ endif(ENABLE_FCD)
 # Setup File component
 ########################################################################
 include(GrComponent)
-GR_REGISTER_COMPONENT("File Source" ENABLE_FILE GNURADIO_CORE_FOUND)
+GR_REGISTER_COMPONENT("IQ File Source" ENABLE_FILE GNURADIO_CORE_FOUND)
 
 if(ENABLE_FILE)
 GR_INCLUDE_SUBDIRECTORY(file)
@@ -90,7 +90,7 @@ endif(ENABLE_RTL)
 # Setup RTL_TCP component
 ########################################################################
 include(GrComponent)
-GR_REGISTER_COMPONENT("Osmocom RTLSDR TCP Client" ENABLE_RTL_TCP GNURADIO_CORE_FOUND)
+GR_REGISTER_COMPONENT("RTLSDR TCP Client" ENABLE_RTL_TCP GNURADIO_CORE_FOUND)
 
 if(ENABLE_RTL_TCP)
 GR_INCLUDE_SUBDIRECTORY(rtl_tcp)
@@ -100,7 +100,7 @@ endif(ENABLE_RTL_TCP)
 # Setup UHD component
 ########################################################################
 include(GrComponent)
-GR_REGISTER_COMPONENT("Ettus UHD" ENABLE_UHD GNURADIO_UHD_FOUND)
+GR_REGISTER_COMPONENT("Ettus UHD" ENABLE_UHD UHD_FOUND GNURADIO_UHD_FOUND)
 
 if(ENABLE_UHD)
 GR_INCLUDE_SUBDIRECTORY(uhd)
@@ -125,7 +125,7 @@ SET_TARGET_PROPERTIES(gnuradio-osmosdr PROPERTIES DEFINE_SYMBOL "gnuradio_osmosd
 SET_TARGET_PROPERTIES(gnuradio-osmosdr PROPERTIES SOVERSION "${MAJOR_VERSION}")
 SET_TARGET_PROPERTIES(gnuradio-osmosdr PROPERTIES VERSION "${MAJOR_VERSION}.${MINOR_VERSION}")
 IF(DEFINED GR_OSMOSDR_OUTPUT_NAME)
-    SET_TARGET_PROPERTIES(uhd PROPERTIES OUTPUT_NAME ${GR_OSMOSDR_OUTPUT_NAME})
+    SET_TARGET_PROPERTIES(gnuradio-osmosdr PROPERTIES OUTPUT_NAME ${GR_OSMOSDR_OUTPUT_NAME})
 ENDIF(DEFINED GR_OSMOSDR_OUTPUT_NAME)
 
 ########################################################################

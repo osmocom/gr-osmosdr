@@ -21,7 +21,11 @@
 # This file included, use CMake directory variables
 ########################################################################
 
-include_directories(APPEND ${CMAKE_CURRENT_SOURCE_DIR} ${GNURADIO_UHD_INCLUDE_DIRS})
+include_directories(APPEND
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${GNURADIO_UHD_INCLUDE_DIRS}
+    ${UHD_INCLUDE_DIRS}
+)
 
 set(uhd_srcs
     ${CMAKE_CURRENT_SOURCE_DIR}/uhd_source_c.cc
@@ -31,5 +35,4 @@ set(uhd_srcs
 # Append gnuradio-osmosdr library sources
 ########################################################################
 list(APPEND gr_osmosdr_srcs ${uhd_srcs})
-list(APPEND gr_osmosdr_libs ${GNURADIO_UHD_LIBRARIES})
-
+list(APPEND gr_osmosdr_libs ${GNURADIO_UHD_LIBRARIES} ${UHD_LIBRARIES})

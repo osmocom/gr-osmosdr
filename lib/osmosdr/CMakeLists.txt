@@ -21,7 +21,10 @@
 # This file included, use CMake directory variables
 ########################################################################
 
-include_directories(APPEND ${CMAKE_CURRENT_SOURCE_DIR} ${GNURADIO_AUDIO_INCLUDE_DIRS})
+include_directories(APPEND
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${GNURADIO_AUDIO_INCLUDE_DIRS}
+)
 
 set(osmosdr_srcs
     ${CMAKE_CURRENT_SOURCE_DIR}/osmosdr_control.cc
