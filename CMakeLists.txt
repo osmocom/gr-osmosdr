@@ -111,7 +111,6 @@ find_package(GnuradioCore)
 find_package(GnuradioAudio)
 find_package(GnuradioUHD)
 find_package(GnuradioFCD)
-#find_package(LibUSB)
 find_package(LibRTLSDR)
 
 if(NOT GRUEL_FOUND)
@@ -122,14 +121,6 @@ if(NOT GNURADIO_CORE_FOUND)
     message(FATAL_ERROR "GnuRadio Core required to compile osmosdr")
 endif()
 
-if(NOT GNURADIO_AUDIO_FOUND)
-    message(FATAL_ERROR "GnuRadio Audio required to compile osmosdr")
-endif()
-
-#if(NOT LIBUSB_FOUND)
-#    message(FATAL_ERROR "LibUSB 1.0 required to compile osmosdr")
-#endif()
-
 ########################################################################
 # Setup the include and linker paths
 ########################################################################
@@ -139,14 +130,12 @@ include_directories(
     ${Boost_INCLUDE_DIRS}
     ${GRUEL_INCLUDE_DIRS}
     ${GNURADIO_CORE_INCLUDE_DIRS}
-#    ${LIBUSB_INCLUDE_DIR}
 )
 
 link_directories(
     ${Boost_LIBRARY_DIRS}
     ${GRUEL_LIBRARY_DIRS}
     ${GNURADIO_CORE_LIBRARY_DIRS}
-#    ${LIBUSB_LIBRARY_DIRS}
 )
 
 # Set component parameters
