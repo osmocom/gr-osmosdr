@@ -17,12 +17,6 @@
 # the Free Software Foundation, Inc., 51 Franklin Street,
 # Boston, MA 02110-1301, USA.
 
-#install(FILES
-#    osmosdr_source_c.xml
-##    osmosdr_sink_c.xml
-#    DESTINATION share/gnuradio/grc/blocks
-#)
-
 ########################################################################
 # Rules for generating the source and sink xml wrappers
 ########################################################################
