@@ -249,14 +249,14 @@ int rtl_source_c::work( int noutput_items,
   unsigned short *buf = _buf[_buf_head];
 
   if (noutput_items <= int(_samp_avail)) {
-    for (int i = 0; i <= noutput_items; ++i)
+    for (int i = 0; i < noutput_items; ++i)
       *out++ = _lut[ *(buf + _buf_offset + i) ];
 
     _buf_offset += noutput_items;
     _samp_avail -= noutput_items;
     return noutput_items;
   } else {
-    for (int i = 0; i <= int(_samp_avail); ++i)
+    for (int i = 0; i < int(_samp_avail); ++i)
       *out++ = _lut[ *(buf + _buf_offset + i) ];
 
     {
@@ -271,7 +271,7 @@ int rtl_source_c::work( int noutput_items,
 
     int remaining = noutput_items - _samp_avail;
 
-    for (int i = 0; i <= remaining; ++i)
+    for (int i = 0; i < remaining; ++i)
       *out++ = _lut[ *(buf + _buf_offset + i) ];
 
     _buf_offset = remaining;
