@@ -45,6 +45,7 @@ using namespace boost::assign;
 
 #define BUF_SIZE  (16 * 32 * 512)
 #define BUF_NUM   32
+#define BUF_SKIP  1 // buffers to skip due to garbage
 
 /*
  * Create a new instance of rtl_source_c and return
@@ -161,6 +162,8 @@ rtl_source_c::rtl_source_c (const std::string &args)
 
   _auto_gain = false;
 
+  _skipped = 0;
+
   _thread = gruel::thread(_rtlsdr_wait, this);
 }
 
@@ -193,6 +196,11 @@ void rtl_source_c::_rtlsdr_callback(unsigned char *buf, uint32_t len, void *ctx)
 
 void rtl_source_c::rtlsdr_callback(unsigned char *buf, uint32_t len)
 {
+  if (_skipped < BUF_SKIP) {
+    _skipped++;
+    return;
+  }
+
   if (len != BUF_SIZE) {
     printf("U(%d)\n", len); fflush(stdout);
     return;

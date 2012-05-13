@@ -133,6 +133,7 @@ private:
   unsigned int _samp_avail;
 
   bool _auto_gain;
+  unsigned int _skipped;
 };
 
 #endif /* INCLUDED_RTLSDR_SOURCE_C_H */
