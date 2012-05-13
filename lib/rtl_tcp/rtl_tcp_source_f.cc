@@ -27,6 +27,12 @@
 #include <stdio.h>
 #include <string.h>
 
+#ifndef _WIN32
+#include <netinet/in.h>
+#else
+#include <WinSock2.h>
+#endif
+
 #define USE_SELECT    1  // non-blocking receive on all platforms
 #define USE_RCV_TIMEO 0  // non-blocking receive on all but Cygwin
 #define SRC_VERBOSE 0
@@ -246,30 +252,30 @@ struct command{
 
 void rtl_tcp_source_f::set_freq(int freq)
 {
-  struct command cmd = { 0x01, freq };
+  struct command cmd = { 0x01, htonl(freq) };
   send(d_socket, (const char*)&cmd, sizeof(cmd), 0);
 }
 
 void rtl_tcp_source_f::set_sample_rate(int sample_rate)
 {
-  struct command cmd = { 0x02, sample_rate };
+  struct command cmd = { 0x02, htonl(sample_rate) };
   send(d_socket, (const char*)&cmd, sizeof(cmd), 0);
 }
 
 void rtl_tcp_source_f::set_gain_mode(int manual)
 {
-  struct command cmd = { 0x03, manual };
+  struct command cmd = { 0x03, htonl(manual) };
   send(d_socket, (const char*)&cmd, sizeof(cmd), 0);
 }
 
 void rtl_tcp_source_f::set_gain(int gain)
 {
-  struct command cmd = { 0x04, gain };
+  struct command cmd = { 0x04, htonl(gain) };
   send(d_socket, (const char*)&cmd, sizeof(cmd), 0);
 }
 
 void rtl_tcp_source_f::set_freq_corr(int ppm)
 {
-  struct command cmd = { 0x05, ppm };
+  struct command cmd = { 0x05, htonl(ppm) };
   send(d_socket, (const char*)&cmd, sizeof(cmd), 0);
 }
