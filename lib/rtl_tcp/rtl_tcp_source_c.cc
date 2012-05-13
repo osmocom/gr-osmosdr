@@ -23,6 +23,7 @@
 #include <sstream>
 
 #include <boost/assign.hpp>
+#include <boost/algorithm/string.hpp>
 
 #include <gr_io_signature.h>
 #include <gr_deinterleave.h>
@@ -56,11 +57,16 @@ rtl_tcp_source_c::rtl_tcp_source_c(const std::string &args) :
 
   dict_t dict = params_to_dict(args);
 
-  if (dict.count("host"))
-    host = dict["host"];
+  if (dict.count("rtl_tcp")) {
+    std::vector< std::string > tokens;
+    boost::algorithm::split( tokens, dict["rtl_tcp"], boost::is_any_of(":") );
 
-  if (dict.count("port"))
-    port = boost::lexical_cast< unsigned short >( dict["port"] );
+    if ( tokens[0].length() && (tokens.size() == 1 || tokens.size() == 2 ) )
+      host = tokens[0];
+
+    if ( tokens.size() == 2 ) // port given
+      port = boost::lexical_cast< unsigned short >( tokens[1] );
+  }
 
   if (dict.count("psize"))
     payload_size = boost::lexical_cast< int >( dict["psize"] );
