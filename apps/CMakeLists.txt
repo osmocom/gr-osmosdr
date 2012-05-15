@@ -21,6 +21,5 @@ include(GrPython)
 
 GR_PYTHON_INSTALL(
     PROGRAMS
-    osmosdr_source.py
     DESTINATION bin
 )
