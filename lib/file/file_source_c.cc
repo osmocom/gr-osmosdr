@@ -172,7 +172,7 @@ osmosdr::gain_range_t file_source_c::get_gain_range( const std::string & name, s
   return get_gain_range( chan );
 }
 
-bool file_source_c::set_gain_mode( bool mode, size_t chan )
+bool file_source_c::set_gain_mode( bool automatic, size_t chan )
 {
   return get_gain_mode(chan);
 }

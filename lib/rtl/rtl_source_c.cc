@@ -427,11 +427,11 @@ osmosdr::gain_range_t rtl_source_c::get_gain_range( const std::string & name, si
   return get_gain_range( chan );
 }
 
-bool rtl_source_c::set_gain_mode( bool mode, size_t chan )
+bool rtl_source_c::set_gain_mode( bool automatic, size_t chan )
 {
   if (_dev) {
-    if (!rtlsdr_set_tuner_gain_mode(_dev, int(!mode))) {
-      _auto_gain = mode;
+    if (!rtlsdr_set_tuner_gain_mode(_dev, int(!automatic))) {
+      _auto_gain = automatic;
     }
   }
 

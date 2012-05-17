@@ -316,15 +316,15 @@ osmosdr::gain_range_t osmosdr_source_c_impl::get_gain_range( const std::string &
   return osmosdr::gain_range_t();
 }
 
-bool osmosdr_source_c_impl::set_gain_mode( bool mode, size_t chan )
+bool osmosdr_source_c_impl::set_gain_mode( bool automatic, size_t chan )
 {
   size_t channel = 0;
   BOOST_FOREACH( osmosdr_src_iface *dev, _devs )
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
       if ( chan == channel++ )
-        if ( _gain_mode[ chan ] != mode ) {
-          _gain_mode[ chan ] = mode;
-          return dev->set_gain_mode( mode, dev_chan );
+        if ( _gain_mode[ chan ] != automatic ) {
+          _gain_mode[ chan ] = automatic;
+          return dev->set_gain_mode( automatic, dev_chan );
         }
 
   return false;

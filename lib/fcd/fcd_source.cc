@@ -198,7 +198,7 @@ osmosdr::gain_range_t fcd_source::get_gain_range( const std::string & name, size
   return get_gain_range( chan );
 }
 
-bool fcd_source::set_gain_mode( bool mode, size_t chan )
+bool fcd_source::set_gain_mode( bool automatic, size_t chan )
 {
   return get_gain_mode(chan);
 }

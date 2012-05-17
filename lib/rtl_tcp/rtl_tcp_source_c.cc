@@ -217,11 +217,11 @@ osmosdr::gain_range_t rtl_tcp_source_c::get_gain_range( const std::string & name
   return get_gain_range( chan );
 }
 
-bool rtl_tcp_source_c::set_gain_mode( bool mode, size_t chan )
+bool rtl_tcp_source_c::set_gain_mode( bool automatic, size_t chan )
 {
-  _src->set_gain_mode(int(!mode));
+  _src->set_gain_mode(int(!automatic));
 
-  _auto_gain = mode;
+  _auto_gain = automatic;
 
   return get_gain_mode(chan);
 }
