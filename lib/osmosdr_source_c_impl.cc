@@ -324,7 +324,10 @@ bool osmosdr_source_c_impl::set_gain_mode( bool automatic, size_t chan )
       if ( chan == channel++ )
         if ( _gain_mode[ chan ] != automatic ) {
           _gain_mode[ chan ] = automatic;
-          return dev->set_gain_mode( automatic, dev_chan );
+          bool mode = dev->set_gain_mode( automatic, dev_chan );
+          if (!automatic) // reapply gain value when switched to manual mode
+            dev->set_gain( _gain[ chan ], dev_chan );
+          return mode;
         }
 
   return false;
