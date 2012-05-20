@@ -21,6 +21,7 @@
 #include <osmosdr_device.h>
 #include <stdexcept>
 #include <boost/foreach.hpp>
+#include <boost/format.hpp>
 #include <boost/thread/mutex.hpp>
 #include <algorithm>
 #include <sstream>
