@@ -125,8 +125,8 @@ rtl_source_c::rtl_source_c (const std::string &args)
   if ( dev_index >= rtlsdr_get_device_count() )
     throw std::runtime_error("Wrong rtlsdr device index given.");
 
-  std::cerr << "Using device #" << dev_index << " "
-            << "(" << rtlsdr_get_device_name(dev_index) << ")"
+  std::cerr << "Using device #" << dev_index << ": "
+            << rtlsdr_get_device_name(dev_index)
             << std::endl;
 
   _dev = NULL;
@@ -173,8 +173,9 @@ rtl_source_c::rtl_source_c (const std::string &args)
 rtl_source_c::~rtl_source_c ()
 {
   if (_dev) {
+    _running = false;
     rtlsdr_cancel_async( _dev );
-    _thread.join();
+    _thread.timed_join( boost::posix_time::milliseconds(200) );
     rtlsdr_close( _dev );
     _dev = NULL;
   }
@@ -294,12 +295,15 @@ int rtl_source_c::work( int noutput_items,
 
 std::vector<std::string> rtl_source_c::get_devices()
 {
-  std::vector<std::string> result;
+  std::vector<std::string> devices;
 
-  for (unsigned int i = 0; i < rtlsdr_get_device_count(); i++)
-    result.push_back( "rtl=" + boost::lexical_cast< std::string >( i ) );
+  for (unsigned int i = 0; i < rtlsdr_get_device_count(); i++) {
+    std::string args = "rtl=" + boost::lexical_cast< std::string >( i );
+    args += ",label='" + std::string(rtlsdr_get_device_name( i )) + "'";
+    devices.push_back( args );
+  }
 
-  return result;
+  return devices;
 }
 
 size_t rtl_source_c::get_num_channels()

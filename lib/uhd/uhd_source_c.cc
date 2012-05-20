@@ -41,13 +41,16 @@ uhd_source_c::uhd_source_c(const std::string &args) :
                    gr_make_io_signature (0, 0, 0),
                    args_to_io_signature(args))
 {
-  size_t num_channels = 1;
+  size_t nchan = 1;
   std::string arguments = args;
 
   dict_t dict = params_to_dict(args);
 
   if (dict.count("nchan"))
-    num_channels = boost::lexical_cast< unsigned int >( dict["nchan"] );
+    nchan = boost::lexical_cast< size_t >( dict["nchan"] );
+
+  if (0 == nchan)
+    nchan = 1;
 
   arguments.clear(); // rebuild argument string without uhd= prefix
   BOOST_FOREACH( dict_t::value_type &entry, dict ) {
@@ -59,12 +62,12 @@ uhd_source_c::uhd_source_c(const std::string &args) :
 
   _src = uhd_make_usrp_source( arguments,
                                uhd::io_type_t::COMPLEX_FLOAT32,
-                               num_channels );
+                               nchan );
 
   if (dict.count("subdev"))
     _src->set_subdev_spec( dict["subdev"] );
 
-  for ( size_t i = 0; i < num_channels; i++ )
+  for ( size_t i = 0; i < nchan; i++ )
     connect( _src, i, self(), i );
 }
 
@@ -77,8 +80,14 @@ std::vector< std::string > uhd_source_c::get_devices()
   std::vector< std::string > devices;
 
   uhd::device_addr_t hint;
-  BOOST_FOREACH(uhd::device_addr_t device, uhd::device::find(hint))
-    devices += "uhd=" + device.to_string();
+  BOOST_FOREACH(const uhd::device_addr_t &dev, uhd::device::find(hint)) {
+    std::string args = "uhd=," + dev.to_string();
+    args += ",label='Ettus USRP'";
+    devices.push_back( args );
+  }
+
+  //devices.clear();
+  //devices.push_back( "uhd=,type=usrp1,label='Ettus USRP'" );
 
   return devices;
 }
@@ -94,7 +103,7 @@ std::string uhd_source_c::name()
 //  std::string dev_name = prop_tree->access<std::string>("/name").get();
   std::string mboard_name = _src->get_device()->get_mboard_name();
 
-//  std::cout << "'" << dev_name << "' '" << mboard_name << "'" << std::endl;
+//  std::cerr << "'" << dev_name << "' '" << mboard_name << "'" << std::endl;
 //  'USRP1 Device' 'USRP1 (Classic)'
 //  'B-Series Device' 'B100 (B-Hundo)'
 

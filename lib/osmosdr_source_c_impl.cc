@@ -96,7 +96,8 @@ osmosdr_source_c_impl::osmosdr_source_c_impl (const std::string &args)
 
   std::vector< std::string > dev_list;
 #ifdef ENABLE_OSMOSDR
-  // TODO: implement
+  BOOST_FOREACH( std::string dev, osmosdr_src_c::get_devices() )
+    dev_list.push_back( dev );
 #endif
 #ifdef ENABLE_FCD
   BOOST_FOREACH( std::string dev, fcd_source::get_devices() )
@@ -133,10 +134,10 @@ osmosdr_source_c_impl::osmosdr_source_c_impl (const std::string &args)
     if ( dict.count("osmosdr") ) {
       osmosdr_src_c_sptr src = osmosdr_make_src_c( arg );
 
-//      for (size_t i = 0; i < src->get_num_channels(); i++)
-//        connect(src, i, self(), channel++);
+      for (size_t i = 0; i < src->get_num_channels(); i++)
+        connect(src, i, self(), channel++);
 
-//      _devs.push_back( src.get() ); // FIXME: implement interface
+      _devs.push_back( src.get() );
     }
 #endif
 

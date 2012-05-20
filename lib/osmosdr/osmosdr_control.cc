@@ -45,7 +45,7 @@ osmosdr_control::~osmosdr_control()
 /*
   1 [OsmoSDR        ]: USB-Audio - OsmoSDR
                        sysmocom OsmoSDR at usb-0000:00:06.1-2, high speed
-*/
+ */
 std::vector< std::string > osmosdr_control::find_devices()
 {
   std::vector< std::string > devices;

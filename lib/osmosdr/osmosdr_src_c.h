@@ -24,6 +24,8 @@
 #include <osmosdr_control.h>
 #include <gr_hier_block2.h>
 
+#include "osmosdr_src_iface.h"
+
 class osmosdr_src_c;
 
 /*
@@ -56,7 +58,8 @@ OSMOSDR_API osmosdr_src_c_sptr osmosdr_make_src_c (const std::string & args = ""
  */
 class OSMOSDR_API osmosdr_src_c :
     public gr_hier_block2,
-    public osmosdr_rx_control
+    public osmosdr_rx_control,
+    public osmosdr_src_iface
 {
 private:
   // The friend declaration allows osmosdr_make_src_c to
@@ -72,6 +75,36 @@ private:
  public:
   ~osmosdr_src_c ();	// public destructor
 
+  static std::vector< std::string > get_devices();
+
+  size_t get_num_channels( void );
+
+  osmosdr::meta_range_t get_sample_rates( void );
+  double set_sample_rate( double rate );
+  double get_sample_rate( void );
+
+  osmosdr::freq_range_t get_freq_range( size_t chan = 0 );
+  double set_center_freq( double freq, size_t chan = 0 );
+  double get_center_freq( size_t chan = 0 );
+  double set_freq_corr( double ppm, size_t chan = 0 );
+  double get_freq_corr( size_t chan = 0 );
+
+  std::vector<std::string> get_gain_names( size_t chan = 0 );
+  osmosdr::gain_range_t get_gain_range( size_t chan = 0 );
+  osmosdr::gain_range_t get_gain_range( const std::string & name, size_t chan = 0 );
+  bool set_gain_mode( bool automatic, size_t chan = 0 );
+  bool get_gain_mode( size_t chan = 0 );
+  double set_gain( double gain, size_t chan = 0 );
+  double set_gain( double gain, const std::string & name, size_t chan = 0 );
+  double get_gain( size_t chan = 0 );
+  double get_gain( const std::string & name, size_t chan = 0 );
+
+  std::vector< std::string > get_antennas( size_t chan = 0 );
+  std::string set_antenna( const std::string & antenna, size_t chan = 0 );
+  std::string get_antenna( size_t chan = 0 );
+
+private:
+  bool _auto_gain;
 };
 
 #endif /* INCLUDED_OSMOSDR_SRC_C_H */

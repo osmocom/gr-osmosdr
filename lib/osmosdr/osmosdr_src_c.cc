@@ -31,7 +31,11 @@
 #include <gr_audio_source.h>
 #include <gr_float_to_complex.h>
 
+#include <boost/assign.hpp>
+
 #include <osmosdr_arg_helpers.h>
+
+using namespace boost::assign;
 
 /*
  * Create a new instance of osmosdr_src_c and return
@@ -52,8 +56,30 @@ osmosdr_src_c::osmosdr_src_c (const std::string &args)
         args_to_io_signature(args)),
     osmosdr_rx_control(args)
 {
+  std::string dev_name;
+  unsigned int dev_index = 0, mcr = 0;
+  size_t nchan = 1;
+
+  dict_t dict = params_to_dict(args);
+
+  if (dict.count("osmosdr"))
+    dev_index = boost::lexical_cast< unsigned int >( dict["osmosdr"] );
+
+  if (dict.count("mcr"))
+    mcr = (unsigned int) boost::lexical_cast< double >( dict["mcr"] );
+
+  if (dict.count("nchan"))
+    nchan = boost::lexical_cast< size_t >( dict["nchan"] );
+
+  std::vector< std::string > devices = osmosdr_control::find_devices();
+
+  if ( devices.size() )
+    dev_name = devices[dev_index];
+  else
+    throw std::runtime_error("No OsmoSDR devices found.");
+
   /* Audio source; sample rate is 500kHz by default */
-  audio_source::sptr src = audio_make_source(500000, audio_dev_name(), true);
+  audio_source::sptr src = audio_make_source(500000, dev_name, true);
 
   /* block to convert stereo audio to a complex stream */
   gr_float_to_complex_sptr f2c = gr_make_float_to_complex(1);
@@ -61,6 +87,8 @@ osmosdr_src_c::osmosdr_src_c (const std::string &args)
   connect(src, 0, f2c, 0); /* Left is I */
   connect(src, 1, f2c, 1); /* Right is Q */
   connect(f2c, 0, self(), 0);
+
+  _auto_gain = false;
 }
 
 /*
@@ -69,4 +97,225 @@ osmosdr_src_c::osmosdr_src_c (const std::string &args)
 osmosdr_src_c::~osmosdr_src_c ()
 {
   // nothing else required in this example
+}
+
+std::vector<std::string> osmosdr_src_c::get_devices()
+{
+  int id = 0;
+  std::vector< std::string > devices;
+
+  BOOST_FOREACH( std::string dev, osmosdr_control::find_devices() ) {
+    std::string args = "osmosdr=" + boost::lexical_cast< std::string >( id++ );
+    args += ",label='sysmocom OsmoSDR'";
+    devices.push_back( args );
+  }
+
+  return devices;
+}
+
+size_t osmosdr_src_c::get_num_channels()
+{
+  return 1;
+}
+
+osmosdr::meta_range_t osmosdr_src_c::get_sample_rates()
+{
+  osmosdr::meta_range_t range;
+
+  range += osmosdr::range_t( 1024000 ); // known to work
+  range += osmosdr::range_t( 1800000 ); // known to work
+  range += osmosdr::range_t( 2048000 ); // known to work
+  range += osmosdr::range_t( 2400000 ); // may work
+  range += osmosdr::range_t( 2600000 ); // may work
+  range += osmosdr::range_t( 2800000 ); // may work
+  range += osmosdr::range_t( 3000000 ); // may work
+  range += osmosdr::range_t( 3200000 ); // max rate, may work
+
+  // TODO: read from the libosmosdr as soon as the api is available
+
+  return range;
+}
+
+double osmosdr_src_c::set_sample_rate(double rate)
+{
+//  if (_dev) {
+//    osmosdr_set_sample_rate( _dev, (uint32_t)rate );
+//  }
+
+  return get_sample_rate();
+}
+
+double osmosdr_src_c::get_sample_rate()
+{
+//  if (_dev)
+//    return (double)osmosdr_get_sample_rate( _dev );
+
+  return 0;
+}
+
+osmosdr::freq_range_t osmosdr_src_c::get_freq_range( size_t chan )
+{
+  osmosdr::freq_range_t range;
+
+  range += osmosdr::range_t( 50e6, 2.2e9, 100 );
+
+  // TODO: read from the libosmosdr as soon as the api is available
+
+  return range;
+}
+
+double osmosdr_src_c::set_center_freq( double freq, size_t chan )
+{
+//  if (_dev)
+//    osmosdr_set_center_freq( _dev, (uint32_t)freq );
+
+  return get_center_freq( chan );
+}
+
+double osmosdr_src_c::get_center_freq( size_t chan )
+{
+//  if (_dev)
+//    return (double)osmosdr_get_center_freq( _dev );
+
+  return 0;
+}
+
+double osmosdr_src_c::set_freq_corr( double ppm, size_t chan )
+{
+//  if ( _dev )
+//    osmosdr_set_freq_correction( _dev, (int)ppm );
+
+  return get_freq_corr( chan );
+}
+
+double osmosdr_src_c::get_freq_corr( size_t chan )
+{
+//  if ( _dev )
+//    return (double)osmosdr_get_freq_correction( _dev );
+
+  return 0;
+}
+
+std::vector<std::string> osmosdr_src_c::get_gain_names( size_t chan )
+{
+  std::vector< std::string > antennas;
+
+  antennas += "LNA";
+
+  return antennas;
+}
+
+osmosdr::gain_range_t osmosdr_src_c::get_gain_range( size_t chan )
+{
+  osmosdr::gain_range_t range;
+
+  range += osmosdr::range_t( -1.0 );
+  range += osmosdr::range_t( 1.5 );
+  range += osmosdr::range_t( 4.0 );
+  range += osmosdr::range_t( 6.5 );
+  range += osmosdr::range_t( 9.0 );
+  range += osmosdr::range_t( 11.5 );
+  range += osmosdr::range_t( 14.0 );
+  range += osmosdr::range_t( 16.5 );
+  range += osmosdr::range_t( 19.0 );
+  range += osmosdr::range_t( 21.5 );
+  range += osmosdr::range_t( 24.0 );
+  range += osmosdr::range_t( 29.0 );
+  range += osmosdr::range_t( 34.0 );
+  range += osmosdr::range_t( 42.0 );
+  range += osmosdr::range_t( 43.0 );
+  range += osmosdr::range_t( 45.0 );
+  range += osmosdr::range_t( 47.0 );
+  range += osmosdr::range_t( 49.0 );
+
+  // TODO: read from the libosmosdr as soon as the api is available
+
+  return range;
+}
+
+osmosdr::gain_range_t osmosdr_src_c::get_gain_range( const std::string & name, size_t chan )
+{
+  return get_gain_range( chan );
+}
+
+bool osmosdr_src_c::set_gain_mode( bool automatic, size_t chan )
+{
+//  if (_dev) {
+//    if (!osmosdr_set_tuner_gain_mode(_dev, int(!automatic))) {
+//      _auto_gain = automatic;
+//    }
+//  }
+
+  return get_gain_mode(chan);
+}
+
+bool osmosdr_src_c::get_gain_mode( size_t chan )
+{
+  return _auto_gain;
+}
+
+static double pick_closest_gain(osmosdr::gain_range_t &gains, double required)
+{
+  double result = required;
+  double distance = 100;
+
+  BOOST_FOREACH(osmosdr::range_t gain, gains)
+  {
+    double diff = fabs(gain.start() - required);
+
+    if (diff < distance) {
+      distance = diff;
+      result = gain.start();
+    }
+  }
+
+  return result;
+}
+
+double osmosdr_src_c::set_gain( double gain, size_t chan )
+{
+  osmosdr::gain_range_t gains = osmosdr_src_c::get_gain_range( chan );
+  double picked_gain = pick_closest_gain( gains, gain );
+
+//  if (_dev)
+//    osmosdr_set_tuner_gain( _dev, int(picked_gain * 10.0) );
+
+  return get_gain( chan );
+}
+
+double osmosdr_src_c::set_gain( double gain, const std::string & name, size_t chan)
+{
+  return set_gain( gain, chan );
+}
+
+double osmosdr_src_c::get_gain( size_t chan )
+{
+//  if ( _dev )
+//    return ((double)osmosdr_get_tuner_gain( _dev )) / 10.0;
+
+  return 0;
+}
+
+double osmosdr_src_c::get_gain( const std::string & name, size_t chan )
+{
+  return get_gain( chan );
+}
+
+std::vector< std::string > osmosdr_src_c::get_antennas( size_t chan )
+{
+  std::vector< std::string > antennas;
+
+  antennas += get_antenna( chan );
+
+  return antennas;
+}
+
+std::string osmosdr_src_c::set_antenna( const std::string & antenna, size_t chan )
+{
+  return get_antenna( chan );
+}
+
+std::string osmosdr_src_c::get_antenna( size_t chan )
+{
+  return "ANT";
 }

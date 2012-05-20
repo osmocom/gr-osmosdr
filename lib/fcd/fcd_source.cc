@@ -38,6 +38,11 @@ fcd_source_sptr make_fcd_source(const std::string &args)
   return gnuradio::get_initial_sptr(new fcd_source(args));
 }
 
+/*
+ 2 [V10            ]: USB-Audio - FUNcube Dongle V1.0
+                      Hanlincrest Ltd. FUNcube Dongle V1.0 at usb-0000:00:1d.0-2, full speed
+ */
+
 static std::vector< std::string > _get_devices()
 {
   std::vector< std::string > devices;
@@ -102,8 +107,11 @@ std::vector< std::string > fcd_source::get_devices()
   int id = 0;
   std::vector< std::string > devices;
 
-  BOOST_FOREACH( std::string dev, _get_devices() )
-    devices.push_back( "fcd=" + boost::lexical_cast< std::string >( id++ ) );
+  BOOST_FOREACH( std::string dev, _get_devices() ) {
+    std::string args = "fcd=" + boost::lexical_cast< std::string >( id++ );
+    args += ",label='FunCube Dongle'";
+    devices.push_back( args );
+  }
 
   return devices;
 }

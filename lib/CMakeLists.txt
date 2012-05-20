@@ -38,6 +38,7 @@ GR_OSMOSDR_APPEND_SRCS(
     osmosdr_source_c_impl.cc
     osmosdr_sink_c_impl.cc
     osmosdr_ranges.cc
+    osmosdr_device.cc
 )
 
 GR_OSMOSDR_APPEND_LIBS(

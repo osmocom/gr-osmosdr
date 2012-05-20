@@ -32,7 +32,7 @@
 #include <boost/foreach.hpp>
 
 typedef std::map< std::string, std::string > dict_t;
-typedef std::pair<std::string, std::string> pair_t;
+typedef std::pair< std::string, std::string > pair_t;
 
 inline std::vector< std::string > args_to_vector( const std::string &args )
 {
@@ -88,11 +88,11 @@ inline dict_t params_to_dict( const std::string &params )
   std::vector< std::string > param_list = params_to_vector( params );
   BOOST_FOREACH(std::string param, param_list)
   {
-    pair_t nchan = param_to_pair( param );
-    std::string value = nchan.second;
+    pair_t pair = param_to_pair( param );
+    std::string value = pair.second;
     if (value.length() && value[0] == '\'' && value[ value.length() - 1 ] == '\'')
       value = value.substr(1, value.length() - 1);
-    result[ nchan.first ] = nchan.second;
+    result[ pair.first ] = value;
   }
 
   return result;
