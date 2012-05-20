@@ -78,9 +78,9 @@ namespace osmosdr {
     template <typename T> T cast(const std::string &key, const T &def) const
     {
       if (!this->count(key)) return def;
-      try { return boost::lexical_cast<T>((*this)[key]); }
+      try { return boost::lexical_cast<T>(this->at(key)); }
       catch(const boost::bad_lexical_cast &) {
-        throw std::runtime_error("cannot cast " + key + " = " + (*this)[key]);
+        throw std::runtime_error("cannot cast " + key + " = " + this->at(key));
       }
     }
   };
