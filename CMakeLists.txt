@@ -108,10 +108,10 @@ set(GRC_BLOCKS_DIR      ${GR_PKG_DATA_DIR}/grc/blocks)
 ########################################################################
 find_package(Gruel)
 find_package(GnuradioCore)
-find_package(GnuradioAudio)
 find_package(UHD)
 find_package(GnuradioUHD)
 find_package(GnuradioFCD)
+find_package(LibOsmoSDR)
 find_package(LibRTLSDR)
 
 if(NOT GRUEL_FOUND)

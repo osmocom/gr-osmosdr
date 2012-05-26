@@ -23,11 +23,10 @@
 
 include_directories(APPEND
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${GNURADIO_AUDIO_INCLUDE_DIRS}
+    ${LIBOSMOSDR_INCLUDE_DIR}
 )
 
 set(osmosdr_srcs
-    ${CMAKE_CURRENT_SOURCE_DIR}/osmosdr_control.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/osmosdr_snk_c.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/osmosdr_src_c.cc
 )
@@ -36,5 +35,4 @@ set(osmosdr_srcs
 # Append gnuradio-osmosdr library sources
 ########################################################################
 list(APPEND gr_osmosdr_srcs ${osmosdr_srcs})
-list(APPEND gr_osmosdr_libs ${GNURADIO_AUDIO_LIBRARIES})
-
+list(APPEND gr_osmosdr_libs ${LIBOSMOSDR_LIBRARIES})

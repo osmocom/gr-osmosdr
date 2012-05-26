@@ -62,21 +62,9 @@ static const int MAX_OUT = 0;	// maximum number of output streams
 osmosdr_snk_c::osmosdr_snk_c (const std::string & args)
   : gr_hier_block2 ("osmosdr_snk_c",
         gr_make_io_signature (MIN_IN, MAX_IN, sizeof (gr_complex)),
-        gr_make_io_signature (MIN_OUT, MAX_OUT, sizeof (gr_complex))),
-    osmosdr_tx_control(args)
+        gr_make_io_signature (MIN_OUT, MAX_OUT, sizeof (gr_complex)))
 {
-  throw std::runtime_error("FIXME: OsmoSDR sink is not yet implemented");
-
-  /* Audio sink; sample rate is 96kHz by default */
-  audio_sink::sptr snk = audio_make_sink(96000, audio_dev_name(), true);
-
-  gr_complex_to_real_sptr real_part = gr_make_complex_to_real(1);
-  gr_complex_to_imag_sptr imag_part = gr_make_complex_to_imag(1);
-
-  connect(self(), 0, real_part, 0);
-  connect(self(), 0, imag_part, 0);
-  connect(imag_part, 0, snk, 0); /* Left is I */
-  connect(real_part, 0, snk, 1); /* Right is Q */
+  throw std::runtime_error("FIXME: OsmoSDR sink is not yet implemented.");
 }
 
 /*

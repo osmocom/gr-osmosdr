@@ -21,7 +21,6 @@
 #define INCLUDED_OSMOSDR_SNK_C_H
 
 #include <osmosdr_api.h>
-#include <osmosdr_control.h>
 #include <gr_hier_block2.h>
 
 class osmosdr_snk_c;
@@ -55,8 +54,7 @@ OSMOSDR_API osmosdr_snk_c_sptr osmosdr_make_snk_c (const std::string & args = ""
  * This uses the preferred technique: subclassing gr_hier_block2.
  */
 class OSMOSDR_API osmosdr_snk_c :
-    public gr_hier_block2,
-    public osmosdr_tx_control
+    public gr_hier_block2
 {
 private:
   // The friend declaration allows osmosdr_make_snk_c to

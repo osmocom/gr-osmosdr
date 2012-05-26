@@ -21,12 +21,16 @@
 #define INCLUDED_OSMOSDR_SRC_C_H
 
 #include <osmosdr_api.h>
-#include <osmosdr_control.h>
-#include <gr_hier_block2.h>
+#include <gr_sync_block.h>
+
+#include <gruel/thread.h>
+#include <boost/thread/mutex.hpp>
+#include <boost/thread/condition_variable.hpp>
 
 #include "osmosdr_src_iface.h"
 
 class osmosdr_src_c;
+typedef struct osmosdr_dev osmosdr_dev_t;
 
 /*
  * We use boost::shared_ptr's instead of raw pointers for all access
@@ -57,8 +61,7 @@ OSMOSDR_API osmosdr_src_c_sptr osmosdr_make_src_c (const std::string & args = ""
  * \sa osmosdr_sink_c for a version that subclasses gr_hier_block2.
  */
 class OSMOSDR_API osmosdr_src_c :
-    public gr_hier_block2,
-    public osmosdr_rx_control,
+    public gr_sync_block,
     public osmosdr_src_iface
 {
 private:
@@ -74,6 +77,10 @@ private:
 
  public:
   ~osmosdr_src_c ();	// public destructor
+
+  int work( int noutput_items,
+            gr_vector_const_void_star &input_items,
+            gr_vector_void_star &output_items );
 
   static std::vector< std::string > get_devices();
 
@@ -104,7 +111,26 @@ private:
   std::string get_antenna( size_t chan = 0 );
 
 private:
+  static void _osmosdr_callback(unsigned char *buf, uint32_t len, void *ctx);
+  void osmosdr_callback(unsigned char *buf, uint32_t len);
+  static void _osmosdr_wait(osmosdr_src_c *obj);
+  void osmosdr_wait();
+
+  osmosdr_dev_t *_dev;
+  gruel::thread _thread;
+  unsigned short **_buf;
+  unsigned int _buf_num;
+  unsigned int _buf_head;
+  unsigned int _buf_used;
+  boost::mutex _buf_mutex;
+  boost::condition_variable _buf_cond;
+  bool _running;
+
+  unsigned int _buf_offset;
+  unsigned int _samp_avail;
+
   bool _auto_gain;
+  unsigned int _skipped;
 };
 
 #endif /* INCLUDED_OSMOSDR_SRC_C_H */

@@ -51,7 +51,7 @@ GR_OSMOSDR_APPEND_LIBS(
 # Setup OsmoSDR component
 ########################################################################
 include(GrComponent)
-GR_REGISTER_COMPONENT("Sysmocom OsmoSDR" ENABLE_OSMOSDR GNURADIO_AUDIO_FOUND)
+GR_REGISTER_COMPONENT("sysmocom OsmoSDR" ENABLE_OSMOSDR LIBOSMOSDR_FOUND)
 
 if(ENABLE_OSMOSDR)
 GR_INCLUDE_SUBDIRECTORY(osmosdr)
