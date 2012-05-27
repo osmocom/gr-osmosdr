@@ -27,7 +27,7 @@
 #include "config.h"
 #endif
 
-#include <rtl_source_c.h>
+#include "rtl_source_c.h"
 #include <gr_io_signature.h>
 
 #include <boost/assign.hpp>
@@ -45,7 +45,9 @@ using namespace boost::assign;
 
 #define BUF_SIZE  (16 * 32 * 512)
 #define BUF_NUM   32
-#define BUF_SKIP  1 // buffers to skip due to garbage
+#define BUF_SKIP  1 // buffers to skip due to initial garbage
+
+#define BYTES_PER_SAMPLE  2 // rtl device delivers 8 bit unsigned IQ data
 
 /*
  * Create a new instance of rtl_source_c and return
@@ -109,12 +111,12 @@ rtl_source_c::rtl_source_c (const std::string &args)
     _buf[i] = (unsigned short *) malloc(BUF_SIZE);
 
   _buf_head = _buf_used = _buf_offset = 0;
-  _samp_avail = BUF_SIZE;
+  _samp_avail = BUF_SIZE / BYTES_PER_SAMPLE;
 
   // create a lookup table for gr_complex values
   for (unsigned int i = 0; i <= 0xffff; i++) {
 #if 1 // little endian
-    _lut.push_back( gr_complex( (float(i & 0xff) - 127.5f) *(1.0f/128.0f),
+    _lut.push_back( gr_complex( (float(i & 0xff) - 127.5f) * (1.0f/128.0f),
                                 (float(i >> 8) - 127.5f) * (1.0f/128.0f) ) );
 #else // big endian
     _lut.push_back( gr_complex( (float(i >> 8) - 127.5f) * (1.0f/128.0f),
@@ -132,7 +134,7 @@ rtl_source_c::rtl_source_c (const std::string &args)
   _dev = NULL;
   ret = rtlsdr_open( &_dev, dev_index );
   if (ret < 0)
-      throw std::runtime_error("Failed to open rtlsdr device.");
+    throw std::runtime_error("Failed to open rtlsdr device.");
 
   if (rtl_freq > 0 || tuner_freq > 0) {
     if (rtl_freq)
@@ -142,21 +144,21 @@ rtl_source_c::rtl_source_c (const std::string &args)
 
     ret = rtlsdr_set_xtal_freq( _dev, rtl_freq, tuner_freq );
     if (ret < 0)
-        throw std::runtime_error(
-          str(boost::format("Failed to set xtal frequencies. Error %d.") % ret ));
+      throw std::runtime_error(
+        str(boost::format("Failed to set xtal frequencies. Error %d.") % ret ));
   }
 
   ret = rtlsdr_set_sample_rate( _dev, 1024000 );
   if (ret < 0)
-      throw std::runtime_error("Failed to set default samplerate.");
+    throw std::runtime_error("Failed to set default samplerate.");
 
   ret = rtlsdr_reset_buffer( _dev );
   if (ret < 0)
-      throw std::runtime_error("Failed to reset usb buffers.");
+    throw std::runtime_error("Failed to reset usb buffers.");
 
   ret = rtlsdr_set_tuner_gain_mode(_dev, 1);
   if (ret < 0)
-      throw std::runtime_error("Failed to enable manual gain mode.");
+    throw std::runtime_error("Failed to enable manual gain mode.");
 
   _running = true;
 
@@ -248,25 +250,24 @@ int rtl_source_c::work( int noutput_items,
   {
     boost::mutex::scoped_lock lock( _buf_mutex );
 
-    while (_buf_used < 3 && _running)
-        _buf_cond.wait( lock );
+    while (_buf_used < 3 && _running) // collect at least 3 buffers
+      _buf_cond.wait( lock );
   }
 
   if (!_running)
     return WORK_DONE;
 
-  unsigned short *buf = _buf[_buf_head];
+  unsigned short *buf = _buf[_buf_head] + _buf_offset;
 
   if (noutput_items <= int(_samp_avail)) {
     for (int i = 0; i < noutput_items; ++i)
-      *out++ = _lut[ *(buf + _buf_offset + i) ];
+      *out++ = _lut[ *(buf + i) ];
 
     _buf_offset += noutput_items;
     _samp_avail -= noutput_items;
-    return noutput_items;
   } else {
     for (int i = 0; i < int(_samp_avail); ++i)
-      *out++ = _lut[ *(buf + _buf_offset + i) ];
+      *out++ = _lut[ *(buf + i) ];
 
     {
       boost::mutex::scoped_lock lock( _buf_mutex );
@@ -276,18 +277,14 @@ int rtl_source_c::work( int noutput_items,
     }
 
     buf = _buf[_buf_head];
-    _buf_offset = 0;
 
     int remaining = noutput_items - _samp_avail;
 
     for (int i = 0; i < remaining; ++i)
-      *out++ = _lut[ *(buf + _buf_offset + i) ];
+      *out++ = _lut[ *(buf + i) ];
 
     _buf_offset = remaining;
-
-    _samp_avail = (BUF_SIZE/2) - remaining;
-
-    return noutput_items;
+    _samp_avail = (BUF_SIZE / BYTES_PER_SAMPLE) - remaining;
   }
 
   return noutput_items;
