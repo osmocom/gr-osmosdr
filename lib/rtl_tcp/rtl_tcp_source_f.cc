@@ -91,8 +91,6 @@ rtl_tcp_source_f::rtl_tcp_source_f(size_t itemsize,
   d_temp_offset(0)
 {
 	int ret = 0;
-	struct sockaddr_in cliaddr;
-	socklen_t clilen;
 #if defined(USING_WINSOCK) // for Windows (with MinGW)
 	// initialize winsock DLL
 	WSADATA wsaData;
