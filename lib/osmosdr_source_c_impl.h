@@ -20,14 +20,13 @@
 #ifndef INCLUDED_OSMOSDR_SOURCE_C_IMPL_H
 #define INCLUDED_OSMOSDR_SOURCE_C_IMPL_H
 
-#include <osmosdr_api.h>
 #include <osmosdr_source_c.h>
 
 #include <osmosdr_src_iface.h>
 
 #include <map>
 
-class OSMOSDR_API osmosdr_source_c_impl : public osmosdr_source_c
+class osmosdr_source_c_impl : public osmosdr_source_c
 {
 public:
   size_t get_num_channels( void );
@@ -61,7 +60,7 @@ private:
 
   // The friend declaration allows osmosdr_make_source_c to
   // access the private constructor.
-  friend OSMOSDR_API osmosdr_source_c_sptr osmosdr_make_source_c (const std::string & args);
+  friend osmosdr_source_c_sptr osmosdr_make_source_c (const std::string & args);
 
   double _sample_rate;
   std::map< size_t, double > _center_freq;

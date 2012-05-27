@@ -32,7 +32,7 @@ typedef boost::shared_ptr<osmosdr_src_iface> osmosdr_src_iface_sptr;
  * TODO: document
  *
  */
-class OSMOSDR_API osmosdr_src_iface
+class osmosdr_src_iface
 {
 public:
   /*!

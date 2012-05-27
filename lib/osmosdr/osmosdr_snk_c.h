@@ -20,7 +20,6 @@
 #ifndef INCLUDED_OSMOSDR_SNK_C_H
 #define INCLUDED_OSMOSDR_SNK_C_H
 
-#include <osmosdr_api.h>
 #include <gr_hier_block2.h>
 
 class osmosdr_snk_c;
@@ -45,7 +44,7 @@ typedef boost::shared_ptr<osmosdr_snk_c> osmosdr_snk_c_sptr;
  * constructor is private.  osmosdr_make_snk_c is the public
  * interface for creating new instances.
  */
-OSMOSDR_API osmosdr_snk_c_sptr osmosdr_make_snk_c (const std::string & args = "");
+osmosdr_snk_c_sptr osmosdr_make_snk_c (const std::string & args = "");
 
 /*!
  * \brief Takes a stream of complex samples.
@@ -53,14 +52,14 @@ OSMOSDR_API osmosdr_snk_c_sptr osmosdr_make_snk_c (const std::string & args = ""
  *
  * This uses the preferred technique: subclassing gr_hier_block2.
  */
-class OSMOSDR_API osmosdr_snk_c :
+class osmosdr_snk_c :
     public gr_hier_block2
 {
 private:
   // The friend declaration allows osmosdr_make_snk_c to
   // access the private constructor.
 
-  friend OSMOSDR_API osmosdr_snk_c_sptr osmosdr_make_snk_c (const std::string & args);
+  friend osmosdr_snk_c_sptr osmosdr_make_snk_c (const std::string & args);
 
   /*!
    * \brief Takes a stream of complex samples.

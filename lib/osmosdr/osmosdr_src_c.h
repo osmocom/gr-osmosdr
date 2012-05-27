@@ -20,7 +20,6 @@
 #ifndef INCLUDED_OSMOSDR_SRC_C_H
 #define INCLUDED_OSMOSDR_SRC_C_H
 
-#include <osmosdr_api.h>
 #include <gr_sync_block.h>
 
 #include <gruel/thread.h>
@@ -52,7 +51,7 @@ typedef boost::shared_ptr<osmosdr_src_c> osmosdr_src_c_sptr;
  * constructor is private.  osmosdr_make_src_c is the public
  * interface for creating new instances.
  */
-OSMOSDR_API osmosdr_src_c_sptr osmosdr_make_src_c (const std::string & args = "");
+osmosdr_src_c_sptr osmosdr_make_src_c (const std::string & args = "");
 
 /*!
  * \brief Provides a stream of complex samples.
@@ -60,7 +59,7 @@ OSMOSDR_API osmosdr_src_c_sptr osmosdr_make_src_c (const std::string & args = ""
  *
  * \sa osmosdr_sink_c for a version that subclasses gr_hier_block2.
  */
-class OSMOSDR_API osmosdr_src_c :
+class osmosdr_src_c :
     public gr_sync_block,
     public osmosdr_src_iface
 {
@@ -68,7 +67,7 @@ private:
   // The friend declaration allows osmosdr_make_src_c to
   // access the private constructor.
 
-  friend OSMOSDR_API osmosdr_src_c_sptr osmosdr_make_src_c (const std::string & args);
+  friend osmosdr_src_c_sptr osmosdr_make_src_c (const std::string & args);
 
   /*!
    * \brief Provides a stream of complex samples.

@@ -20,10 +20,9 @@
 #ifndef INCLUDED_OSMOSDR_SINK_C_IMPL_H
 #define INCLUDED_OSMOSDR_SINK_C_IMPL_H
 
-#include <osmosdr_api.h>
 #include <osmosdr_sink_c.h>
 
-class OSMOSDR_API osmosdr_sink_c_impl : public osmosdr_sink_c
+class osmosdr_sink_c_impl : public osmosdr_sink_c
 {
 public:
 
@@ -32,7 +31,7 @@ private:
 
   // The friend declaration allows osmosdr_make_sink_c to
   // access the private constructor.
-  friend OSMOSDR_API osmosdr_sink_c_sptr osmosdr_make_sink_c (const std::string & args);
+  friend osmosdr_sink_c_sptr osmosdr_make_sink_c (const std::string & args);
 };
 
 #endif /* INCLUDED_OSMOSDR_SINK_C_IMPL_H */

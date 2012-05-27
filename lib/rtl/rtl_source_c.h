@@ -22,7 +22,6 @@
 #ifndef INCLUDED_RTLSDR_SOURCE_C_H
 #define INCLUDED_RTLSDR_SOURCE_C_H
 
-#include <osmosdr_api.h>
 #include <gr_sync_block.h>
 
 #include <gruel/thread.h>
@@ -54,14 +53,14 @@ typedef boost::shared_ptr<rtl_source_c> rtl_source_c_sptr;
  * constructor is private. make_rtl_source_c is the public
  * interface for creating new instances.
  */
-OSMOSDR_API rtl_source_c_sptr make_rtl_source_c (const std::string & args = "");
+rtl_source_c_sptr make_rtl_source_c (const std::string & args = "");
 
 /*!
  * \brief Provides a stream of complex samples.
  * \ingroup block
  *
  */
-class OSMOSDR_API rtl_source_c :
+class rtl_source_c :
     public gr_sync_block,
     public osmosdr_src_iface
 {
@@ -69,7 +68,7 @@ private:
   // The friend declaration allows make_rtl_source_c to
   // access the private constructor.
 
-  friend OSMOSDR_API rtl_source_c_sptr make_rtl_source_c (const std::string & args);
+  friend rtl_source_c_sptr make_rtl_source_c (const std::string & args);
 
   /*!
    * \brief Provides a stream of complex samples.

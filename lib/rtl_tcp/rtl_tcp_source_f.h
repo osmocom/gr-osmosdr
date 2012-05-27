@@ -21,8 +21,6 @@
 #ifndef RTL_TCP_SOURCE_F_H
 #define RTL_TCP_SOURCE_F_H
 
-#include <osmosdr_api.h>
-
 #include <gr_sync_block.h>
 #include <gruel/thread.h>
 
@@ -49,7 +47,7 @@ typedef void* optval_t;
 class rtl_tcp_source_f;
 typedef boost::shared_ptr<rtl_tcp_source_f> rtl_tcp_source_f_sptr;
 
-OSMOSDR_API rtl_tcp_source_f_sptr make_rtl_tcp_source_f (
+rtl_tcp_source_f_sptr make_rtl_tcp_source_f (
       size_t itemsize,
       const char *host,
       unsigned short port,
@@ -57,7 +55,7 @@ OSMOSDR_API rtl_tcp_source_f_sptr make_rtl_tcp_source_f (
       bool eof,
       bool wait);
 
-class OSMOSDR_API rtl_tcp_source_f : public gr_sync_block
+class rtl_tcp_source_f : public gr_sync_block
 {
 private:
   size_t        d_itemsize;
@@ -75,7 +73,7 @@ private:
 
   // The friend declaration allows make_source_c to
   // access the private constructor.
-  friend OSMOSDR_API rtl_tcp_source_f_sptr make_rtl_tcp_source_f (
+  friend rtl_tcp_source_f_sptr make_rtl_tcp_source_f (
       size_t itemsize,
       const char *host,
       unsigned short port,
