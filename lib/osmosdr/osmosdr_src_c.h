@@ -126,7 +126,7 @@ private:
   bool _running;
 
   unsigned int _buf_offset;
-  unsigned int _samp_avail;
+  int _samp_avail;
 
   bool _auto_gain;
   unsigned int _skipped;
