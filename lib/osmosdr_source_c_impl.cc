@@ -79,18 +79,35 @@ osmosdr_source_c_impl::osmosdr_source_c_impl (const std::string &args)
 
   std::vector< std::string > arg_list = args_to_vector(args);
 
+  std::vector< std::string > dev_types;
+
+  dev_types.push_back("file");
+#ifdef ENABLE_OSMOSDR
+  dev_types.push_back("osmosdr");
+#endif
+#ifdef ENABLE_FCD
+  dev_types.push_back("fcd");
+#endif
+#ifdef ENABLE_RTL
+  dev_types.push_back("rtl");
+#endif
+  dev_types.push_back("rtl_tcp");
+#ifdef ENABLE_UHD
+  dev_types.push_back("uhd");
+#endif
+
+  std::cerr << "gr-osmosdr supported device types: ";
+  BOOST_FOREACH(std::string dev_type, dev_types)
+    std::cerr << dev_type << " ";
+  std::cerr << std::endl << std::flush;
+
   BOOST_FOREACH(std::string arg, arg_list) {
-
     dict_t dict = params_to_dict(arg);
-
-    if ( dict.count("osmosdr") |
-         dict.count("fcd") |
-         dict.count("file") |
-         dict.count("rtl") |
-         dict.count("rtl_tcp") |
-         dict.count("uhd") )
-    {
-      device_specified = true;
+    BOOST_FOREACH(std::string dev_type, dev_types) {
+      if ( dict.count( dev_type ) ) {
+        device_specified = true;
+        break;
+      }
     }
   }
 
