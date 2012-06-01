@@ -286,6 +286,7 @@ osmosdr::meta_range_t osmosdr_src_c::get_sample_rates()
   osmosdr::meta_range_t range;
 
   range += osmosdr::range_t( 500000 ); // known to work
+  range += osmosdr::range_t( 1000000 ); // known to work
 
   // TODO: read from the libosmosdr as soon as the api is available
 
@@ -313,9 +314,8 @@ osmosdr::freq_range_t osmosdr_src_c::get_freq_range( size_t chan )
 {
   osmosdr::freq_range_t range;
 
+  /* there is a (temperature dependent) gap between 1100 to 1250 MHz */
   range += osmosdr::range_t( 50e6, 2.2e9, 100 );
-
-  // TODO: read from the libosmosdr as soon as the api is available
 
   return range;
 }
@@ -359,26 +359,15 @@ osmosdr::gain_range_t osmosdr_src_c::get_gain_range( size_t chan )
 {
   osmosdr::gain_range_t range;
 
-  range += osmosdr::range_t( -1.0 );
-  range += osmosdr::range_t( 1.5 );
-  range += osmosdr::range_t( 4.0 );
-  range += osmosdr::range_t( 6.5 );
-  range += osmosdr::range_t( 9.0 );
-  range += osmosdr::range_t( 11.5 );
-  range += osmosdr::range_t( 14.0 );
-  range += osmosdr::range_t( 16.5 );
-  range += osmosdr::range_t( 19.0 );
-  range += osmosdr::range_t( 21.5 );
-  range += osmosdr::range_t( 24.0 );
-  range += osmosdr::range_t( 29.0 );
-  range += osmosdr::range_t( 34.0 );
-  range += osmosdr::range_t( 42.0 );
-  range += osmosdr::range_t( 43.0 );
-  range += osmosdr::range_t( 45.0 );
-  range += osmosdr::range_t( 47.0 );
-  range += osmosdr::range_t( 49.0 );
-
-  // TODO: read from the libosmosdr as soon as the api is available
+  if (_dev) {
+    int count = osmosdr_get_tuner_gains(_dev, NULL);
+    if (count > 0) {
+      int gains[ count ];
+      count = osmosdr_get_tuner_gains(_dev, gains);
+      for (int i = 0; i < count; i++)
+        range += osmosdr::range_t( gains[i] / 10.0 );
+    }
+  }
 
   return range;
 }
