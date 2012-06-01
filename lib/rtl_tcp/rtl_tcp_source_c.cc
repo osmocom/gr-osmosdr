@@ -120,14 +120,16 @@ osmosdr::meta_range_t rtl_tcp_source_c::get_sample_rates( void )
 {
   osmosdr::meta_range_t range;
 
+  range += osmosdr::range_t( 1000000 ); // known to work
   range += osmosdr::range_t( 1024000 ); // known to work
   range += osmosdr::range_t( 1800000 ); // known to work
+  range += osmosdr::range_t( 1920000 ); // known to work
   range += osmosdr::range_t( 2048000 ); // known to work
-  range += osmosdr::range_t( 2400000 ); // may work
+  range += osmosdr::range_t( 2400000 ); // known to work
   range += osmosdr::range_t( 2600000 ); // may work
   range += osmosdr::range_t( 2800000 ); // may work
   range += osmosdr::range_t( 3000000 ); // may work
-  range += osmosdr::range_t( 3200000 ); // max rate, may work
+  range += osmosdr::range_t( 3200000 ); // max rate
 
   return range;
 }
@@ -148,6 +150,8 @@ double rtl_tcp_source_c::get_sample_rate( void )
 
 osmosdr::freq_range_t rtl_tcp_source_c::get_freq_range( size_t chan )
 {
+  // FIXME: assumption on E4000 tuner
+
   osmosdr::freq_range_t range(50e6, 2.2e6, 100);
 
   return range;
@@ -189,6 +193,8 @@ std::vector<std::string> rtl_tcp_source_c::get_gain_names( size_t chan )
 osmosdr::gain_range_t rtl_tcp_source_c::get_gain_range( size_t chan )
 {
   osmosdr::gain_range_t range;
+
+  // FIXME: assumption on E4000 tuner
 
   range += osmosdr::range_t( -1.0 );
   range += osmosdr::range_t( 1.5 );
