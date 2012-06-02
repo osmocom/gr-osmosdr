@@ -362,10 +362,11 @@ osmosdr::gain_range_t osmosdr_src_c::get_gain_range( size_t chan )
   if (_dev) {
     int count = osmosdr_get_tuner_gains(_dev, NULL);
     if (count > 0) {
-      int gains[ count ];
+      int* gains = new int[ count ];
       count = osmosdr_get_tuner_gains(_dev, gains);
       for (int i = 0; i < count; i++)
         range += osmosdr::range_t( gains[i] / 10.0 );
+      delete[] gains;
     }
   }
 
