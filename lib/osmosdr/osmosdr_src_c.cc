@@ -348,11 +348,11 @@ double osmosdr_src_c::get_freq_corr( size_t chan )
 
 std::vector<std::string> osmosdr_src_c::get_gain_names( size_t chan )
 {
-  std::vector< std::string > antennas;
+  std::vector< std::string > gains;
 
-  antennas += "LNA";
+  gains += "LNA";
 
-  return antennas;
+  return gains;
 }
 
 osmosdr::gain_range_t osmosdr_src_c::get_gain_range( size_t chan )
