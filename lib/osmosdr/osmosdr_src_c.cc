@@ -115,6 +115,10 @@ osmosdr_src_c::osmosdr_src_c (const std::string &args)
   if (ret < 0)
     throw std::runtime_error("Failed to open osmosdr device.");
 
+  ret = osmosdr_set_fpga_iq_swap(_dev, 0);
+  if (ret < 0)
+    throw std::runtime_error("Failed to disable IQ swapping.");
+
   ret = osmosdr_set_sample_rate( _dev, 1000000 );
   if (ret < 0)
     throw std::runtime_error("Failed to set default samplerate.");
