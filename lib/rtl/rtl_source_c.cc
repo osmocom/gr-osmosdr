@@ -79,7 +79,10 @@ static const int MAX_OUT = 1;	// maximum number of output streams
 rtl_source_c::rtl_source_c (const std::string &args)
   : gr_sync_block ("rtl_source_c",
         gr_make_io_signature (MIN_IN, MAX_IN, sizeof (gr_complex)),
-        gr_make_io_signature (MIN_OUT, MAX_OUT, sizeof (gr_complex)))
+        gr_make_io_signature (MIN_OUT, MAX_OUT, sizeof (gr_complex))),
+    _running(true),
+    _auto_gain(false),
+    _skipped(0)
 {
   int ret;
   unsigned int dev_index = 0, rtl_freq = 0, tuner_freq = 0;
@@ -96,6 +99,8 @@ rtl_source_c::rtl_source_c (const std::string &args)
     tuner_freq = (unsigned int)boost::lexical_cast< double >( dict["tuner_xtal"] );
 
   _buf_num = BUF_NUM;
+  _buf_head = _buf_used = _buf_offset = 0;
+  _samp_avail = BUF_SIZE / BYTES_PER_SAMPLE;
 
   if (dict.count("buffers")) {
     _buf_num = (unsigned int)boost::lexical_cast< double >( dict["buffers"] );
@@ -104,14 +109,6 @@ rtl_source_c::rtl_source_c (const std::string &args)
     std::cerr << "Using " << _buf_num << " buffers of size " << BUF_SIZE << "."
               << std::endl;
   }
-
-  _buf = (unsigned short **) malloc(_buf_num * sizeof(unsigned short *));
-
-  for(unsigned int i = 0; i < _buf_num; ++i)
-    _buf[i] = (unsigned short *) malloc(BUF_SIZE);
-
-  _buf_head = _buf_used = _buf_offset = 0;
-  _samp_avail = BUF_SIZE / BYTES_PER_SAMPLE;
 
   // create a lookup table for gr_complex values
   for (unsigned int i = 0; i <= 0xffff; i++) {
@@ -152,19 +149,18 @@ rtl_source_c::rtl_source_c (const std::string &args)
   if (ret < 0)
     throw std::runtime_error("Failed to set default samplerate.");
 
+  ret = rtlsdr_set_tuner_gain_mode(_dev, int(!_auto_gain));
+  if (ret < 0)
+    throw std::runtime_error("Failed to enable manual gain mode.");
+
   ret = rtlsdr_reset_buffer( _dev );
   if (ret < 0)
     throw std::runtime_error("Failed to reset usb buffers.");
 
-  ret = rtlsdr_set_tuner_gain_mode(_dev, 1);
-  if (ret < 0)
-    throw std::runtime_error("Failed to enable manual gain mode.");
+  _buf = (unsigned short **) malloc(_buf_num * sizeof(unsigned short *));
 
-  _running = true;
-
-  _auto_gain = false;
-
-  _skipped = 0;
+  for(unsigned int i = 0; i < _buf_num; ++i)
+    _buf[i] = (unsigned short *) malloc(BUF_SIZE);
 
   _thread = gruel::thread(_rtlsdr_wait, this);
 }
@@ -201,11 +197,6 @@ void rtl_source_c::rtlsdr_callback(unsigned char *buf, uint32_t len)
 {
   if (_skipped < BUF_SKIP) {
     _skipped++;
-    return;
-  }
-
-  if (len != BUF_SIZE) {
-    printf("U(%d)\n", len); fflush(stdout);
     return;
   }
 

@@ -65,7 +65,10 @@ osmosdr_make_src_c (const std::string &args)
 osmosdr_src_c::osmosdr_src_c (const std::string &args)
   : gr_sync_block ("osmosdr_src_c",
         gr_make_io_signature (0, 0, sizeof (gr_complex)),
-        args_to_io_signature(args))
+        args_to_io_signature(args)),
+    _running(true),
+    _auto_gain(false),
+    _skipped(0)
 {
   int ret;
   unsigned int dev_index = 0, mcr = 0;
@@ -80,15 +83,17 @@ osmosdr_src_c::osmosdr_src_c (const std::string &args)
     mcr = (unsigned int) boost::lexical_cast< double >( dict["mcr"] );
 
   if (mcr != 0)
-    throw std::runtime_error("Setting the master clock rate is not supported.");
+    throw std::runtime_error("FIXME: Setting the MCR is not supported.");
 
   if (dict.count("nchan"))
     nchan = boost::lexical_cast< size_t >( dict["nchan"] );
 
   if (nchan != 1)
-    throw std::runtime_error("Values of nchan != 1 are not supported.");
+    throw std::runtime_error("FIXME: Values of nchan != 1 are not supported.");
 
   _buf_num = BUF_NUM;
+  _buf_head = _buf_used = _buf_offset = 0;
+  _samp_avail = BUF_SIZE / BYTES_PER_SAMPLE;
 
   if (dict.count("buffers")) {
     _buf_num = (unsigned int)boost::lexical_cast< double >( dict["buffers"] );
@@ -97,14 +102,6 @@ osmosdr_src_c::osmosdr_src_c (const std::string &args)
     std::cerr << "Using " << _buf_num << " buffers of size " << BUF_SIZE << "."
               << std::endl;
   }
-
-  _buf = (unsigned short **) malloc(_buf_num * sizeof(unsigned short *));
-
-  for(unsigned int i = 0; i < _buf_num; ++i)
-    _buf[i] = (unsigned short *) malloc(BUF_SIZE);
-
-  _buf_head = _buf_used = _buf_offset = 0;
-  _samp_avail = BUF_SIZE / BYTES_PER_SAMPLE;
 
   if ( dev_index >= osmosdr_get_device_count() )
     throw std::runtime_error("Wrong osmosdr device index given.");
@@ -118,23 +115,22 @@ osmosdr_src_c::osmosdr_src_c (const std::string &args)
   if (ret < 0)
     throw std::runtime_error("Failed to open osmosdr device.");
 
-  ret = osmosdr_set_sample_rate( _dev, 500000 );
+  ret = osmosdr_set_sample_rate( _dev, 1000000 );
   if (ret < 0)
     throw std::runtime_error("Failed to set default samplerate.");
+
+  ret = osmosdr_set_tuner_gain_mode(_dev, int(!_auto_gain));
+  if (ret < 0)
+    throw std::runtime_error("Failed to enable manual gain mode.");
 
   ret = osmosdr_reset_buffer( _dev );
   if (ret < 0)
     throw std::runtime_error("Failed to reset usb buffers.");
 
-  ret = osmosdr_set_tuner_gain_mode(_dev, 1);
-  if (ret < 0)
-    throw std::runtime_error("Failed to enable manual gain mode.");
+  _buf = (unsigned short **) malloc(_buf_num * sizeof(unsigned short *));
 
-  _running = true;
-
-  _auto_gain = false;
-
-  _skipped = 0;
+  for(unsigned int i = 0; i < _buf_num; ++i)
+    _buf[i] = (unsigned short *) malloc(BUF_SIZE);
 
   _thread = gruel::thread(_osmosdr_wait, this);
 }
@@ -171,11 +167,6 @@ void osmosdr_src_c::osmosdr_callback(unsigned char *buf, uint32_t len)
 {
   if (_skipped < BUF_SKIP) {
     _skipped++;
-    return;
-  }
-
-  if (len != BUF_SIZE) {
-    printf("U(%d)\n", len); fflush(stdout);
     return;
   }
 
