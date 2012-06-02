@@ -119,7 +119,11 @@ osmosdr_src_c::osmosdr_src_c (const std::string &args)
   if (ret < 0)
     throw std::runtime_error("Failed to disable IQ swapping.");
 
-  ret = osmosdr_set_sample_rate( _dev, 1000000 );
+  ret = osmosdr_set_fpga_decimation( _dev, 3 ); /* DS register 0x06 */
+  if (ret < 0)
+    throw std::runtime_error("Failed to set default decimation.");
+
+  ret = osmosdr_set_sample_rate( _dev, 500000 );
   if (ret < 0)
     throw std::runtime_error("Failed to set default samplerate.");
 
@@ -280,8 +284,8 @@ osmosdr::meta_range_t osmosdr_src_c::get_sample_rates()
 {
   osmosdr::meta_range_t range;
 
-  range += osmosdr::range_t( 500000 ); // known to work
-  range += osmosdr::range_t( 1000000 ); // known to work
+  for (unsigned int i = 64; i >= 4; i >>= 1 ) /* FIXME: hardcoded decimation */
+    range += osmosdr::range_t( 4000000 / i ); /* FIXME: hardcoded clock */
 
   // TODO: read from the libosmosdr as soon as the api is available
 
@@ -290,7 +294,27 @@ osmosdr::meta_range_t osmosdr_src_c::get_sample_rates()
 
 double osmosdr_src_c::set_sample_rate(double rate)
 {
-  if (_dev) {
+  if ( _dev && rate >= 62500.0 ) {
+    int decimation = 4000000 / int(rate); /* FIXME: hardcoded clock */
+
+    int reg_value;
+    if (decimation == 4)
+      reg_value = 2;
+    else if (decimation == 8)
+      reg_value = 3;
+    else if (decimation == 16)
+      reg_value = 4;
+    else if (decimation == 32)
+      reg_value = 5;
+    else if (decimation == 64)
+      reg_value = 6;
+    else {
+      reg_value = 3;
+      rate = 500e6;
+    }
+
+    osmosdr_set_fpga_decimation( _dev, reg_value );
+
     osmosdr_set_sample_rate( _dev, (uint32_t)rate );
   }
 
