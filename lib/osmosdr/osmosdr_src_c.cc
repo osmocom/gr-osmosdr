@@ -227,19 +227,19 @@ int osmosdr_src_c::work( int noutput_items,
   if (!_running)
     return WORK_DONE;
 
-  unsigned short *buf = _buf[_buf_head] + _buf_offset;
+  short *buf = (short *)_buf[_buf_head] + _buf_offset;
 
   if (noutput_items <= _samp_avail) {
-    for (int i = 0; i < noutput_items; i += 2)
-       *out++ = gr_complex( float(*(buf + i + 0)) * (1.0f/32767.5f),
-                            float(*(buf + i + 1)) * (1.0f/32767.5f) );
+    for (int i = 0; i < noutput_items; i++)
+       *out++ = gr_complex( float(*(buf + i * 2 + 0)) * (1.0f/32767.5f),
+                            float(*(buf + i * 2 + 1)) * (1.0f/32767.5f) );
 
     _buf_offset += noutput_items * 2;
     _samp_avail -= noutput_items;
   } else {
-    for (int i = 0; i < _samp_avail; i += 2)
-      *out++ = gr_complex( float(*(buf + i + 0)) * (1.0f/32767.5f),
-                           float(*(buf + i + 1)) * (1.0f/32767.5f) );
+    for (int i = 0; i < _samp_avail; i++)
+      *out++ = gr_complex( float(*(buf + i * 2 + 0)) * (1.0f/32767.5f),
+                           float(*(buf + i * 2 + 1)) * (1.0f/32767.5f) );
 
     {
       boost::mutex::scoped_lock lock( _buf_mutex );
@@ -248,13 +248,13 @@ int osmosdr_src_c::work( int noutput_items,
       _buf_used--;
     }
 
-    buf = _buf[_buf_head];
+    buf = (short *)_buf[_buf_head];
 
     int remaining = noutput_items - _samp_avail;
 
-    for (int i = 0; i < remaining; i += 2)
-      *out++ = gr_complex( float(*(buf + i + 0)) * (1.0f/32767.5f),
-                           float(*(buf + i + 1)) * (1.0f/32767.5f) );
+    for (int i = 0; i < remaining; i++)
+      *out++ = gr_complex( float(*(buf + i * 2 + 0)) * (1.0f/32767.5f),
+                           float(*(buf + i * 2 + 1)) * (1.0f/32767.5f) );
 
     _buf_offset = remaining * 2;
     _samp_avail = (BUF_SIZE / BYTES_PER_SAMPLE) - remaining;
