@@ -3,11 +3,11 @@ PKG_CHECK_MODULES(PC_GNURADIO_UHD gnuradio-uhd)
 
 FIND_PATH(
     GNURADIO_UHD_INCLUDE_DIRS
-    NAMES gr_uhd_api.h
-    HINTS $ENV{GNURADIO_UHD_DIR}/include/gnuradio
+    NAMES gnuradio/gr_uhd_api.h
+    HINTS $ENV{GNURADIO_UHD_DIR}/include
         ${PC_GNURADIO_UHD_INCLUDEDIR}
-    PATHS /usr/local/include/gnuradio
-          /usr/include/gnuradio
+    PATHS /usr/local/include
+          /usr/include
 )
 
 FIND_LIBRARY(
