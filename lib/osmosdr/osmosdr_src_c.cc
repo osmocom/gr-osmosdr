@@ -261,10 +261,22 @@ int osmosdr_src_c::work( int noutput_items,
 std::vector<std::string> osmosdr_src_c::get_devices()
 {
   std::vector< std::string > devices;
+  char buffer[256];
 
   for (unsigned int i = 0; i < osmosdr_get_device_count(); i++) {
     std::string args = "osmosdr=" + boost::lexical_cast< std::string >( i );
-    args += ",label='" + std::string(osmosdr_get_device_name( i )) + "'";
+
+    std::string label = std::string(osmosdr_get_device_name( i ));
+
+    memset(buffer, 0, sizeof(buffer));
+    osmosdr_get_device_usb_strings( i, NULL, NULL, buffer );
+    std::string serial = std::string(buffer);
+
+    if (serial.length())
+      label += " " + serial;
+
+    args += ",label='" + label +  + "'";
+
     devices.push_back( args );
   }
 
