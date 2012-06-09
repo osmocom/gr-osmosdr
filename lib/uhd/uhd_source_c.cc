@@ -20,6 +20,7 @@
 
 #include <boost/foreach.hpp>
 #include <boost/assign.hpp>
+#include <boost/algorithm/string.hpp>
 
 //#include <uhd/property_tree.hpp>
 
@@ -82,7 +83,26 @@ std::vector< std::string > uhd_source_c::get_devices()
   uhd::device_addr_t hint;
   BOOST_FOREACH(const uhd::device_addr_t &dev, uhd::device::find(hint)) {
     std::string args = "uhd=," + dev.to_string();
-    args += ",label='Ettus USRP'";
+
+    std::string label = "Ettus";
+
+    std::string type = dev.cast< std::string >("type", "USRP");
+    std::string name = dev.cast< std::string >("name", "");
+    std::string serial = dev.cast< std::string >("serial", "");
+
+    if (type.length()) {
+      boost::to_upper(type);
+      label += " " + type;
+    }
+
+    if (name.length())
+      label += " " + name;
+
+    if (serial.length())
+      label += " " + serial;
+
+    args += ",label='" + label +  + "'";
+
     devices.push_back( args );
   }
 
