@@ -89,7 +89,9 @@ std::string device_t::to_string(void) const
     std::string value = entry.second;
     if (value.find(" ") != std::string::npos)
       value = "'" + value + "'";
-    ss << ((count++) ? pairs_delim : "") + entry.first + pair_delim + value;
+    ss << ((count++) ? pairs_delim : "") + entry.first;
+    if (value.length())
+      ss << pair_delim + value;
   }
   return ss.str();
 }

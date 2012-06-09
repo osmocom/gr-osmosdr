@@ -43,8 +43,6 @@ uhd_source_c::uhd_source_c(const std::string &args) :
                    args_to_io_signature(args))
 {
   size_t nchan = 1;
-  std::string arguments = args;
-
   dict_t dict = params_to_dict(args);
 
   if (dict.count("nchan"))
@@ -53,12 +51,13 @@ uhd_source_c::uhd_source_c(const std::string &args) :
   if (0 == nchan)
     nchan = 1;
 
-  arguments.clear(); // rebuild argument string without uhd= prefix
+  std::string arguments; // rebuild argument string without internal arguments
   BOOST_FOREACH( dict_t::value_type &entry, dict ) {
-    if ( "uhd" == entry.first )
-      arguments += entry.second;
-    else
+    if ( "uhd" != entry.first &&
+         "nchan" != entry.first &&
+         "subdev" != entry.first ) {
       arguments += entry.first + "=" + entry.second + ",";
+    }
   }
 
   _src = uhd_make_usrp_source( arguments,
@@ -82,7 +81,7 @@ std::vector< std::string > uhd_source_c::get_devices()
 
   uhd::device_addr_t hint;
   BOOST_FOREACH(const uhd::device_addr_t &dev, uhd::device::find(hint)) {
-    std::string args = "uhd=," + dev.to_string();
+    std::string args = "uhd," + dev.to_string();
 
     std::string label = "Ettus";
 
@@ -107,7 +106,7 @@ std::vector< std::string > uhd_source_c::get_devices()
   }
 
   //devices.clear();
-  //devices.push_back( "uhd=,type=usrp1,label='Ettus USRP'" );
+  //devices.push_back( "uhd,type=usrp1,label='Ettus USRP'" );
 
   return devices;
 }
