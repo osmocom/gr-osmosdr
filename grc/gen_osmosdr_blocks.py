@@ -21,8 +21,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 MAIN_TMPL = """\
 <?xml version="1.0"?>
 <block>
-	<name>OsmoSDR $sourk.title()</name>
-	<key>osmosdr_$(sourk)_c</key>
+	<name>$(title) $sourk.title()</name>
+	<key>$(prefix)_$(sourk)_c</key>
+	<category>Sources</category>
 	<throttle>1</throttle>
 	<import>import osmosdr</import>
 	<make>osmosdr.$(sourk)_c( args="nchan=" + str(\$nchan) + " " + \$args  )
@@ -147,6 +148,7 @@ Otherwise, the user should specify one of the possible antenna choices.
 See the OsmoSDR project page for more detailed documentation:
 http://sdr.osmocom.org/trac/
 http://sdr.osmocom.org/trac/wiki/GrOsmoSDR
+http://sdr.osmocom.org/trac/wiki/rtl-sdr
 	</doc>
 </block>
 """
@@ -211,13 +213,25 @@ def parse_tmpl(_tmpl, **kwargs):
 
 max_num_channels = 5
 
+import os.path
+
 if __name__ == '__main__':
 	import sys
 	for file in sys.argv[1:]:
-		if file.endswith ('source_c.xml'):
+		head, tail = os.path.split(file)
+
+		if tail.startswith('rtlsdr'):
+			title = 'RTLSDR (official)'
+			prefix = 'rtlsdr'
+		elif tail.startswith('osmosdr'):
+			title = 'OsmoSDR'
+			prefix = 'osmosdr'
+		else: raise Exception, 'file %s has wrong syntax!'%tail
+
+		if tail.endswith ('source_c.xml'):
 			sourk = 'source'
 			dir = 'out'
-		elif file.endswith ('sink_c.xml'):
+		elif tail.endswith ('sink_c.xml'):
 			sourk = 'sink'
 			dir = 'in'
 		else: raise Exception, 'is %s a source or sink?'%file
@@ -226,6 +240,8 @@ if __name__ == '__main__':
 		open(file, 'w').write(parse_tmpl(MAIN_TMPL,
 			max_nchan=max_num_channels,
 			params=params,
+			title=title,
+			prefix=prefix,
 			sourk=sourk,
 			dir=dir,
 		))
