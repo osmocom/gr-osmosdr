@@ -221,7 +221,7 @@ if __name__ == '__main__':
 		head, tail = os.path.split(file)
 
 		if tail.startswith('rtlsdr'):
-			title = 'RTLSDR (official)'
+			title = 'RTLSDR'
 			prefix = 'rtlsdr'
 		elif tail.startswith('osmosdr'):
 			title = 'OsmoSDR'
