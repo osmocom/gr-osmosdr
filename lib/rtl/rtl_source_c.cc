@@ -32,6 +32,7 @@
 
 #include <boost/assign.hpp>
 #include <boost/format.hpp>
+#include <boost/detail/endian.hpp>
 
 #include <stdexcept>
 #include <iostream>
@@ -112,10 +113,10 @@ rtl_source_c::rtl_source_c (const std::string &args)
 
   // create a lookup table for gr_complex values
   for (unsigned int i = 0; i <= 0xffff; i++) {
-#if 1 // little endian
+#ifdef BOOST_LITTLE_ENDIAN
     _lut.push_back( gr_complex( (float(i & 0xff) - 127.5f) * (1.0f/128.0f),
                                 (float(i >> 8) - 127.5f) * (1.0f/128.0f) ) );
-#else // big endian
+#else // BOOST_BIG_ENDIAN
     _lut.push_back( gr_complex( (float(i >> 8) - 127.5f) * (1.0f/128.0f),
                                 (float(i & 0xff) - 127.5f) * (1.0f/128.0f) ) );
 #endif
