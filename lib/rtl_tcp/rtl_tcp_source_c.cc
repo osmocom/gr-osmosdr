@@ -152,7 +152,8 @@ osmosdr::freq_range_t rtl_tcp_source_c::get_freq_range( size_t chan )
 {
   // FIXME: assumption on E4000 tuner
 
-  osmosdr::freq_range_t range(50e6, 2.2e6, 100);
+  /* there is a (temperature dependent) gap between 1100 to 1250 MHz */
+  osmosdr::freq_range_t range( 50e6, 2.2e6 );
 
   return range;
 }

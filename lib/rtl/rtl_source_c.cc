@@ -344,13 +344,13 @@ osmosdr::freq_range_t rtl_source_c::get_freq_range( size_t chan )
 
     if ( tuner == RTLSDR_TUNER_E4000 ) {
       /* there is a (temperature dependent) gap between 1100 to 1250 MHz */
-      range += osmosdr::range_t( 50e6, 2.2e9, 100 );
+      range += osmosdr::range_t( 50e6, 2.2e9 );
     } else if ( tuner == RTLSDR_TUNER_FC0012 ) {
-      /* range += osmosdr::range_t( 50e6, 2.2e9, 100 ); */
+      /* range += osmosdr::range_t( 50e6, 2.2e9 ); */
     } else if ( tuner == RTLSDR_TUNER_FC0013 ) {
-      /* range += osmosdr::range_t( 50e6, 2.2e9, 100 ); */
+      /* range += osmosdr::range_t( 50e6, 2.2e9 ); */
     } else if ( tuner == RTLSDR_TUNER_FC2580 ) {
-      /* range += osmosdr::range_t( 50e6, 2.2e9, 100 ); */
+      /* range += osmosdr::range_t( 50e6, 2.2e9 ); */
     }
   }
 

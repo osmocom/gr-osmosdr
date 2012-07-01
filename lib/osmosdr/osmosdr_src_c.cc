@@ -328,7 +328,7 @@ osmosdr::freq_range_t osmosdr_src_c::get_freq_range( size_t chan )
   osmosdr::freq_range_t range;
 
   /* there is a (temperature dependent) gap between 1100 to 1250 MHz */
-  range += osmosdr::range_t( 50e6, 2.2e9, 100 );
+  range += osmosdr::range_t( 50e6, 2.2e9 );
 
   return range;
 }
