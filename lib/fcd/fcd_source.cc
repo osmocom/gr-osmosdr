@@ -189,7 +189,7 @@ std::vector<std::string> fcd_source::get_gain_names( size_t chan )
 {
   std::vector< std::string > names;
 
-  names += "LNA", "MIXER";
+  names += "LNA";
 
   return names;
 }

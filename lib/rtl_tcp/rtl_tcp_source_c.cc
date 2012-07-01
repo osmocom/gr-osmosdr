@@ -189,7 +189,11 @@ double rtl_tcp_source_c::get_freq_corr( size_t chan )
 
 std::vector<std::string> rtl_tcp_source_c::get_gain_names( size_t chan )
 {
-  return std::vector< std::string >();
+  std::vector< std::string > names;
+
+  names += "LNA";
+
+  return names;
 }
 
 osmosdr::gain_range_t rtl_tcp_source_c::get_gain_range( size_t chan )
