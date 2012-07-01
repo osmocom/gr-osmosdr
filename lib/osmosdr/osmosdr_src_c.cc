@@ -407,31 +407,12 @@ bool osmosdr_src_c::get_gain_mode( size_t chan )
   return _auto_gain;
 }
 
-static double pick_closest_gain(osmosdr::gain_range_t &gains, double required)
-{
-  double result = required;
-  double distance = 100;
-
-  BOOST_FOREACH(osmosdr::range_t gain, gains)
-  {
-    double diff = fabs(gain.start() - required);
-
-    if (diff < distance) {
-      distance = diff;
-      result = gain.start();
-    }
-  }
-
-  return result;
-}
-
 double osmosdr_src_c::set_gain( double gain, size_t chan )
 {
   osmosdr::gain_range_t gains = osmosdr_src_c::get_gain_range( chan );
-  double picked_gain = pick_closest_gain( gains, gain );
 
   if (_dev)
-    osmosdr_set_tuner_gain( _dev, int(picked_gain * 10.0) );
+    osmosdr_set_tuner_gain( _dev, int(gains.clip(gain) * 10.0) );
 
   return get_gain( chan );
 }

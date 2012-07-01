@@ -239,30 +239,11 @@ bool rtl_tcp_source_c::get_gain_mode( size_t chan )
   return _auto_gain;
 }
 
-static double pick_closest_gain(osmosdr::gain_range_t &gains, double required)
-{
-  double result = required;
-  double distance = 100;
-
-  BOOST_FOREACH(osmosdr::range_t gain, gains)
-  {
-    double diff = fabs(gain.start() - required);
-
-    if (diff < distance) {
-      distance = diff;
-      result = gain.start();
-    }
-  }
-
-  return result;
-}
-
 double rtl_tcp_source_c::set_gain( double gain, size_t chan )
 {
   osmosdr::gain_range_t gains = rtl_tcp_source_c::get_gain_range( chan );
-  double picked_gain = pick_closest_gain( gains, gain );
 
-  _src->set_gain( int(picked_gain * 10.0) );
+  _src->set_gain( int(gains.clip(gain) * 10.0) );
 
   _gain = gain;
 
