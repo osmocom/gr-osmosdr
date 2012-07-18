@@ -158,6 +158,8 @@ rtl_source_c::rtl_source_c (const std::string &args)
   if (ret < 0)
     throw std::runtime_error("Failed to reset usb buffers.");
 
+  set_if_gain( 24 ); /* preset to a reasonable default (non-GRC use case) */
+
   _buf = (unsigned short **) malloc(_buf_num * sizeof(unsigned short *));
 
   for(unsigned int i = 0; i < _buf_num; ++i)
@@ -441,61 +443,9 @@ bool rtl_source_c::get_gain_mode( size_t chan )
 double rtl_source_c::set_gain( double gain, size_t chan )
 {
   osmosdr::gain_range_t rf_gains = rtl_source_c::get_gain_range( chan );
-  std::vector< osmosdr::gain_range_t > if_gains;
 
-  if_gains += osmosdr::gain_range_t(-3, 6, 9);
-  if_gains += osmosdr::gain_range_t(0, 9, 3);
-  if_gains += osmosdr::gain_range_t(0, 9, 3);
-  if_gains += osmosdr::gain_range_t(0, 2, 1);
-  if_gains += osmosdr::gain_range_t(3, 15, 3);
-  if_gains += osmosdr::gain_range_t(3, 15, 3);
-
-  double rf_gain = rf_gains.clip(gain);
-  double missing_gain = gain - rf_gain;
-
-  std::map< int, double > gains;
-
-  /* initialize with min gains */
-  for (unsigned int i = 0; i < if_gains.size(); i++) {
-    gains[ i + 1 ] = if_gains[ i ].start();
-  }
-
-  for (int i = if_gains.size() - 1; i >= 0; i--) {
-    osmosdr::gain_range_t range = if_gains[ i ];
-
-    double error = missing_gain;
-
-    for( double g = range.start(); g <= range.stop(); g += range.step() ) {
-
-      double sum = 0;
-      for (int j = 0; j < int(gains.size()); j++) {
-        if ( i == j )
-          sum += g;
-        else
-          sum += gains[ j + 1 ];
-      }
-
-      double err = abs(missing_gain - sum);
-      if (err < error) {
-        error = err;
-        gains[ i + 1 ] = g;
-      }
-    }
-  }
-#if 0
-  std::cerr << missing_gain << " => "; double sum = 0;
-  for (unsigned int i = 0; i < gains.size(); i++) {
-    sum += gains[ i + 1 ];
-    std::cerr << gains[ i + 1 ] << " ";
-  }
-  std::cerr << " = " << sum << std::endl;
-#endif
   if (_dev) {
-    rtlsdr_set_tuner_gain( _dev, int(rf_gain * 10.0) );
-
-    for (unsigned int stage = 1; stage <= gains.size(); stage++) {
-      rtlsdr_set_tuner_if_gain( _dev, stage, int(gains[ stage ] * 10.0));
-    }
+    rtlsdr_set_tuner_gain( _dev, int(rf_gains.clip(gain) * 10.0) );
   }
 
   return get_gain( chan );
@@ -517,6 +467,63 @@ double rtl_source_c::get_gain( size_t chan )
 double rtl_source_c::get_gain( const std::string & name, size_t chan )
 {
   return get_gain( chan );
+}
+
+double rtl_source_c::set_if_gain(double gain, size_t chan)
+{
+  std::vector< osmosdr::gain_range_t > if_gains;
+
+  if_gains += osmosdr::gain_range_t(-3, 6, 9);
+  if_gains += osmosdr::gain_range_t(0, 9, 3);
+  if_gains += osmosdr::gain_range_t(0, 9, 3);
+  if_gains += osmosdr::gain_range_t(0, 2, 1);
+  if_gains += osmosdr::gain_range_t(3, 15, 3);
+  if_gains += osmosdr::gain_range_t(3, 15, 3);
+
+  std::map< int, double > gains;
+
+  /* initialize with min gains */
+  for (unsigned int i = 0; i < if_gains.size(); i++) {
+    gains[ i + 1 ] = if_gains[ i ].start();
+  }
+
+  for (int i = if_gains.size() - 1; i >= 0; i--) {
+    osmosdr::gain_range_t range = if_gains[ i ];
+
+    double error = gain;
+
+    for( double g = range.start(); g <= range.stop(); g += range.step() ) {
+
+      double sum = 0;
+      for (int j = 0; j < int(gains.size()); j++) {
+        if ( i == j )
+          sum += g;
+        else
+          sum += gains[ j + 1 ];
+      }
+
+      double err = abs(gain - sum);
+      if (err < error) {
+        error = err;
+        gains[ i + 1 ] = g;
+      }
+    }
+  }
+#if 0
+  std::cerr << gain << " => "; double sum = 0;
+  for (unsigned int i = 0; i < gains.size(); i++) {
+    sum += gains[ i + 1 ];
+    std::cerr << gains[ i + 1 ] << " ";
+  }
+  std::cerr << " = " << sum << std::endl;
+#endif
+  if (_dev) {
+    for (unsigned int stage = 1; stage <= gains.size(); stage++) {
+      rtlsdr_set_tuner_if_gain( _dev, stage, int(gains[ stage ] * 10.0));
+    }
+  }
+
+  return gain;
 }
 
 std::vector< std::string > rtl_source_c::get_antennas( size_t chan )

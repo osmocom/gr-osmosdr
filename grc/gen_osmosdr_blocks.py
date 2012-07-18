@@ -26,7 +26,7 @@ MAIN_TMPL = """\
 	<category>Sources</category>
 	<throttle>1</throttle>
 	<import>import osmosdr</import>
-	<make>osmosdr.$(sourk)_c( args="nchan=" + str(\$nchan) + " " + \$args  )
+	<make>osmosdr.$(sourk)_c( args="nchan=" + str(\$nchan) + " " + \$args )
 self.\$(id).set_sample_rate(\$sample_rate)
 #for $n in range($max_nchan)
 \#if \$nchan() > $n
@@ -34,18 +34,20 @@ self.\$(id).set_center_freq(\$freq$(n), $n)
 self.\$(id).set_freq_corr(\$corr$(n), $n)
 self.\$(id).set_gain_mode(\$gain_mode$(n), $n)
 self.\$(id).set_gain(\$gain$(n), $n)
+self.\$(id).set_if_gain(\$if_gain$(n), $n)
 \#if \$ant$(n)()
 self.\$(id).set_antenna(\$ant$(n), $n)
 \#end if
 \#end if
 #end for
-</make>
+	</make>
 	<callback>set_sample_rate(\$sample_rate)</callback>
 	#for $n in range($max_nchan)
 	<callback>set_center_freq(\$freq$(n), $n)</callback>
 	<callback>set_freq_corr(\$corr$(n), $n)</callback>
 	<callback>set_gain_mode(\$gain_mode$(n), $n)</callback>
 	<callback>set_gain(\$gain$(n), $n)</callback>
+	<callback>set_if_gain(\$if_gain$(n), $n)</callback>
 	<callback>set_antenna(\$ant$(n), $n)</callback>
 	#end for
 	<param>
@@ -100,18 +102,15 @@ self.\$(id).set_antenna(\$ant$(n), $n)
 	<doc>
 The OsmoSDR $sourk.title() block:
 
-While primarily being developed for the OsmoSDR hardware, this block also
-supports the FunCube Dongle, Ettus UHD, rtl-sdr radios and cfile source.
-By using the OsmoSDR block you can take advantage of a common software api in
-your application(s) independent of the underlying radio hardware.
+While primarily being developed for the OsmoSDR hardware, this block also supports the FunCube Dongle, Ettus UHD, rtl-sdr radios and cfile source.
+By using the OsmoSDR block you can take advantage of a common software api in your application(s) independent of the underlying radio hardware.
 
 Output Type:
 This parameter controls the data type of the stream in gnuradio.
 
 Device Arguments:
 The device argument is a delimited string used to locate devices on your system.
-Use the device id or name (if applicable) to specify a certain device or list
-of devices. If left blank, the first device found will be used.
+Use the device id or name (if applicable) to specify a certain device or list of devices. If left blank, the first device found will be used.
 
 Examples (some arguments may be optional):
   fcd=0
@@ -133,13 +132,17 @@ The center frequency is the overall frequency of the RF chain.
 Freq. Corr.:
 The frequency correction factor in parts per million (ppm). Leave 0 if unknown.
 
-Gain:
-Overall gain of the device's signal path. For the new gain value to be applied,
-the manual gain mode must be enabled first.
-
 Gain Mode:
 Chooses between the manual (default) and automatic gain mode where appropriate.
 Currently, only rtlsdr devices support automatic gain mode.
+
+Gain:
+Overall gain of the device's signal path. For the new gain value to be applied, the manual gain mode must be enabled first.
+
+IF Gain:
+Overall IF gain of the device's signal path. For the new gain value to be applied, the manual gain mode must be enabled first.
+This setting has only effect for rtl-sdr and OsmoSDR devices with E4000 tuners.
+Observations lead to an useful gain range from 15 to 30dB.
 
 Antenna:
 For devices with only one antenna, this may be left blank.
@@ -157,20 +160,13 @@ PARAMS_TMPL = """
 	<param>
 		<name>Ch$(n): Frequency (Hz)</name>
 		<key>freq$(n)</key>
-		<value>0</value>
+		<value>100e6</value>
 		<type>real</type>
 		<hide>\#if \$nchan() > $n then 'none' else 'all'#</hide>
 	</param>
 	<param>
 	<name>Ch$(n): Freq. Corr. (ppm)</name>
 		<key>corr$(n)</key>
-		<value>0</value>
-		<type>real</type>
-		<hide>\#if \$nchan() > $n then 'none' else 'all'#</hide>
-	</param>
-	<param>
-		<name>Ch$(n): Gain (dB)</name>
-		<key>gain$(n)</key>
 		<value>0</value>
 		<type>real</type>
 		<hide>\#if \$nchan() > $n then 'none' else 'all'#</hide>
@@ -189,6 +185,20 @@ PARAMS_TMPL = """
 			<name>Auto</name>
 			<key>1</key>
 		</option>
+	</param>
+	<param>
+	<name>Ch$(n): Gain (dB)</name>
+		<key>gain$(n)</key>
+		<value>10</value>
+		<type>real</type>
+		<hide>\#if \$nchan() > $n then 'none' else 'all'#</hide>
+	</param>
+	<param>
+		<name>Ch$(n): IF Gain (dB)</name>
+		<key>if_gain$(n)</key>
+		<value>20</value>
+		<type>real</type>
+		<hide>\#if \$nchan() > $n then 'none' else 'all'#</hide>
 	</param>
 	<param>
 		<name>Ch$(n): Antenna</name>

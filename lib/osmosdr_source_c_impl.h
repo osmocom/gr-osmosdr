@@ -51,6 +51,8 @@ public:
   double get_gain( size_t chan = 0 );
   double get_gain( const std::string & name, size_t chan = 0 );
 
+  double set_if_gain( double gain, size_t chan = 0 );
+
   std::vector< std::string > get_antennas( size_t chan = 0 );
   std::string set_antenna( const std::string & antenna, size_t chan = 0 );
   std::string get_antenna( size_t chan = 0 );
@@ -67,6 +69,7 @@ private:
   std::map< size_t, double > _freq_corr;
   std::map< size_t, bool > _gain_mode;
   std::map< size_t, double > _gain;
+  std::map< size_t, double > _if_gain;
   std::map< size_t, std::string > _antenna;
   std::vector< osmosdr_src_iface * > _devs;
 };

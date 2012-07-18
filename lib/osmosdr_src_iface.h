@@ -176,6 +176,16 @@ public:
   virtual double get_gain( const std::string & name, size_t chan = 0 ) = 0;
 
   /*!
+   * Set the IF gain for the underlying radio hardware.
+   * This function will automatically distribute the desired gain value over
+   * available IF gain stages in an appropriate way and return the actual value.
+   * \param gain the gain in dB
+   * \param chan the channel index 0 to N-1
+   * \return the actual gain in dB
+   */
+  virtual double set_if_gain( double gain, size_t chan = 0 ) { return 0; }
+
+  /*!
    * Get the available antennas of the underlying radio hardware.
    * \param chan the channel index 0 to N-1
    * \return a vector of strings containing the names of available antennas

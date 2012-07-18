@@ -105,6 +105,8 @@ private:
   double get_gain( size_t chan = 0 );
   double get_gain( const std::string & name, size_t chan = 0 );
 
+  double set_if_gain( double gain, size_t chan = 0 );
+
   std::vector< std::string > get_antennas( size_t chan = 0 );
   std::string set_antenna( const std::string & antenna, size_t chan = 0 );
   std::string get_antenna( size_t chan = 0 );

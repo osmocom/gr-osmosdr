@@ -227,7 +227,7 @@ double osmosdr_source_c_impl::set_sample_rate(double rate)
 
   if (_sample_rate != rate) {
     BOOST_FOREACH( osmosdr_src_iface *dev, _devs )
-          sample_rate = dev->set_sample_rate(rate);
+      sample_rate = dev->set_sample_rate(rate);
 
     _sample_rate = sample_rate;
   }
@@ -382,7 +382,7 @@ double osmosdr_source_c_impl::set_gain( double gain, const std::string & name, s
   BOOST_FOREACH( osmosdr_src_iface *dev, _devs )
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
       if ( chan == channel++ )
-          return dev->set_gain( gain, name, dev_chan );
+        return dev->set_gain( gain, name, dev_chan );
 
   return 0;
 }
@@ -409,6 +409,20 @@ double osmosdr_source_c_impl::get_gain( const std::string & name, size_t chan )
   return 0;
 }
 
+double osmosdr_source_c_impl::set_if_gain(double gain, size_t chan)
+{
+  size_t channel = 0;
+  BOOST_FOREACH( osmosdr_src_iface *dev, _devs )
+    for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
+      if ( chan == channel++ )
+        if ( _if_gain[ chan ] != gain ) {
+          _if_gain[ chan ] = gain;
+          return dev->set_if_gain( gain, dev_chan );
+        }
+
+  return 0;
+}
+
 std::vector< std::string > osmosdr_source_c_impl::get_antennas( size_t chan )
 {
   size_t channel = 0;
@@ -427,8 +441,8 @@ std::string osmosdr_source_c_impl::set_antenna( const std::string & antenna, siz
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
       if ( chan == channel++ )
         if ( _antenna[ chan ] != antenna ) {
-            _antenna[ chan ] = antenna;
-            return dev->set_antenna( antenna, dev_chan );
+          _antenna[ chan ] = antenna;
+          return dev->set_antenna( antenna, dev_chan );
         }
 
   return "";
