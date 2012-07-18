@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='ASCII'?>
 <flow_graph>
-  <timestamp>Tue May 15 18:30:25 2012</timestamp>
+  <timestamp>Wed Jul 18 20:57:38 2012</timestamp>
   <block>
     <key>options</key>
     <param>
@@ -194,6 +194,10 @@
       <value></value>
     </param>
     <param>
+      <key>freqvar</key>
+      <value>None</value>
+    </param>
+    <param>
       <key>_coordinate</key>
       <value>(718, 318)</value>
     </param>
@@ -281,6 +285,10 @@
       <value></value>
     </param>
     <param>
+      <key>freqvar</key>
+      <value>None</value>
+    </param>
+    <param>
       <key>_coordinate</key>
       <value>(717, 114)</value>
     </param>
@@ -348,7 +356,7 @@
     <key>variable_slider</key>
     <param>
       <key>id</key>
-      <value>gain_slider</value>
+      <value>gain</value>
     </param>
     <param>
       <key>_enabled</key>
@@ -400,6 +408,61 @@
     </param>
   </block>
   <block>
+    <key>variable_slider</key>
+    <param>
+      <key>id</key>
+      <value>if_gain</value>
+    </param>
+    <param>
+      <key>_enabled</key>
+      <value>True</value>
+    </param>
+    <param>
+      <key>label</key>
+      <value></value>
+    </param>
+    <param>
+      <key>value</key>
+      <value>20</value>
+    </param>
+    <param>
+      <key>min</key>
+      <value>0</value>
+    </param>
+    <param>
+      <key>max</key>
+      <value>40</value>
+    </param>
+    <param>
+      <key>num_steps</key>
+      <value>41</value>
+    </param>
+    <param>
+      <key>style</key>
+      <value>wx.SL_HORIZONTAL</value>
+    </param>
+    <param>
+      <key>converver</key>
+      <value>float_converter</value>
+    </param>
+    <param>
+      <key>grid_pos</key>
+      <value></value>
+    </param>
+    <param>
+      <key>notebook</key>
+      <value></value>
+    </param>
+    <param>
+      <key>_coordinate</key>
+      <value>(600, 60)</value>
+    </param>
+    <param>
+      <key>_rotation</key>
+      <value>0</value>
+    </param>
+  </block>
+  <block>
     <key>osmosdr_source_c</key>
     <param>
       <key>id</key>
@@ -434,12 +497,16 @@
       <value>0</value>
     </param>
     <param>
-      <key>gain0</key>
-      <value>gain_slider</value>
-    </param>
-    <param>
       <key>gain_mode0</key>
       <value>0</value>
+    </param>
+    <param>
+      <key>gain0</key>
+      <value>gain</value>
+    </param>
+    <param>
+      <key>if_gain0</key>
+      <value>if_gain</value>
     </param>
     <param>
       <key>ant0</key>
@@ -454,12 +521,16 @@
       <value>0</value>
     </param>
     <param>
-      <key>gain1</key>
-      <value>gain_slider</value>
-    </param>
-    <param>
       <key>gain_mode1</key>
       <value>0</value>
+    </param>
+    <param>
+      <key>gain1</key>
+      <value>gain</value>
+    </param>
+    <param>
+      <key>if_gain1</key>
+      <value>if_gain</value>
     </param>
     <param>
       <key>ant1</key>
@@ -474,12 +545,16 @@
       <value>0</value>
     </param>
     <param>
+      <key>gain_mode2</key>
+      <value>0</value>
+    </param>
+    <param>
       <key>gain2</key>
       <value>0</value>
     </param>
     <param>
-      <key>gain_mode2</key>
-      <value>0</value>
+      <key>if_gain2</key>
+      <value>20</value>
     </param>
     <param>
       <key>ant2</key>
@@ -494,12 +569,16 @@
       <value>0</value>
     </param>
     <param>
+      <key>gain_mode3</key>
+      <value>0</value>
+    </param>
+    <param>
       <key>gain3</key>
       <value>0</value>
     </param>
     <param>
-      <key>gain_mode3</key>
-      <value>0</value>
+      <key>if_gain3</key>
+      <value>20</value>
     </param>
     <param>
       <key>ant3</key>
@@ -514,12 +593,16 @@
       <value>0</value>
     </param>
     <param>
+      <key>gain_mode4</key>
+      <value>0</value>
+    </param>
+    <param>
       <key>gain4</key>
       <value>0</value>
     </param>
     <param>
-      <key>gain_mode4</key>
-      <value>0</value>
+      <key>if_gain4</key>
+      <value>20</value>
     </param>
     <param>
       <key>ant4</key>
