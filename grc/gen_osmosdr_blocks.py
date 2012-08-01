@@ -102,7 +102,14 @@ self.\$(id).set_antenna(\$ant$(n), $n)
 	<doc>
 The OsmoSDR $sourk.title() block:
 
-While primarily being developed for the OsmoSDR hardware, this block also supports the FunCube Dongle, Ettus UHD, rtl-sdr radios and cfile source.
+While primarily being developed for the OsmoSDR hardware, this block also supports
+
+ * FunCube Dongle through libgnuradio-fcd
+ * Ettus USRP Devices through Ettus UHD library
+ * RTL2832U based DVB-T dongles through librtlsdr
+ * rtl-tcp spectrum server (see librtlsdr project)
+ * gnuradio .cfile input through libgnuradio-core
+
 By using the OsmoSDR block you can take advantage of a common software api in your application(s) independent of the underlying radio hardware.
 
 Output Type:
@@ -141,8 +148,7 @@ Overall gain of the device's signal path. For the new gain value to be applied, 
 
 IF Gain:
 Overall IF gain of the device's signal path. For the new gain value to be applied, the manual gain mode must be enabled first.
-This setting has only effect for rtl-sdr and OsmoSDR devices with E4000 tuners.
-Observations lead to an useful gain range from 15 to 30dB.
+This setting has only effect for rtl-sdr and OsmoSDR devices with E4000 tuners. Observations lead to a useful gain range from 15 to 30dB.
 
 Antenna:
 For devices with only one antenna, this may be left blank.
