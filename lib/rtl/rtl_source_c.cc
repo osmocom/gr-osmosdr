@@ -152,7 +152,11 @@ rtl_source_c::rtl_source_c (const std::string &args)
 
   ret = rtlsdr_set_tuner_gain_mode(_dev, int(!_auto_gain));
   if (ret < 0)
-    throw std::runtime_error("Failed to enable manual gain mode.");
+    throw std::runtime_error("Failed to set tuner gain mode.");
+
+  ret = rtlsdr_set_agc_mode(_dev, int(_auto_gain));
+  if (ret < 0)
+    throw std::runtime_error("Failed to set agc mode.");
 
   ret = rtlsdr_reset_buffer( _dev );
   if (ret < 0)
@@ -430,6 +434,8 @@ bool rtl_source_c::set_gain_mode( bool automatic, size_t chan )
     if (!rtlsdr_set_tuner_gain_mode(_dev, int(!automatic))) {
       _auto_gain = automatic;
     }
+
+    rtlsdr_set_agc_mode(_dev, int(automatic));
   }
 
   return get_gain_mode(chan);
