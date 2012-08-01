@@ -202,7 +202,7 @@ PARAMS_TMPL = """
 	<param>
 		<name>Ch$(n): IF Gain (dB)</name>
 		<key>if_gain$(n)</key>
-		<value>20</value>
+		<value>24</value>
 		<type>real</type>
 		<hide>\#if \$nchan() > $n then 'none' else 'all'#</hide>
 	</param>
