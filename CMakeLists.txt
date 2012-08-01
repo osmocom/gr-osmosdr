@@ -65,6 +65,7 @@ MESSAGE(STATUS "Configuring Boost C++ Libraries...")
 
 SET(BOOST_REQUIRED_COMPONENTS
     thread
+    system
 )
 
 if(UNIX AND EXISTS "/usr/lib64")
