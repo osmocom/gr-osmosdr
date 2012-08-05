@@ -16,6 +16,20 @@
 //#include "osmosdr_sink_c.h"
 %}
 
+%template(string_vector_t) std::vector<std::string>;
+
+%template(size_vector_t) std::vector<size_t>;
+
+%include <osmosdr_pimpl.h>
+
+%ignore osmosdr::device_t::operator[]; //ignore warnings about %extend
+
+%template(string_string_dict_t) std::map<std::string, std::string>; //define before device
+%include <osmosdr_device.h>
+
+%template(range_vector_t) std::vector<osmosdr::range_t>; //define before range
+%include <osmosdr_ranges.h>
+
 GR_SWIG_BLOCK_MAGIC(osmosdr,source_c);
 %include "osmosdr_source_c.h"
 
