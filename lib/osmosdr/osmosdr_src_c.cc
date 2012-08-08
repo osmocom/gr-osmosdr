@@ -153,7 +153,7 @@ osmosdr_src_c::~osmosdr_src_c ()
   if (_dev) {
     _running = false;
     osmosdr_cancel_async( _dev );
-    _thread.timed_join( boost::posix_time::milliseconds(200) );
+    _thread.join();
     osmosdr_close( _dev );
     _dev = NULL;
   }
