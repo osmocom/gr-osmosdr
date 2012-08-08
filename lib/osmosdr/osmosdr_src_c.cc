@@ -66,6 +66,8 @@ osmosdr_src_c::osmosdr_src_c (const std::string &args)
   : gr_sync_block ("osmosdr_src_c",
         gr_make_io_signature (0, 0, sizeof (gr_complex)),
         args_to_io_signature(args)),
+    _dev(NULL),
+    _buf(NULL),
     _running(true),
     _auto_gain(false),
     _skipped(0)
@@ -135,8 +137,10 @@ osmosdr_src_c::osmosdr_src_c (const std::string &args)
 
   _buf = (unsigned short **) malloc(_buf_num * sizeof(unsigned short *));
 
-  for(unsigned int i = 0; i < _buf_num; ++i)
-    _buf[i] = (unsigned short *) malloc(BUF_SIZE);
+  if (_buf) {
+    for(unsigned int i = 0; i < _buf_num; ++i)
+      _buf[i] = (unsigned short *) malloc(BUF_SIZE);
+  }
 
   _thread = gruel::thread(_osmosdr_wait, this);
 }
@@ -154,13 +158,15 @@ osmosdr_src_c::~osmosdr_src_c ()
     _dev = NULL;
   }
 
-  for(unsigned int i = 0; i < _buf_num; ++i) {
-    if (_buf[i])
-      free(_buf[i]);
-  }
+  if (_buf) {
+    for(unsigned int i = 0; i < _buf_num; ++i) {
+      if (_buf[i])
+        free(_buf[i]);
+    }
 
-  free(_buf);
-  _buf = NULL;
+    free(_buf);
+    _buf = NULL;
+  }
 }
 
 void osmosdr_src_c::_osmosdr_callback(unsigned char *buf, uint32_t len, void *ctx)
