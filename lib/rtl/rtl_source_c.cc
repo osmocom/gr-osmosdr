@@ -81,6 +81,8 @@ rtl_source_c::rtl_source_c (const std::string &args)
   : gr_sync_block ("rtl_source_c",
         gr_make_io_signature (MIN_IN, MAX_IN, sizeof (gr_complex)),
         gr_make_io_signature (MIN_OUT, MAX_OUT, sizeof (gr_complex))),
+    _dev(NULL),
+    _buf(NULL),
     _running(true),
     _auto_gain(false),
     _skipped(0)
@@ -166,8 +168,10 @@ rtl_source_c::rtl_source_c (const std::string &args)
 
   _buf = (unsigned short **) malloc(_buf_num * sizeof(unsigned short *));
 
-  for(unsigned int i = 0; i < _buf_num; ++i)
-    _buf[i] = (unsigned short *) malloc(BUF_SIZE);
+  if (_buf) {
+    for(unsigned int i = 0; i < _buf_num; ++i)
+      _buf[i] = (unsigned short *) malloc(BUF_SIZE);
+  }
 
   _thread = gruel::thread(_rtlsdr_wait, this);
 }
@@ -185,13 +189,15 @@ rtl_source_c::~rtl_source_c ()
     _dev = NULL;
   }
 
-  for(unsigned int i = 0; i < _buf_num; ++i) {
-    if (_buf[i])
-      free(_buf[i]);
-  }
+  if (_buf) {
+    for(unsigned int i = 0; i < _buf_num; ++i) {
+      if (_buf[i])
+        free(_buf[i]);
+    }
 
-  free(_buf);
-  _buf = NULL;
+    free(_buf);
+    _buf = NULL;
+  }
 }
 
 void rtl_source_c::_rtlsdr_callback(unsigned char *buf, uint32_t len, void *ctx)
