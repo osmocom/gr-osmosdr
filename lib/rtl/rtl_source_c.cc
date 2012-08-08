@@ -184,7 +184,7 @@ rtl_source_c::~rtl_source_c ()
   if (_dev) {
     _running = false;
     rtlsdr_cancel_async( _dev );
-    _thread.timed_join( boost::posix_time::milliseconds(200) );
+    _thread.join();
     rtlsdr_close( _dev );
     _dev = NULL;
   }
