@@ -220,7 +220,7 @@ void rtl_source_c::rtlsdr_callback(unsigned char *buf, uint32_t len)
     memcpy(_buf[buf_tail], buf, len);
 
     if (_buf_used == _buf_num) {
-      printf("O"); fflush(stdout);
+      std::cerr << "O" << std::flush;
       _buf_head = (_buf_head + 1) % _buf_num;
     } else {
       _buf_used++;
