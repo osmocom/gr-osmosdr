@@ -88,7 +88,7 @@ rtl_source_c::rtl_source_c (const std::string &args)
     _skipped(0)
 {
   int ret;
-  unsigned int dev_index = 0, rtl_freq = 0, tuner_freq = 0;
+  unsigned int dev_index = 0, rtl_freq = 0, tuner_freq = 0, direct_samp = 0;
 
   dict_t dict = params_to_dict(args);
 
@@ -100,6 +100,9 @@ rtl_source_c::rtl_source_c (const std::string &args)
 
   if (dict.count("tuner_xtal"))
     tuner_freq = (unsigned int)boost::lexical_cast< double >( dict["tuner_xtal"] );
+
+  if (dict.count("direct_samp"))
+    direct_samp = boost::lexical_cast< unsigned int >( dict["direct_samp"] );
 
   _buf_num = BUF_NUM;
   _buf_head = _buf_used = _buf_offset = 0;
@@ -159,6 +162,12 @@ rtl_source_c::rtl_source_c (const std::string &args)
   ret = rtlsdr_set_agc_mode(_dev, int(_auto_gain));
   if (ret < 0)
     throw std::runtime_error("Failed to set agc mode.");
+
+  if (direct_samp) {
+    ret = rtlsdr_set_direct_sampling(_dev, direct_samp);
+    if (ret < 0)
+      throw std::runtime_error("Failed to enable direct sampling mode.");
+  }
 
   ret = rtlsdr_reset_buffer( _dev );
   if (ret < 0)
