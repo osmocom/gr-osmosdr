@@ -56,6 +56,10 @@
 
 #include <osmosdr_arg_helpers.h>
 
+/* This avoids throws in ctor of gr_hier_block2, as gnuradio is unable to deal
+ with this behavior in a clean way. The GR maintainer Rondeau has been informed. */
+#define WORKAROUND_GR_HIER_BLOCK2_BUG
+
 /*
  * Create a new instance of osmosdr_source_c_impl and return
  * a boost shared_ptr.  This is effectively the public constructor.
@@ -110,7 +114,9 @@ osmosdr_source_c_impl::osmosdr_source_c_impl (const std::string &args)
       }
     }
   }
-
+#ifdef WORKAROUND_GR_HIER_BLOCK2_BUG
+  try {
+#endif
   std::vector< std::string > dev_list;
 #ifdef ENABLE_OSMOSDR
   BOOST_FOREACH( std::string dev, osmosdr_src_c::get_devices() )
@@ -204,6 +210,11 @@ osmosdr_source_c_impl::osmosdr_source_c_impl (const std::string &args)
 
   if (!_devs.size())
     throw std::runtime_error("No devices specified via device arguments.");
+#ifdef WORKAROUND_GR_HIER_BLOCK2_BUG
+  } catch ( std::exception &ex ) {
+    std::cerr << std::endl << "FATAL: " << ex.what() << std::endl << std::endl;
+  }
+#endif
 }
 
 size_t osmosdr_source_c_impl::get_num_channels()
