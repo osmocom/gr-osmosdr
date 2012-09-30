@@ -7,5 +7,6 @@
 #cmakedefine ENABLE_RTL
 #cmakedefine ENABLE_RTL_TCP
 #cmakedefine ENABLE_UHD
+#cmakedefine ENABLE_MIRI
 
 #endif // CONFIG_H_IN

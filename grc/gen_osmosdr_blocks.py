@@ -108,6 +108,7 @@ While primarily being developed for the OsmoSDR hardware, this block also suppor
  * Ettus USRP Devices through Ettus UHD library
  * RTL2832U based DVB-T dongles through librtlsdr
  * rtl-tcp spectrum server (see librtlsdr project)
+ * MSi2500 based DVB-T dongles through libmirisdr
  * gnuradio .cfile input through libgnuradio-core
 
 By using the OsmoSDR block you can take advantage of a common software api in your application(s) independent of the underlying radio hardware.
@@ -121,6 +122,7 @@ Use the device id or name (if applicable) to specify a certain device or list of
 
 Examples (some arguments may be optional):
   fcd=0
+  miri=0
   rtl=0,rtl_xtal=28.80001e6,tuner_xtal=26e6,buffers=64 ...
   rtl_tcp=127.0.0.1:1234,psize=16384
   uhd,serial=...,type=usrp1,mcr=52e6,nchan=2,subdev='\\\\'B:0 A:0\\\\'' ...

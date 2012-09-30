@@ -54,6 +54,10 @@
 #include <uhd_source_c.h>
 #endif
 
+#ifdef ENABLE_MIRI
+#include <miri_source_c.h>
+#endif
+
 #include <osmosdr_arg_helpers.h>
 
 /* This avoids throws in ctor of gr_hier_block2, as gnuradio is unable to deal
@@ -99,6 +103,9 @@ osmosdr_source_c_impl::osmosdr_source_c_impl (const std::string &args)
 #ifdef ENABLE_UHD
   dev_types.push_back("uhd");
 #endif
+#ifdef ENABLE_MIRI
+  dev_types.push_back("miri");
+#endif
 
   std::cerr << "gr-osmosdr supported device types: ";
   BOOST_FOREACH(std::string dev_type, dev_types)
@@ -132,6 +139,10 @@ osmosdr_source_c_impl::osmosdr_source_c_impl (const std::string &args)
 #endif
 #ifdef ENABLE_UHD
   BOOST_FOREACH( std::string dev, uhd_source_c::get_devices() )
+    dev_list.push_back( dev );
+#endif
+#ifdef ENABLE_MIRI
+  BOOST_FOREACH( std::string dev, miri_source_c::get_devices() )
     dev_list.push_back( dev );
 #endif
 //  std::cerr << std::endl;
@@ -199,6 +210,17 @@ osmosdr_source_c_impl::osmosdr_source_c_impl (const std::string &args)
 #ifdef ENABLE_UHD
     if ( dict.count("uhd") ) {
       uhd_source_c_sptr src = make_uhd_source_c( arg );
+
+      for (size_t i = 0; i < src->get_num_channels(); i++)
+        connect(src, i, self(), channel++);
+
+      _devs.push_back( src.get() );
+    }
+#endif
+
+#ifdef ENABLE_MIRI
+    if ( dict.count("miri") ) {
+      miri_source_c_sptr src = make_miri_source_c( arg );
 
       for (size_t i = 0; i < src->get_num_channels(); i++)
         connect(src, i, self(), channel++);

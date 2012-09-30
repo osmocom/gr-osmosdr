@@ -108,6 +108,16 @@ GR_INCLUDE_SUBDIRECTORY(uhd)
 endif(ENABLE_UHD)
 
 ########################################################################
+# Setup MiriSDR component
+########################################################################
+include(GrComponent)
+GR_REGISTER_COMPONENT("Osmocom MiriSDR" ENABLE_MIRI LIBMIRISDR_FOUND)
+
+if(ENABLE_MIRI)
+GR_INCLUDE_SUBDIRECTORY(miri)
+endif(ENABLE_MIRI)
+
+########################################################################
 # Setup configuration file
 ########################################################################
 ADD_DEFINITIONS(-DHAVE_CONFIG_H=1)

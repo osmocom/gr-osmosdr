@@ -114,6 +114,7 @@ find_package(GnuradioUHD)
 find_package(GnuradioFCD)
 find_package(LibOsmoSDR)
 find_package(LibRTLSDR)
+find_package(LibMiriSDR)
 
 if(NOT GRUEL_FOUND)
     message(FATAL_ERROR "Gruel required to compile osmosdr")
