@@ -89,6 +89,7 @@ rtl_source_c::rtl_source_c (const std::string &args)
 {
   int ret;
   unsigned int dev_index = 0, rtl_freq = 0, tuner_freq = 0, direct_samp = 0;
+  unsigned int offset_tune = 0;
 
   dict_t dict = params_to_dict(args);
 
@@ -103,6 +104,9 @@ rtl_source_c::rtl_source_c (const std::string &args)
 
   if (dict.count("direct_samp"))
     direct_samp = boost::lexical_cast< unsigned int >( dict["direct_samp"] );
+
+  if (dict.count("offset_tune"))
+    offset_tune = boost::lexical_cast< unsigned int >( dict["offset_tune"] );
 
   _buf_num = BUF_NUM;
   _buf_head = _buf_used = _buf_offset = 0;
@@ -167,6 +171,12 @@ rtl_source_c::rtl_source_c (const std::string &args)
     ret = rtlsdr_set_direct_sampling(_dev, direct_samp);
     if (ret < 0)
       throw std::runtime_error("Failed to enable direct sampling mode.");
+  }
+
+  if (offset_tune) {
+    ret = rtlsdr_set_offset_tuning(_dev, offset_tune);
+    if (ret < 0)
+      throw std::runtime_error("Failed to enable offset tuning.");
   }
 
   ret = rtlsdr_reset_buffer( _dev );
