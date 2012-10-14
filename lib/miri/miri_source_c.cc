@@ -283,16 +283,7 @@ osmosdr::meta_range_t miri_source_c::get_sample_rates()
 {
   osmosdr::meta_range_t range;
 
-  if (_dev) {
-    int count = mirisdr_get_sample_rates(_dev, NULL);
-    if (count > 0) {
-      uint32_t* rates = new uint32_t[ count ];
-      count = mirisdr_get_sample_rates(_dev, rates);
-      for (int i = 0; i < count; i++)
-        range += osmosdr::range_t( rates[i] );
-      delete[] rates;
-    }
-  }
+  range += osmosdr::range_t( 8000000 ); // known to work
 
   return range;
 }
