@@ -131,8 +131,9 @@ miri_source_c::miri_source_c (const std::string &args)
     throw std::runtime_error("Failed to reset usb buffers.");
 
   _buf = (unsigned short **) malloc(_buf_num * sizeof(unsigned short *));
+  _buf_lens = (unsigned int *) malloc(_buf_num * sizeof(unsigned int));
 
-  if (_buf) {
+  if (_buf && _buf_lens) {
     for(unsigned int i = 0; i < _buf_num; ++i)
       _buf[i] = (unsigned short *) malloc(BUF_SIZE);
   }
@@ -161,6 +162,8 @@ miri_source_c::~miri_source_c ()
 
     free(_buf);
     _buf = NULL;
+    free(_buf_lens);
+    _buf_lens = NULL;
   }
 }
 
@@ -180,8 +183,12 @@ void miri_source_c::mirisdr_callback(unsigned char *buf, uint32_t len)
   {
     boost::mutex::scoped_lock lock( _buf_mutex );
 
+    if (len > BUF_SIZE)
+      throw std::runtime_error("Buffer too small.");
+
     int buf_tail = (_buf_head + _buf_used) % _buf_num;
     memcpy(_buf[buf_tail], buf, len);
+    _buf_lens[buf_tail] = len;
 
     if (_buf_used == _buf_num) {
       std::cerr << "O" << std::flush;
@@ -255,7 +262,7 @@ int miri_source_c::work( int noutput_items,
                            float(*(buf + i * 2 + 1)) * (1.0f/4096.0f) );
 
     _buf_offset = remaining * 2;
-    _samp_avail = (BUF_SIZE / BYTES_PER_SAMPLE) - remaining;
+    _samp_avail = (_buf_lens[_buf_head] / BYTES_PER_SAMPLE) - remaining;
   }
 
   return noutput_items;

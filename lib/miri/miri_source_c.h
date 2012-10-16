@@ -116,6 +116,7 @@ private:
   mirisdr_dev_t *_dev;
   gruel::thread _thread;
   unsigned short **_buf;
+  unsigned int *_buf_lens;
   unsigned int _buf_num;
   unsigned int _buf_head;
   unsigned int _buf_used;
