@@ -6,6 +6,7 @@ FIND_PATH(
     NAMES gr_random.h
     HINTS $ENV{GNURADIO_CORE_DIR}/include/gnuradio
         ${PC_GNURADIO_CORE_INCLUDEDIR}
+        ${CMAKE_INSTALL_PREFIX}/include/gnuradio
     PATHS /usr/local/include/gnuradio
           /usr/include/gnuradio
 )
@@ -15,6 +16,8 @@ FIND_LIBRARY(
     NAMES gnuradio-core
     HINTS $ENV{GNURADIO_CORE_DIR}/lib
         ${PC_GNURADIO_CORE_LIBDIR}
+        ${CMAKE_INSTALL_PREFIX}/lib64
+        ${CMAKE_INSTALL_PREFIX}/lib
     PATHS /usr/local/lib
           /usr/local/lib64
           /usr/lib
