@@ -94,14 +94,16 @@ miri_source_c::miri_source_c (const std::string &args)
   if (dict.count("miri"))
     dev_index = boost::lexical_cast< unsigned int >( dict["miri"] );
 
-  _buf_num = BUF_NUM;
-  _buf_head = _buf_used = _buf_offset = 0;
+  _buf_num = _buf_head = _buf_used = _buf_offset = 0;
   _samp_avail = BUF_SIZE / BYTES_PER_SAMPLE;
 
-  if (dict.count("buffers")) {
-    _buf_num = (unsigned int)boost::lexical_cast< double >( dict["buffers"] );
-    if (0 == _buf_num)
-      _buf_num = BUF_NUM;
+  if (dict.count("buffers"))
+    _buf_num = boost::lexical_cast< unsigned int >( dict["buffers"] );
+
+  if (0 == _buf_num)
+    _buf_num = BUF_NUM;
+
+  if ( BUF_NUM != _buf_num ) {
     std::cerr << "Using " << _buf_num << " buffers of size " << BUF_SIZE << "."
               << std::endl;
   }
