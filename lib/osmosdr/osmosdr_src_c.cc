@@ -43,7 +43,7 @@
 
 using namespace boost::assign;
 
-#define BUF_SIZE  (16 * 32 * 512)
+#define BUF_LEN  (16 * 32 * 512) /* must be multiple of 512 */
 #define BUF_NUM   32
 #define BUF_SKIP  1 // buffers to skip due to garbage
 
@@ -93,17 +93,26 @@ osmosdr_src_c::osmosdr_src_c (const std::string &args)
   if (nchan != 1)
     throw std::runtime_error("FIXME: Values of nchan != 1 are not supported.");
 
-  _buf_num = BUF_NUM;
-  _buf_head = _buf_used = _buf_offset = 0;
-  _samp_avail = BUF_SIZE / BYTES_PER_SAMPLE;
+  _buf_num = _buf_len = _buf_head = _buf_used = _buf_offset = 0;
 
-  if (dict.count("buffers")) {
-    _buf_num = (unsigned int)boost::lexical_cast< double >( dict["buffers"] );
-    if (0 == _buf_num)
-      _buf_num = BUF_NUM;
-    std::cerr << "Using " << _buf_num << " buffers of size " << BUF_SIZE << "."
+  if (dict.count("buffers"))
+    _buf_num = boost::lexical_cast< unsigned int >( dict["buffers"] );
+
+  if (dict.count("buflen"))
+    _buf_len = boost::lexical_cast< unsigned int >( dict["buflen"] );
+
+  if (0 == _buf_num)
+    _buf_num = BUF_NUM;
+
+  if (0 == _buf_len || _buf_len % 512 != 0) /* len must be multiple of 512 */
+    _buf_len = BUF_LEN;
+
+  if ( BUF_NUM != _buf_num || BUF_LEN != _buf_len ) {
+    std::cerr << "Using " << _buf_num << " buffers of size " << _buf_len << "."
               << std::endl;
   }
+
+  _samp_avail = _buf_len / BYTES_PER_SAMPLE;
 
   if ( dev_index >= osmosdr_get_device_count() )
     throw std::runtime_error("Wrong osmosdr device index given.");
@@ -139,7 +148,7 @@ osmosdr_src_c::osmosdr_src_c (const std::string &args)
 
   if (_buf) {
     for(unsigned int i = 0; i < _buf_num; ++i)
-      _buf[i] = (unsigned short *) malloc(BUF_SIZE);
+      _buf[i] = (unsigned short *) malloc(_buf_len);
   }
 
   _thread = gruel::thread(_osmosdr_wait, this);
@@ -206,7 +215,7 @@ void osmosdr_src_c::_osmosdr_wait(osmosdr_src_c *obj)
 
 void osmosdr_src_c::osmosdr_wait()
 {
-  int ret = osmosdr_read_async( _dev, _osmosdr_callback, (void *)this, 0, BUF_SIZE );
+  int ret = osmosdr_read_async( _dev, _osmosdr_callback, (void *)this, 0, _buf_len );
 
   _running = false;
 
@@ -260,7 +269,7 @@ int osmosdr_src_c::work( int noutput_items,
                            float(*(buf + i * 2 + 1)) * (1.0f/32767.5f) );
 
     _buf_offset = remaining * 2;
-    _samp_avail = (BUF_SIZE / BYTES_PER_SAMPLE) - remaining;
+    _samp_avail = (_buf_len / BYTES_PER_SAMPLE) - remaining;
   }
 
   return noutput_items;

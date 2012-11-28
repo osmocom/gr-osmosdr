@@ -121,6 +121,7 @@ private:
   gruel::thread _thread;
   unsigned short **_buf;
   unsigned int _buf_num;
+  unsigned int _buf_len;
   unsigned int _buf_head;
   unsigned int _buf_used;
   boost::mutex _buf_mutex;
