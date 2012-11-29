@@ -77,6 +77,7 @@ public:
   std::string get_antenna( size_t chan = 0 );
 
 private:
+  double _lo_offset;
   boost::shared_ptr<uhd_usrp_source> _src;
 };
 

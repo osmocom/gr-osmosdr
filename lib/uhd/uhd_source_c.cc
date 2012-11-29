@@ -40,7 +40,8 @@ uhd_source_c_sptr make_uhd_source_c(const std::string &args)
 uhd_source_c::uhd_source_c(const std::string &args) :
     gr_hier_block2("uhd_source_c",
                    gr_make_io_signature (0, 0, 0),
-                   args_to_io_signature(args))
+                   args_to_io_signature(args)),
+    _lo_offset(0.0f)
 {
   size_t nchan = 1;
   dict_t dict = params_to_dict(args);
@@ -51,11 +52,15 @@ uhd_source_c::uhd_source_c(const std::string &args) :
   if (0 == nchan)
     nchan = 1;
 
+  if (dict.count("lo_offset"))
+    _lo_offset = boost::lexical_cast< double >( dict["lo_offset"] );
+
   std::string arguments; // rebuild argument string without internal arguments
   BOOST_FOREACH( dict_t::value_type &entry, dict ) {
     if ( "uhd" != entry.first &&
          "nchan" != entry.first &&
-         "subdev" != entry.first ) {
+         "subdev" != entry.first &&
+         "lo_offset" != entry.first ) {
       arguments += entry.first + "=" + entry.second + ",";
     }
   }
@@ -64,8 +69,15 @@ uhd_source_c::uhd_source_c(const std::string &args) :
                                uhd::io_type_t::COMPLEX_FLOAT32,
                                nchan );
 
-  if (dict.count("subdev"))
+  if (dict.count("subdev")) {
     _src->set_subdev_spec( dict["subdev"] );
+
+    std::cerr << "-- Using subdev spec '" << _src->get_subdev_spec() << "'."
+              << std::endl;
+  }
+
+  if (0.0 != _lo_offset)
+    std::cerr << "-- Using lo offset of " << _lo_offset << " Hz." << std::endl;
 
   for ( size_t i = 0; i < nchan; i++ )
     connect( _src, i, self(), i );
@@ -167,7 +179,12 @@ osmosdr::freq_range_t uhd_source_c::get_freq_range( size_t chan )
 
 double uhd_source_c::set_center_freq( double freq, size_t chan )
 {
-  _src->set_center_freq(freq, chan);
+  //_src->set_center_freq(freq, chan);
+
+  // advanced tuning with tune_request_t
+  uhd::tune_request_t tune_req(freq, _lo_offset);
+
+  _src->set_center_freq(tune_req, chan);
 
   return get_center_freq(chan);
 }
