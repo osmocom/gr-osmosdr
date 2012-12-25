@@ -29,6 +29,8 @@
 
 #include <osmosdr_source_c_impl.h>
 #include <gr_io_signature.h>
+#include <gr_noise_source_c.h>
+#include <gr_throttle.h>
 
 #ifdef ENABLE_OSMOSDR
 #include <osmosdr_src_c.h>
@@ -235,6 +237,26 @@ osmosdr_source_c_impl::osmosdr_source_c_impl (const std::string &args)
 #ifdef WORKAROUND_GR_HIER_BLOCK2_BUG
   } catch ( std::exception &ex ) {
     std::cerr << std::endl << "FATAL: " << ex.what() << std::endl << std::endl;
+
+    /* we try to prevent the whole application from crashing by faking
+     * the missing hardware (channels) with a gaussian noise source */
+    gr_noise_source_c_sptr noise_source = \
+        gr_make_noise_source_c( GR_GAUSSIAN, 10 );
+
+    gr_throttle::sptr throttle = gr_make_throttle(sizeof(gr_complex), 1e6);
+
+    connect(noise_source, 0, throttle, 0);
+
+    size_t missing_chans = output_signature()->max_streams() - channel;
+
+    std::cerr << "Trying to fill up " << missing_chans
+              << " missing channel(s) with gaussian noise.\n"
+              << "This is being done to prevent the application from crashing\n"
+              << "due to a gnuradio bug. The maintainers have been informed.\n"
+              << std::endl;
+
+    for (size_t i = 0; i < missing_chans; i++)
+      connect(throttle, 0, self(), channel++);
   }
 #endif
 }
@@ -249,9 +271,19 @@ size_t osmosdr_source_c_impl::get_num_channels()
   return channels;
 }
 
+#define NO_DEVICES_MSG  "FATAL: No device(s) available to work with."
+
 osmosdr::meta_range_t osmosdr_source_c_impl::get_sample_rates()
 {
-  return _devs[0]->get_sample_rates(); // assume same devices used in the group
+  osmosdr::meta_range_t rates(0, 0, 1);
+
+  if (!_devs.empty())
+    rates = _devs[0]->get_sample_rates(); // assume same devices used in the group
+#if 0
+  else
+    throw std::runtime_error(NO_DEVICES_MSG);
+#endif
+  return rates;
 }
 
 double osmosdr_source_c_impl::set_sample_rate(double rate)
@@ -259,6 +291,10 @@ double osmosdr_source_c_impl::set_sample_rate(double rate)
   double sample_rate = 0;
 
   if (_sample_rate != rate) {
+#if 0
+    if (_devs.empty())
+      throw std::runtime_error(NO_DEVICES_MSG);
+#endif
     BOOST_FOREACH( osmosdr_src_iface *dev, _devs )
       sample_rate = dev->set_sample_rate(rate);
 
@@ -270,7 +306,15 @@ double osmosdr_source_c_impl::set_sample_rate(double rate)
 
 double osmosdr_source_c_impl::get_sample_rate()
 {
-  return _devs[0]->get_sample_rate(); // assume same devices used in the group
+  double sample_rate = 0;
+
+  if (!_devs.empty())
+    sample_rate = _devs[0]->get_sample_rate(); // assume same devices used in the group
+#if 0
+  else
+    throw std::runtime_error(NO_DEVICES_MSG);
+#endif
+  return sample_rate;
 }
 
 osmosdr::freq_range_t osmosdr_source_c_impl::get_freq_range( size_t chan )
