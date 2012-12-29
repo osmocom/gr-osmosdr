@@ -44,6 +44,16 @@ typedef void* optval_t;
 
 #define ssize_t int
 
+/* copied from rtl sdr */
+enum rtlsdr_tuner {
+	RTLSDR_TUNER_UNKNOWN = 0,
+	RTLSDR_TUNER_E4000,
+	RTLSDR_TUNER_FC0012,
+	RTLSDR_TUNER_FC0013,
+	RTLSDR_TUNER_FC2580,
+	RTLSDR_TUNER_R820T
+};
+
 class rtl_tcp_source_f;
 typedef boost::shared_ptr<rtl_tcp_source_f> rtl_tcp_source_f_sptr;
 
@@ -67,6 +77,9 @@ private:
   size_t        d_temp_offset;   // point to temp buffer location offset
   float         *d_LUT;
 
+  unsigned int d_tuner_type;
+  unsigned int d_tuner_gain_count;
+
  private:
   rtl_tcp_source_f(size_t itemsize, const char *host,
    unsigned short port, int payload_size, bool eof, bool wait);
@@ -83,6 +96,9 @@ private:
 
  public:
   ~rtl_tcp_source_f();
+
+  enum rtlsdr_tuner get_tuner_type() { return (enum rtlsdr_tuner) d_tuner_type; }
+  unsigned int get_tuner_gain_count() { return d_tuner_gain_count; }
 
   int work(int noutput_items,
 	   gr_vector_const_void_star &input_items,

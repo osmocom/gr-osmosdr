@@ -1,6 +1,7 @@
 /* -*- c++ -*- */
 /*
  * Copyright 2012 Hoernchen <la@tfc-server.de>
+ * Copyright 2012 Dimitri Stolnikov <horiz0n@gmx.net>
  *
  * GNU Radio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,6 +33,13 @@
 #else
 #include <WinSock2.h>
 #endif
+
+/* copied from rtl sdr code */
+typedef struct { /* structure size must be multiple of 2 bytes */
+	char magic[4];
+	uint32_t tuner_type;
+	uint32_t tuner_gain_count;
+} dongle_info_t;
 
 #define USE_SELECT    1  // non-blocking receive on all platforms
 #define USE_RCV_TIMEO 0  // non-blocking receive on all but Cygwin
@@ -83,9 +91,9 @@ rtl_tcp_source_f::rtl_tcp_source_f(size_t itemsize,
 	: gr_sync_block ("rtl_tcp_source_f",
                    gr_make_io_signature(0, 0, 0),
                    gr_make_io_signature(1, 1, sizeof(float))),
-	d_itemsize(itemsize),
+  d_itemsize(itemsize),
   d_payload_size(payload_size),
-	d_eof(eof),
+  d_eof(eof),
   d_wait(wait),
   d_socket(-1),
   d_temp_offset(0)
@@ -163,12 +171,25 @@ rtl_tcp_source_f::rtl_tcp_source_f(size_t itemsize,
 	}
 #endif // USE_RCV_TIMEO
 
-
 	while(connect(d_socket, ip_src->ai_addr, ip_src->ai_addrlen) != 0);
 	freeaddrinfo(ip_src);	
 	
 	int flag = 1;
 	setsockopt(d_socket, IPPROTO_TCP, TCP_NODELAY, (char *)&flag,sizeof(flag));
+
+    dongle_info_t dongle_info;
+    ret = recv(d_socket, (char*)&dongle_info, sizeof(dongle_info), 0);
+    if (sizeof(dongle_info) != ret)
+        fprintf(stderr,"failed to read dongle info\n");
+
+    d_tuner_type = RTLSDR_TUNER_UNKNOWN;
+    d_tuner_gain_count = 0;
+
+    if (memcmp(dongle_info.magic, "RTL0", 4) == 0)
+    {
+        d_tuner_type = ntohl(dongle_info.tuner_type);
+        d_tuner_gain_count = ntohl(dongle_info.tuner_gain_count);
+    }
 }
 
 rtl_tcp_source_f_sptr make_rtl_tcp_source_f (size_t itemsize,

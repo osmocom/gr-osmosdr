@@ -35,6 +35,22 @@
 
 using namespace boost::assign;
 
+std::string get_tuner_name( enum rtlsdr_tuner tuner_type )
+{
+    if ( RTLSDR_TUNER_E4000 == tuner_type )
+        return "E4000";
+    else if ( RTLSDR_TUNER_FC0012 == tuner_type )
+        return "FC0012";
+    else if ( RTLSDR_TUNER_FC0013 == tuner_type )
+        return "FC0013";
+    else if ( RTLSDR_TUNER_FC2580 == tuner_type )
+        return "FC2580";
+    else if ( RTLSDR_TUNER_R820T == tuner_type )
+        return "R820T";
+    else
+        return "Unknown";
+}
+
 rtl_tcp_source_c_sptr make_rtl_tcp_source_c(const std::string &args)
 {
   return gnuradio::get_initial_sptr(new rtl_tcp_source_c(args));
@@ -83,7 +99,16 @@ rtl_tcp_source_c::rtl_tcp_source_c(const std::string &args) :
   _src = make_rtl_tcp_source_f(sizeof(float), host.c_str(), port, payload_size,
                                false, false);
 
-  set_gain_mode(false); // enable manual gain mode by default
+  if ( _src->get_tuner_type() != RTLSDR_TUNER_UNKNOWN )
+  {
+      std::cerr << "The RTL TCP server reports a "
+                << get_tuner_name( _src->get_tuner_type() )
+                << " tuner with " << _src->get_tuner_gain_count()
+                << " selectable gains."
+                << std::endl;
+  }
+
+  set_gain_mode(false); /* enable manual gain mode by default */
 
   /* rtl tcp source provides a stream of interleaved IQ floats */
   gr_deinterleave_sptr deinterleave = gr_make_deinterleave(sizeof(float));
@@ -201,26 +226,52 @@ osmosdr::gain_range_t rtl_tcp_source_c::get_gain_range( size_t chan )
 {
   osmosdr::gain_range_t range;
 
-  // FIXME: assumption on E4000 tuner
+  /* the following gain values have been copied from librtlsdr */
 
-  range += osmosdr::range_t( -1.0 );
-  range += osmosdr::range_t( 1.5 );
-  range += osmosdr::range_t( 4.0 );
-  range += osmosdr::range_t( 6.5 );
-  range += osmosdr::range_t( 9.0 );
-  range += osmosdr::range_t( 11.5 );
-  range += osmosdr::range_t( 14.0 );
-  range += osmosdr::range_t( 16.5 );
-  range += osmosdr::range_t( 19.0 );
-  range += osmosdr::range_t( 21.5 );
-  range += osmosdr::range_t( 24.0 );
-  range += osmosdr::range_t( 29.0 );
-  range += osmosdr::range_t( 34.0 );
-  range += osmosdr::range_t( 42.0 );
-  range += osmosdr::range_t( 43.0 );
-  range += osmosdr::range_t( 45.0 );
-  range += osmosdr::range_t( 47.0 );
-  range += osmosdr::range_t( 49.0 );
+  /* all gain values are expressed in tenths of a dB */
+  const int e4k_gains[] = { -10, 15, 40, 65, 90, 115, 140, 165, 190, 215,
+          240, 290, 340, 420 };
+  const int fc0012_gains[] = { -99, -40, 71, 179, 192 };
+  const int fc0013_gains[] = { -99, -73, -65, -63, -60, -58, -54, 58, 61,
+               63, 65, 67, 68, 70, 71, 179, 181, 182,
+               184, 186, 188, 191, 197 };
+  const int fc2580_gains[] = { 0 /* no gain values */ };
+  const int r820t_gains[] = { 0, 9, 14, 27, 37, 77, 87, 125, 144, 157,
+             166, 197, 207, 229, 254, 280, 297, 328,
+             338, 364, 372, 386, 402, 421, 434, 439,
+             445, 480, 496 };
+  const int unknown_gains[] = { 0 /* no gain values */ };
+
+  const int *ptr = NULL;
+  int len = 0;
+
+  switch (_src->get_tuner_type())
+  {
+  case RTLSDR_TUNER_E4000:
+    ptr = e4k_gains; len = sizeof(e4k_gains);
+    break;
+  case RTLSDR_TUNER_FC0012:
+    ptr = fc0012_gains; len = sizeof(fc0012_gains);
+    break;
+  case RTLSDR_TUNER_FC0013:
+    ptr = fc0013_gains; len = sizeof(fc0013_gains);
+    break;
+  case RTLSDR_TUNER_FC2580:
+    ptr = fc2580_gains; len = sizeof(fc2580_gains);
+    break;
+  case RTLSDR_TUNER_R820T:
+    ptr = r820t_gains; len = sizeof(r820t_gains);
+    break;
+  default:
+    ptr = unknown_gains; len = sizeof(unknown_gains);
+    break;
+  }
+
+  if ( ptr != NULL && len > 0 )
+  {
+    for (int i = 0; i < int(len / sizeof(int)); i++)
+      range += osmosdr::range_t( ptr[i] / 10.0f );
+  }
 
   return range;
 }
