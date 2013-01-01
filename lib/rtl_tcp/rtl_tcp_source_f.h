@@ -1,17 +1,17 @@
 /* -*- c++ -*- */
 /*
  * Copyright 2012 Hoernchen <la@tfc-server.de>
- * 
+ *
  * GNU Radio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3, or (at your option)
  * any later version.
- * 
+ *
  * GNU Radio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with GNU Radio; see the file COPYING.  If not, write to
  * the Free Software Foundation, Inc., 51 Franklin Street,
@@ -46,24 +46,24 @@ typedef void* optval_t;
 
 /* copied from rtl sdr */
 enum rtlsdr_tuner {
-	RTLSDR_TUNER_UNKNOWN = 0,
-	RTLSDR_TUNER_E4000,
-	RTLSDR_TUNER_FC0012,
-	RTLSDR_TUNER_FC0013,
-	RTLSDR_TUNER_FC2580,
-	RTLSDR_TUNER_R820T
+  RTLSDR_TUNER_UNKNOWN = 0,
+  RTLSDR_TUNER_E4000,
+  RTLSDR_TUNER_FC0012,
+  RTLSDR_TUNER_FC0013,
+  RTLSDR_TUNER_FC2580,
+  RTLSDR_TUNER_R820T
 };
 
 class rtl_tcp_source_f;
 typedef boost::shared_ptr<rtl_tcp_source_f> rtl_tcp_source_f_sptr;
 
 rtl_tcp_source_f_sptr make_rtl_tcp_source_f (
-      size_t itemsize,
-      const char *host,
-      unsigned short port,
-      int payload_size,
-      bool eof,
-      bool wait);
+    size_t itemsize,
+    const char *host,
+    unsigned short port,
+    int payload_size,
+    bool eof = false,
+    bool wait = false);
 
 class rtl_tcp_source_f : public gr_sync_block
 {
@@ -80,9 +80,9 @@ private:
   unsigned int d_tuner_type;
   unsigned int d_tuner_gain_count;
 
- private:
+private:
   rtl_tcp_source_f(size_t itemsize, const char *host,
-   unsigned short port, int payload_size, bool eof, bool wait);
+                   unsigned short port, int payload_size, bool eof, bool wait);
 
   // The friend declaration allows make_source_c to
   // access the private constructor.
@@ -94,15 +94,15 @@ private:
       bool eof,
       bool wait);
 
- public:
+public:
   ~rtl_tcp_source_f();
 
   enum rtlsdr_tuner get_tuner_type() { return (enum rtlsdr_tuner) d_tuner_type; }
   unsigned int get_tuner_gain_count() { return d_tuner_gain_count; }
 
   int work(int noutput_items,
-	   gr_vector_const_void_star &input_items,
-	   gr_vector_void_star &output_items);
+           gr_vector_const_void_star &input_items,
+           gr_vector_void_star &output_items);
 
   void set_freq(int freq);
   void set_sample_rate(int sample_rate);

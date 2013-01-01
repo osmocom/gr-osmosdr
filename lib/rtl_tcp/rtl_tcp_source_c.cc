@@ -37,18 +37,18 @@ using namespace boost::assign;
 
 static std::string get_tuner_name( enum rtlsdr_tuner tuner_type )
 {
-    if ( RTLSDR_TUNER_E4000 == tuner_type )
-        return "E4000";
-    else if ( RTLSDR_TUNER_FC0012 == tuner_type )
-        return "FC0012";
-    else if ( RTLSDR_TUNER_FC0013 == tuner_type )
-        return "FC0013";
-    else if ( RTLSDR_TUNER_FC2580 == tuner_type )
-        return "FC2580";
-    else if ( RTLSDR_TUNER_R820T == tuner_type )
-        return "R820T";
-    else
-        return "Unknown";
+  if ( RTLSDR_TUNER_E4000 == tuner_type )
+    return "E4000";
+  else if ( RTLSDR_TUNER_FC0012 == tuner_type )
+    return "FC0012";
+  else if ( RTLSDR_TUNER_FC0013 == tuner_type )
+    return "FC0013";
+  else if ( RTLSDR_TUNER_FC2580 == tuner_type )
+    return "FC2580";
+  else if ( RTLSDR_TUNER_R820T == tuner_type )
+    return "R820T";
+  else
+    return "Unknown";
 }
 
 rtl_tcp_source_c_sptr make_rtl_tcp_source_c(const std::string &args)
@@ -96,16 +96,15 @@ rtl_tcp_source_c::rtl_tcp_source_c(const std::string &args) :
   if (payload_size <= 0)
     payload_size = 16384;
 
-  _src = make_rtl_tcp_source_f(sizeof(float), host.c_str(), port, payload_size,
-                               false, false);
+  _src = make_rtl_tcp_source_f(sizeof(float), host.c_str(), port, payload_size);
 
   if ( _src->get_tuner_type() != RTLSDR_TUNER_UNKNOWN )
   {
-      std::cerr << "The RTL TCP server reports a "
-                << get_tuner_name( _src->get_tuner_type() )
-                << " tuner with " << _src->get_tuner_gain_count()
-                << " selectable gains."
-                << std::endl;
+    std::cerr << "The RTL TCP server reports a "
+              << get_tuner_name( _src->get_tuner_type() )
+              << " tuner with " << _src->get_tuner_gain_count()
+              << " selectable gains."
+              << std::endl;
   }
 
   set_gain_mode(false); /* enable manual gain mode by default */
@@ -245,16 +244,16 @@ osmosdr::gain_range_t rtl_tcp_source_c::get_gain_range( size_t chan )
 
   /* all gain values are expressed in tenths of a dB */
   const int e4k_gains[] = { -10, 15, 40, 65, 90, 115, 140, 165, 190, 215,
-          240, 290, 340, 420 };
+                            240, 290, 340, 420 };
   const int fc0012_gains[] = { -99, -40, 71, 179, 192 };
   const int fc0013_gains[] = { -99, -73, -65, -63, -60, -58, -54, 58, 61,
-               63, 65, 67, 68, 70, 71, 179, 181, 182,
-               184, 186, 188, 191, 197 };
+                               63, 65, 67, 68, 70, 71, 179, 181, 182,
+                               184, 186, 188, 191, 197 };
   const int fc2580_gains[] = { 0 /* no gain values */ };
   const int r820t_gains[] = { 0, 9, 14, 27, 37, 77, 87, 125, 144, 157,
-             166, 197, 207, 229, 254, 280, 297, 328,
-             338, 364, 372, 386, 402, 421, 434, 439,
-             445, 480, 496 };
+                              166, 197, 207, 229, 254, 280, 297, 328,
+                              338, 364, 372, 386, 402, 421, 434, 439,
+                              445, 480, 496 };
   const int unknown_gains[] = { 0 /* no gain values */ };
 
   const int *ptr = NULL;
