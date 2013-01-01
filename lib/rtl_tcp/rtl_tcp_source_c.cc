@@ -35,7 +35,7 @@
 
 using namespace boost::assign;
 
-std::string get_tuner_name( enum rtlsdr_tuner tuner_type )
+static std::string get_tuner_name( enum rtlsdr_tuner tuner_type )
 {
     if ( RTLSDR_TUNER_E4000 == tuner_type )
         return "E4000";
@@ -177,10 +177,25 @@ double rtl_tcp_source_c::get_sample_rate( void )
 
 osmosdr::freq_range_t rtl_tcp_source_c::get_freq_range( size_t chan )
 {
-  // FIXME: assumption on E4000 tuner
+  osmosdr::freq_range_t range;
 
-  /* there is a (temperature dependent) gap between 1100 to 1250 MHz */
-  osmosdr::freq_range_t range( 50e6, 2.2e6 );
+  enum rtlsdr_tuner tuner = _src->get_tuner_type();
+
+  if ( tuner == RTLSDR_TUNER_E4000 ) {
+    /* there is a (temperature dependent) gap between 1100 to 1250 MHz */
+    range += osmosdr::range_t( 52e6, 2.2e9 );
+  } else if ( tuner == RTLSDR_TUNER_FC0012 ) {
+    range += osmosdr::range_t( 22e6, 948e6 );
+  } else if ( tuner == RTLSDR_TUNER_FC0013 ) {
+    range += osmosdr::range_t( 22e6, 1.1e9 );
+  } else if ( tuner == RTLSDR_TUNER_FC2580 ) {
+    range += osmosdr::range_t( 146e6, 308e6 );
+    range += osmosdr::range_t( 438e6, 924e6 );
+  } else if ( tuner == RTLSDR_TUNER_R820T ) {
+    range += osmosdr::range_t( 24e6, 1766e6 );
+  } else {
+    range += osmosdr::range_t( 52e6, 2.2e9 ); // assume E4000 tuner
+  }
 
   return range;
 }

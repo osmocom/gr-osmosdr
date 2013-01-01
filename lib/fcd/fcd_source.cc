@@ -152,7 +152,7 @@ double fcd_source::get_sample_rate( void )
 
 osmosdr::freq_range_t fcd_source::get_freq_range( size_t chan )
 {
-  osmosdr::freq_range_t range(50e6, 2.2e9);
+  osmosdr::freq_range_t range( 52e6, 2.2e9 );
 
   return range;
 }
