@@ -84,6 +84,7 @@ rtl_source_c::rtl_source_c (const std::string &args)
     _dev(NULL),
     _buf(NULL),
     _running(true),
+    _no_tuner(false),
     _auto_gain(false),
     _skipped(0)
 {
@@ -208,6 +209,7 @@ rtl_source_c::rtl_source_c (const std::string &args)
     ret = rtlsdr_set_direct_sampling(_dev, direct_samp);
     if (ret < 0)
       throw std::runtime_error("Failed to enable direct sampling.");
+    _no_tuner = true;
   }
 
   if (offset_tune) {
@@ -410,6 +412,13 @@ osmosdr::freq_range_t rtl_source_c::get_freq_range( size_t chan )
   osmosdr::freq_range_t range;
 
   if (_dev) {
+    if (_no_tuner) {
+      uint32_t rtl_freq;
+      if ( !rtlsdr_get_xtal_freq( _dev, &rtl_freq, NULL ) )
+        range += osmosdr::range_t( 0, double(rtl_freq) );
+      return range;
+    }
+
     enum rtlsdr_tuner tuner = rtlsdr_get_tuner_type(_dev);
 
     if ( tuner == RTLSDR_TUNER_E4000 ) {

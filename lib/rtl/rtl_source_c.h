@@ -134,6 +134,7 @@ private:
   unsigned int _buf_offset;
   int _samp_avail;
 
+  bool _no_tuner;
   bool _auto_gain;
   unsigned int _skipped;
 };
