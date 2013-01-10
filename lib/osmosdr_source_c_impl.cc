@@ -279,7 +279,7 @@ size_t osmosdr_source_c_impl::get_num_channels()
 
 osmosdr::meta_range_t osmosdr_source_c_impl::get_sample_rates()
 {
-  osmosdr::meta_range_t rates(0, 0, 1);
+  osmosdr::meta_range_t rates(0, 0, 0);
 
   if (!_devs.empty())
     rates = _devs[0]->get_sample_rates(); // assume same devices used in the group
