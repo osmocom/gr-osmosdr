@@ -93,7 +93,7 @@ std::vector< std::string > uhd_source_c::get_devices()
 
   uhd::device_addr_t hint;
   BOOST_FOREACH(const uhd::device_addr_t &dev, uhd::device::find(hint)) {
-    std::string args = "uhd," + dev.to_string();
+    std::string args = "uhd,subdev='A:0'," + dev.to_string();
 
     std::string label = "Ettus";
 
