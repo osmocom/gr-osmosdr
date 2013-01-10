@@ -33,6 +33,7 @@
 #include <boost/assign.hpp>
 #include <boost/format.hpp>
 #include <boost/detail/endian.hpp>
+#include <boost/algorithm/string.hpp>
 
 #include <stdexcept>
 #include <iostream>
@@ -355,10 +356,33 @@ int rtl_source_c::work( int noutput_items,
 std::vector<std::string> rtl_source_c::get_devices()
 {
   std::vector<std::string> devices;
+  std::string label;
+  char manufact[256];
+  char product[256];
+  char serial[256];
 
   for (unsigned int i = 0; i < rtlsdr_get_device_count(); i++) {
     std::string args = "rtl=" + boost::lexical_cast< std::string >( i );
-    args += ",label='" + std::string(rtlsdr_get_device_name( i )) + "'";
+
+    label.clear();
+
+    memset(manufact, 0, sizeof(manufact));
+    memset(product, 0, sizeof(product));
+    memset(serial, 0, sizeof(serial));
+    if ( !rtlsdr_get_device_usb_strings( i, manufact, product, serial ) ) {
+      if (strlen(manufact))
+        label += std::string(manufact) + " ";
+      if (strlen(product))
+        label += std::string(product) + " ";
+      if (strlen(serial))
+        label += "SN: " + std::string(serial) + " ";
+    } else {
+      label = std::string(rtlsdr_get_device_name(i));
+    }
+
+    boost::algorithm::trim(label);
+
+    args += ",label='" + label + "'";
     devices.push_back( args );
   }
 
