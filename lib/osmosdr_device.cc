@@ -32,7 +32,9 @@
 /*
 #define ENABLE_OSMOSDR
 #define ENABLE_FCD
+#define ENABLE_FILE
 #define ENABLE_RTL
+#define ENABLE_RTL_TCP
 #define ENABLE_UHD
 #define ENABLE_MIRI
 */
@@ -44,8 +46,16 @@
 #include <fcd_source.h>
 #endif
 
+#ifdef ENABLE_FILE
+#include <file_source_c.h>
+#endif
+
 #ifdef ENABLE_RTL
 #include <rtl_source_c.h>
+#endif
+
+#ifdef ENABLE_RTL_TCP
+#include <rtl_tcp_source_c.h>
 #endif
 
 #ifdef ENABLE_UHD
@@ -115,8 +125,16 @@ devices_t device::find(const device_t &hint)
   BOOST_FOREACH( std::string dev, fcd_source::get_devices() )
     devices.push_back( device_t(dev) );
 #endif
+#ifdef ENABLE_FILE
+  BOOST_FOREACH( std::string dev, file_source_c::get_devices() )
+    devices.push_back( device_t(dev) );
+#endif
 #ifdef ENABLE_RTL
   BOOST_FOREACH( std::string dev, rtl_source_c::get_devices() )
+    devices.push_back( device_t(dev) );
+#endif
+#ifdef ENABLE_RTL_TCP
+  BOOST_FOREACH( std::string dev, rtl_tcp_source_c::get_devices() )
     devices.push_back( device_t(dev) );
 #endif
 #ifdef ENABLE_UHD

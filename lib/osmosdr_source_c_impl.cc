@@ -91,7 +91,9 @@ osmosdr_source_c_impl::osmosdr_source_c_impl (const std::string &args)
 
   std::vector< std::string > dev_types;
 
+#ifdef ENABLE_FILE
   dev_types.push_back("file");
+#endif
 #ifdef ENABLE_OSMOSDR
   dev_types.push_back("osmosdr");
 #endif
@@ -101,7 +103,9 @@ osmosdr_source_c_impl::osmosdr_source_c_impl (const std::string &args)
 #ifdef ENABLE_RTL
   dev_types.push_back("rtl");
 #endif
+#ifdef ENABLE_RTL_TCP
   dev_types.push_back("rtl_tcp");
+#endif
 #ifdef ENABLE_UHD
   dev_types.push_back("uhd");
 #endif
