@@ -48,6 +48,8 @@ public:
 
   std::string name();
 
+  static std::vector< std::string > get_devices();
+
   size_t get_num_channels( void );
 
   osmosdr::meta_range_t get_sample_rates( void );

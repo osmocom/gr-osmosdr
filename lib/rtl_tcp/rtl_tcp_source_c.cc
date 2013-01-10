@@ -132,7 +132,18 @@ gr_basic_block_sptr rtl_tcp_source_c::self()
 
 std::string rtl_tcp_source_c::name()
 {
-  return "RTL TCP Client Source";
+  return "RTL TCP Client";
+}
+
+std::vector<std::string> rtl_tcp_source_c::get_devices()
+{
+  std::vector<std::string> devices;
+
+  std::string args = "rtl_tcp=localhost:1234";
+  args += ",label='RTL-SDR Spectrum Server'";
+  devices.push_back( args );
+
+  return devices;
 }
 
 size_t rtl_tcp_source_c::get_num_channels( void )
