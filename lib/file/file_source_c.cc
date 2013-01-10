@@ -101,7 +101,18 @@ gr_basic_block_sptr file_source_c::self()
 
 std::string file_source_c::name()
 {
-  return "File Source";
+  return "IQ File Source";
+}
+
+std::vector<std::string> file_source_c::get_devices()
+{
+  std::vector<std::string> devices;
+
+  std::string args = "file=your.file,freq=100e6,rate=1e6,repeat=false,throttle=true";
+  args += ",label='Complex Sampled (IQ) File'";
+  devices.push_back( args );
+
+  return devices;
 }
 
 size_t file_source_c::get_num_channels( void )
