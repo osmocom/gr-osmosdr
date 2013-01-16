@@ -302,6 +302,8 @@ void rtl_source_c::rtlsdr_wait()
 
   if ( ret != 0 )
     std::cerr << "rtlsdr_read_async returned with " << ret << std::endl;
+
+  _buf_cond.notify_one();
 }
 
 int rtl_source_c::work( int noutput_items,
