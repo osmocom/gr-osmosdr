@@ -221,6 +221,8 @@ void osmosdr_src_c::osmosdr_wait()
 
   if ( ret != 0 )
     std::cerr << "osmosdr_read_async returned with " << ret << std::endl;
+
+  _buf_cond.notify_one();
 }
 
 int osmosdr_src_c::work( int noutput_items,
