@@ -216,6 +216,8 @@ void miri_source_c::mirisdr_wait()
 
   if ( ret != 0 )
     std::cerr << "mirisdr_read_async returned with " << ret << std::endl;
+
+  _buf_cond.notify_one();
 }
 
 int miri_source_c::work( int noutput_items,
