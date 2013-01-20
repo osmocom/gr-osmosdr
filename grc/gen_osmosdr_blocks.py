@@ -102,55 +102,63 @@ self.\$(id).set_antenna(\$ant$(n), $n)
 	<doc>
 The OsmoSDR $sourk.title() block:
 
-While primarily being developed for the OsmoSDR hardware, this block also supports
+While primarily being developed for the OsmoSDR hardware, this block as well supports:
 
  * FunCube Dongle through libgnuradio-fcd
+ * OSMOCOM OsmoSDR Devices through libosmosdr
  * Ettus USRP Devices through Ettus UHD library
  * RTL2832U based DVB-T dongles through librtlsdr
- * rtl-tcp spectrum server (see librtlsdr project)
+ * RTL-TCP spectrum server (see librtlsdr project)
  * MSi2500 based DVB-T dongles through libmirisdr
  * gnuradio .cfile input through libgnuradio-core
 
 By using the OsmoSDR block you can take advantage of a common software api in your application(s) independent of the underlying radio hardware.
 
 Output Type:
-This parameter controls the data type of the stream in gnuradio.
+This parameter controls the data type of the stream in gnuradio. Only complex float32 samples are supported at the moment.
 
 Device Arguments:
-The device argument is a delimited string used to locate devices on your system.
-Use the device id or name (if applicable) to specify a certain device or list of devices. If left blank, the first device found will be used.
+The device argument is a comma delimited string used to locate devices on your system. Device arguments for multiple devices may be given by separating them with a space.
+Use the device id or name/serial (if applicable) to specify a certain device or list of devices. If left blank, the first device found will be used.
 
-Examples (some arguments may be optional):
+Examples:
+
+Optional arguments are placed into [] brackets, remove the brackets before using them! Specific variable values are separated with a |, choose one of them. Variable values containing spaces shall be enclosed in '' as demonstrated in examples section below.
+Lines ending with ... mean it's possible to bind devices together by specifying multiple device arguments separated with a space.
+
   fcd=0
-  miri=0
-  rtl=0,rtl_xtal=28.80001e6,tuner_xtal=26e6,buffers=64 ...
-  rtl_tcp=127.0.0.1:1234,psize=16384
-  uhd,serial=...,type=usrp1,mcr=52e6,nchan=2,subdev='\\\\'B:0 A:0\\\\'' ...
-  osmosdr=0,mcr=64e6,nchan=5 ...
-  file=/path/to/file.ext,freq=428e6,rate=1e6,repeat=true,throttle=true ...
+  miri=0[,buffers=32] ...
+  rtl=serial_number ...
+  rtl=0[,rtl_xtal=28.8e6][,tuner_xtal=28.8e6] ...
+  rtl=1[,buffers=32][,buflen=N*512] ...
+  rtl=2[,direct_samp=0|1|2][,offset_tune=0|1] ...
+  rtl_tcp=127.0.0.1:1234[,psize=16384] ...
+  uhd[,serial=...][,lo_offset=0][,mcr=52e6][,nchan=2][,subdev='\\\\'B:0 A:0\\\\''] ...
+  osmosdr=0[,mcr=64e6][,nchan=5][,buffers=32][,buflen=N*512] ...
+  file='/path/to/your file',rate=1e6[,freq=100e6][,repeat=true][,throttle=true] ...
 
 Num Channels:
-Selects the total number of channels in this multi-device configuration.
+Selects the total number of channels in this multi-device configuration. Required when specifying multiple device arguments.
 
 Sample Rate:
-The sample rate is the number of samples per second output by this block.
+The sample rate is the number of samples per second output by this block on each channel.
 
 Frequency:
-The center frequency is the overall frequency of the RF chain.
+The center frequency is the frequency the RF chain is tuned to.
 
 Freq. Corr.:
-The frequency correction factor in parts per million (ppm). Leave 0 if unknown.
+The frequency correction factor in parts per million (ppm). Set to 0 if unknown.
 
 Gain Mode:
 Chooses between the manual (default) and automatic gain mode where appropriate.
 Currently, only rtlsdr devices support automatic gain mode.
 
-Gain:
-Overall gain of the device's signal path. For the new gain value to be applied, the manual gain mode must be enabled first.
+RF Gain:
+Overall RF gain of the receiving device. For the new gain value to be applied, the manual gain mode must be enabled first.
 
 IF Gain:
-Overall IF gain of the device's signal path. For the new gain value to be applied, the manual gain mode must be enabled first.
-This setting has only effect for rtl-sdr and OsmoSDR devices with E4000 tuners. Observations lead to a useful gain range from 15 to 30dB.
+Overall IF gain of the receiving device. For the new gain value to be applied, the manual gain mode must be enabled first.
+This setting has only effect for RTL-SDR and OsmoSDR devices with E4000 tuners. Observations lead to a reasonable gain range from 15 to 30dB.
 
 Antenna:
 For devices with only one antenna, this may be left blank.
@@ -158,8 +166,8 @@ Otherwise, the user should specify one of the possible antenna choices.
 
 See the OsmoSDR project page for more detailed documentation:
 http://sdr.osmocom.org/trac/
-http://sdr.osmocom.org/trac/wiki/GrOsmoSDR
 http://sdr.osmocom.org/trac/wiki/rtl-sdr
+http://sdr.osmocom.org/trac/wiki/GrOsmoSDR
 	</doc>
 </block>
 """
@@ -195,7 +203,7 @@ PARAMS_TMPL = """
 		</option>
 	</param>
 	<param>
-	<name>Ch$(n): Gain (dB)</name>
+		<name>Ch$(n): RF Gain (dB)</name>
 		<key>gain$(n)</key>
 		<value>10</value>
 		<type>real</type>
