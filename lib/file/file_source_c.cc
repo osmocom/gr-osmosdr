@@ -45,8 +45,8 @@ file_source_c::file_source_c(const std::string &args) :
                  gr_make_io_signature (1, 1, sizeof (gr_complex)))
 {
   std::string filename;
-  bool repeat = false;
-  bool throttle = false;
+  bool repeat = true;
+  bool throttle = true;
   _freq = 0;
   _rate = 0;
 
@@ -62,10 +62,10 @@ file_source_c::file_source_c(const std::string &args) :
     _rate = boost::lexical_cast< double >( dict["rate"] );
 
   if (dict.count("repeat"))
-    repeat = "true" == dict["repeat"] ? true : false;
+    repeat = ("true" == dict["repeat"] ? true : false);
 
   if (dict.count("throttle"))
-    throttle = "true" == dict["throttle"] ? true : false;
+    throttle = ("true" == dict["throttle"] ? true : false);
 
   if (!filename.length())
     throw std::runtime_error("No file name specified.");
@@ -108,7 +108,7 @@ std::vector<std::string> file_source_c::get_devices()
 {
   std::vector<std::string> devices;
 
-  std::string args = "file=your.file,freq=100e6,rate=1e6,repeat=false,throttle=true";
+  std::string args = "file='/path/to/your/file',rate=1e6,freq=100e6,repeat=true,throttle=true";
   args += ",label='Complex Sampled (IQ) File'";
   devices.push_back( args );
 
