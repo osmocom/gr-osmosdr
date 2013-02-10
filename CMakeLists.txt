@@ -190,6 +190,11 @@ IF(CMAKE_CROSSCOMPILING)
     UNSET(GR_OSMOSDR_PC_LIBS)
 ENDIF(CMAKE_CROSSCOMPILING)
 
+# fake gnuradio cpack behavior as long as we don't use it directly
+set(CPACK_PACKAGE_NAME "gnuradio-osmosdr")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "GNU Radio block for various radio hardware")
+set(CPACK_PACKAGE_VERSION ${VERSION})
+
 CONFIGURE_FILE(
     ${CMAKE_CURRENT_SOURCE_DIR}/gnuradio-osmosdr.pc.in
     ${CMAKE_CURRENT_BINARY_DIR}/gnuradio-osmosdr.pc
