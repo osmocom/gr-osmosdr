@@ -46,8 +46,6 @@ public:
 
   static std::vector< std::string > get_devices();
 
-  gr_basic_block_sptr self();
-
   std::string name();
 
   size_t get_num_channels( void );

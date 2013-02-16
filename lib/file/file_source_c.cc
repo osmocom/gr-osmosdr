@@ -94,11 +94,6 @@ file_source_c::~file_source_c()
 {
 }
 
-gr_basic_block_sptr file_source_c::self()
-{
-  return gr_hier_block2::self();
-}
-
 std::string file_source_c::name()
 {
   return "IQ File Source";

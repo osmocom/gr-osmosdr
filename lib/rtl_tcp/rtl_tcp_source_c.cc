@@ -125,11 +125,6 @@ rtl_tcp_source_c::~rtl_tcp_source_c()
 {
 }
 
-gr_basic_block_sptr rtl_tcp_source_c::self()
-{
-  return gr_hier_block2::self();
-}
-
 std::string rtl_tcp_source_c::name()
 {
   return "RTL TCP Client";

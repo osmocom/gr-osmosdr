@@ -123,11 +123,6 @@ std::vector< std::string > uhd_source_c::get_devices()
   return devices;
 }
 
-gr_basic_block_sptr uhd_source_c::self()
-{
-  return gr_hier_block2::self();
-}
-
 std::string uhd_source_c::name()
 {
 //  uhd::property_tree::sptr prop_tree = _src->get_device()->get_device()->get_tree();

@@ -42,8 +42,6 @@ private:
 public:
   ~file_source_c();
 
-  gr_basic_block_sptr self();
-
   std::string name();
 
   static std::vector< std::string > get_devices();

@@ -116,11 +116,6 @@ std::vector< std::string > fcd_source::get_devices()
   return devices;
 }
 
-gr_basic_block_sptr fcd_source::self()
-{
-  return gr_hier_block2::self();
-}
-
 std::string fcd_source::name()
 {
   return "FUNcube Dongle";
