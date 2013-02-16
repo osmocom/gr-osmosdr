@@ -113,7 +113,10 @@ osmosdr_source_c_impl::osmosdr_source_c_impl (const std::string &args)
   dev_types.push_back("miri");
 #endif
 
-  std::cerr << "gr-osmosdr supported device types: ";
+  std::cerr << "gr-osmosdr ("
+            << GR_OSMOSDR_VERSION << " / " << GR_OSMOSDR_LIBVER
+            << ") supported device types:" << std::endl;
+  std::cerr << "    " << std::flush;
   BOOST_FOREACH(std::string dev_type, dev_types)
     std::cerr << dev_type << " ";
   std::cerr << std::endl << std::flush;

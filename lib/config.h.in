@@ -1,6 +1,9 @@
 #ifndef CONFIG_H_IN
 #define CONFIG_H_IN
 
+#define GR_OSMOSDR_VERSION "@VERSION@"
+#define GR_OSMOSDR_LIBVER "@LIBVER@"
+
 #cmakedefine ENABLE_OSMOSDR
 #cmakedefine ENABLE_FCD
 #cmakedefine ENABLE_FILE
