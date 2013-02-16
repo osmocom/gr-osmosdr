@@ -48,24 +48,24 @@ endif()
 # Use the logic below to set the version constants
 ########################################################################
 if("${MINOR_VERSION}" STREQUAL "git")
-    # VERSION: 3.6git-xxx-gxxxxxxxx
-    # DOCVER:  3.6git
-    # LIBVER:  3.6git
+    # VERSION: 3.3git-xxx-gxxxxxxxx
+    # DOCVER:  3.3git
+    # LIBVER:  3.3git
     set(VERSION "${GIT_DESCRIBE}")
     set(DOCVER  "${MAJOR_VERSION}.${API_COMPAT}${MINOR_VERSION}")
     set(LIBVER  "${MAJOR_VERSION}.${API_COMPAT}${MINOR_VERSION}")
 elseif("${MAINT_VERSION}" STREQUAL "git")
-    # VERSION: 3.6.1git-xxx-gxxxxxxxx
-    # DOCVER:  3.6.1git
-    # LIBVER:  3.6.1git
+    # VERSION: 3.3.1git-xxx-gxxxxxxxx
+    # DOCVER:  3.3.1git
+    # LIBVER:  3.3.1git
     set(VERSION "${GIT_DESCRIBE}")
     set(DOCVER  "${MAJOR_VERSION}.${API_COMPAT}.${MINOR_VERSION}${MAINT_VERSION}")
     set(LIBVER  "${MAJOR_VERSION}.${API_COMPAT}.${MINOR_VERSION}${MAINT_VERSION}")
 else()
     # This is a numbered release.
-    # VERSION: 3.6.1{.x}
-    # DOCVER:  3.6.1{.x}
-    # LIBVER:  3.6.1{.x}
+    # VERSION: 3.3.1{.x}
+    # DOCVER:  3.3.1{.x}
+    # LIBVER:  3.3.1{.x}
     if("${MAINT_VERSION}" STREQUAL "0")
         set(VERSION "${MAJOR_VERSION}.${API_COMPAT}.${MINOR_VERSION}")
     else()
