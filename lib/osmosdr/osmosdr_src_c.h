@@ -132,6 +132,7 @@ private:
   int _samp_avail;
 
   bool _auto_gain;
+  double _if_gain;
   unsigned int _skipped;
 };
 

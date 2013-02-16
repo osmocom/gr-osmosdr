@@ -70,6 +70,7 @@ osmosdr_src_c::osmosdr_src_c (const std::string &args)
     _buf(NULL),
     _running(true),
     _auto_gain(false),
+    _if_gain(0),
     _skipped(0)
 {
   int ret;
@@ -380,11 +381,12 @@ double osmosdr_src_c::get_freq_corr( size_t chan )
 
 std::vector<std::string> osmosdr_src_c::get_gain_names( size_t chan )
 {
-  std::vector< std::string > gains;
+  std::vector< std::string > names;
 
-  gains += "LNA";
+  names += "LNA";
+  names += "IF";
 
-  return gains;
+  return names;
 }
 
 osmosdr::gain_range_t osmosdr_src_c::get_gain_range( size_t chan )
@@ -407,6 +409,10 @@ osmosdr::gain_range_t osmosdr_src_c::get_gain_range( size_t chan )
 
 osmosdr::gain_range_t osmosdr_src_c::get_gain_range( const std::string & name, size_t chan )
 {
+  if ( "IF" == name ) {
+    return osmosdr::gain_range_t(3, 56, 1);
+  }
+
   return get_gain_range( chan );
 }
 
@@ -439,6 +445,10 @@ double osmosdr_src_c::set_gain( double gain, size_t chan )
 
 double osmosdr_src_c::set_gain( double gain, const std::string & name, size_t chan)
 {
+  if ( "IF" == name ) {
+    return set_if_gain( gain, chan );
+  }
+
   return set_gain( gain, chan );
 }
 
@@ -452,6 +462,10 @@ double osmosdr_src_c::get_gain( size_t chan )
 
 double osmosdr_src_c::get_gain( const std::string & name, size_t chan )
 {
+  if ( "IF" == name ) {
+    return _if_gain;
+  }
+
   return get_gain( chan );
 }
 
@@ -509,6 +523,7 @@ double osmosdr_src_c::set_if_gain(double gain, size_t chan)
     }
   }
 
+  _if_gain = gain;
   return gain;
 }
 
