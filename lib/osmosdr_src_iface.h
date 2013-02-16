@@ -130,14 +130,14 @@ public:
    * \param chan the channel index 0 to N-1
    * \return the actual gain mode
    */
-  virtual bool set_gain_mode( bool automatic, size_t chan = 0 ) = 0;
+  virtual bool set_gain_mode( bool automatic, size_t chan = 0 ) { return false; }
 
   /*!
    * Get the gain mode selected for the underlying radio hardware.
    * \param chan the channel index 0 to N-1
    * \return the actual gain mode (true means automatic gain mode)
    */
-  virtual bool get_gain_mode( size_t chan = 0 ) = 0;
+  virtual bool get_gain_mode( size_t chan = 0 ) { return false; }
 
   /*!
    * Set the gain for the underlying radio hardware.
