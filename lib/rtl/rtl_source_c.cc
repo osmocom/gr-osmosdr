@@ -87,6 +87,7 @@ rtl_source_c::rtl_source_c (const std::string &args)
     _running(true),
     _no_tuner(false),
     _auto_gain(false),
+    _if_gain(0),
     _skipped(0)
 {
   int ret;
@@ -499,11 +500,17 @@ double rtl_source_c::get_freq_corr( size_t chan )
 
 std::vector<std::string> rtl_source_c::get_gain_names( size_t chan )
 {
-  std::vector< std::string > gains;
+  std::vector< std::string > names;
 
-  gains += "LNA";
+  names += "LNA";
 
-  return gains;
+  if ( _dev ) {
+    if ( rtlsdr_get_tuner_type(_dev) == RTLSDR_TUNER_E4000 ) {
+      names += "IF";
+    }
+  }
+
+  return names;
 }
 
 osmosdr::gain_range_t rtl_source_c::get_gain_range( size_t chan )
@@ -526,6 +533,16 @@ osmosdr::gain_range_t rtl_source_c::get_gain_range( size_t chan )
 
 osmosdr::gain_range_t rtl_source_c::get_gain_range( const std::string & name, size_t chan )
 {
+  if ( "IF" == name ) {
+    if ( _dev ) {
+      if ( rtlsdr_get_tuner_type(_dev) == RTLSDR_TUNER_E4000 ) {
+        return osmosdr::gain_range_t(3, 56, 1);
+      } else {
+        return osmosdr::gain_range_t();
+      }
+    }
+  }
+
   return get_gain_range( chan );
 }
 
@@ -560,6 +577,10 @@ double rtl_source_c::set_gain( double gain, size_t chan )
 
 double rtl_source_c::set_gain( double gain, const std::string & name, size_t chan)
 {
+  if ( "IF" == name ) {
+    return set_if_gain( gain, chan );
+  }
+
   return set_gain( gain, chan );
 }
 
@@ -573,11 +594,22 @@ double rtl_source_c::get_gain( size_t chan )
 
 double rtl_source_c::get_gain( const std::string & name, size_t chan )
 {
+  if ( "IF" == name ) {
+    return _if_gain;
+  }
+
   return get_gain( chan );
 }
 
 double rtl_source_c::set_if_gain(double gain, size_t chan)
 {
+  if ( _dev ) {
+    if ( rtlsdr_get_tuner_type(_dev) != RTLSDR_TUNER_E4000 ) {
+      _if_gain = 0;
+      return _if_gain;
+    }
+  }
+
   std::vector< osmosdr::gain_range_t > if_gains;
 
   if_gains += osmosdr::gain_range_t(-3, 6, 9);
@@ -630,6 +662,7 @@ double rtl_source_c::set_if_gain(double gain, size_t chan)
     }
   }
 
+  _if_gain = gain;
   return gain;
 }
 

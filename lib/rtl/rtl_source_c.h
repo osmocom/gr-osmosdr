@@ -136,6 +136,7 @@ private:
 
   bool _no_tuner;
   bool _auto_gain;
+  double _if_gain;
   unsigned int _skipped;
 };
 
