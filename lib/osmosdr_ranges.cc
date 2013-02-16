@@ -154,6 +154,27 @@ double meta_range_t::clip(double value, bool clip_step) const{
     return last_stop;
 }
 
+std::vector<double> meta_range_t::values() const {
+    std::vector<double> values;
+
+    BOOST_FOREACH(const range_t &r, (*this)) {
+        if (r.start() != r.stop()) {
+            if ( r.step() == 0 ) {
+                values.push_back( r.start() );
+                values.push_back( r.stop() );
+            } else {
+                for ( double val = r.start(); val <= r.stop(); val += r.step() ) {
+                    values.push_back( val );
+                }
+            }
+        } else {
+            values.push_back( r.start() );
+        }
+    }
+
+    return values;
+}
+
 const std::string meta_range_t::to_pp_string(void) const{
     std::stringstream ss;
     BOOST_FOREACH(const range_t &r, (*this)){

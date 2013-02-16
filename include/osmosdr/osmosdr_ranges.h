@@ -107,6 +107,9 @@ namespace osmosdr{
          */
         double clip(double value, bool clip_step = false) const;
 
+        /*! return a vector containing all values of the range */
+        std::vector<double> values() const;
+
         //! Convert this meta-range to a printable string
         const std::string to_pp_string(void) const;
 
