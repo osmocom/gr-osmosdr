@@ -59,7 +59,9 @@ rtl_tcp_source_c_sptr make_rtl_tcp_source_c(const std::string &args)
 rtl_tcp_source_c::rtl_tcp_source_c(const std::string &args) :
   gr_hier_block2("rtl_tcp_source_c",
                  gr_make_io_signature (0, 0, 0),
-                 gr_make_io_signature (1, 1, sizeof (gr_complex)))
+                 gr_make_io_signature (1, 1, sizeof (gr_complex))),
+  _auto_gain(false),
+  _if_gain(0)
 {
   std::string host = "127.0.0.1";
   unsigned short port = 1234;
@@ -69,7 +71,6 @@ rtl_tcp_source_c::rtl_tcp_source_c(const std::string &args) :
   _rate = 0;
   _gain = 0;
   _corr = 0;
-  _auto_gain = false;
 
   dict_t dict = params_to_dict(args);
 
@@ -102,8 +103,9 @@ rtl_tcp_source_c::rtl_tcp_source_c(const std::string &args) :
   {
     std::cerr << "The RTL TCP server reports a "
               << get_tuner_name( _src->get_tuner_type() )
-              << " tuner with " << _src->get_tuner_gain_count()
-              << " selectable gains."
+              << " tuner with "
+              << _src->get_tuner_gain_count() << " RF and "
+              << _src->get_tuner_if_gain_count() << " IF gains."
               << std::endl;
   }
 
@@ -239,6 +241,10 @@ std::vector<std::string> rtl_tcp_source_c::get_gain_names( size_t chan )
 
   names += "LNA";
 
+  if ( _src->get_tuner_type() == RTLSDR_TUNER_E4000 ) {
+    names += "IF";
+  }
+
   return names;
 }
 
@@ -298,6 +304,14 @@ osmosdr::gain_range_t rtl_tcp_source_c::get_gain_range( size_t chan )
 
 osmosdr::gain_range_t rtl_tcp_source_c::get_gain_range( const std::string & name, size_t chan )
 {
+  if ( "IF" == name ) {
+    if ( _src->get_tuner_type() == RTLSDR_TUNER_E4000 ) {
+      return osmosdr::gain_range_t(3, 56, 1);
+    } else {
+      return osmosdr::gain_range_t();
+    }
+  }
+
   return get_gain_range( chan );
 }
 
@@ -328,7 +342,11 @@ double rtl_tcp_source_c::set_gain( double gain, size_t chan )
 
 double rtl_tcp_source_c::set_gain( double gain, const std::string & name, size_t chan )
 {
-  return set_gain(chan);
+  if ( "IF" == name ) {
+    return set_if_gain( gain, chan );
+  }
+
+  return set_gain( gain, chan );
 }
 
 double rtl_tcp_source_c::get_gain( size_t chan )
@@ -338,7 +356,72 @@ double rtl_tcp_source_c::get_gain( size_t chan )
 
 double rtl_tcp_source_c::get_gain( const std::string & name, size_t chan )
 {
-  return get_gain(chan);
+  if ( "IF" == name ) {
+    return _if_gain;
+  }
+
+  return get_gain( chan );
+}
+
+double rtl_tcp_source_c::set_if_gain(double gain, size_t chan)
+{
+  if ( _src->get_tuner_type() != RTLSDR_TUNER_E4000 ) {
+    _if_gain = 0;
+    return _if_gain;
+  }
+
+  std::vector< osmosdr::gain_range_t > if_gains;
+
+  if_gains += osmosdr::gain_range_t(-3, 6, 9);
+  if_gains += osmosdr::gain_range_t(0, 9, 3);
+  if_gains += osmosdr::gain_range_t(0, 9, 3);
+  if_gains += osmosdr::gain_range_t(0, 2, 1);
+  if_gains += osmosdr::gain_range_t(3, 15, 3);
+  if_gains += osmosdr::gain_range_t(3, 15, 3);
+
+  std::map< int, double > gains;
+
+  /* initialize with min gains */
+  for (unsigned int i = 0; i < if_gains.size(); i++) {
+    gains[ i + 1 ] = if_gains[ i ].start();
+  }
+
+  for (int i = if_gains.size() - 1; i >= 0; i--) {
+    osmosdr::gain_range_t range = if_gains[ i ];
+
+    double error = gain;
+
+    for( double g = range.start(); g <= range.stop(); g += range.step() ) {
+
+      double sum = 0;
+      for (int j = 0; j < int(gains.size()); j++) {
+        if ( i == j )
+          sum += g;
+        else
+          sum += gains[ j + 1 ];
+      }
+
+      double err = abs(gain - sum);
+      if (err < error) {
+        error = err;
+        gains[ i + 1 ] = g;
+      }
+    }
+  }
+#if 0
+  std::cerr << gain << " => "; double sum = 0;
+  for (unsigned int i = 0; i < gains.size(); i++) {
+    sum += gains[ i + 1 ];
+    std::cerr << gains[ i + 1 ] << " ";
+  }
+  std::cerr << " = " << sum << std::endl;
+#endif
+  for (unsigned int stage = 1; stage <= gains.size(); stage++) {
+    _src->set_if_gain(stage, int(gains[ stage ] * 10.0));
+  }
+
+  _if_gain = gain;
+  return gain;
 }
 
 std::vector< std::string > rtl_tcp_source_c::get_antennas( size_t chan )

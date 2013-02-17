@@ -79,6 +79,7 @@ private:
 
   unsigned int d_tuner_type;
   unsigned int d_tuner_gain_count;
+  unsigned int d_tuner_if_gain_count;
 
 private:
   rtl_tcp_source_f(size_t itemsize, const char *host,
@@ -99,6 +100,7 @@ public:
 
   enum rtlsdr_tuner get_tuner_type() { return (enum rtlsdr_tuner) d_tuner_type; }
   unsigned int get_tuner_gain_count() { return d_tuner_gain_count; }
+  unsigned int get_tuner_if_gain_count() { return d_tuner_if_gain_count; }
 
   int work(int noutput_items,
            gr_vector_const_void_star &input_items,
@@ -109,6 +111,7 @@ public:
   void set_gain_mode(int manual);
   void set_gain(int gain);
   void set_freq_corr(int ppm);
+  void set_if_gain(int stage, int gain);
 };
 
 

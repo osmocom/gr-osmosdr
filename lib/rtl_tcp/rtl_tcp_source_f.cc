@@ -184,11 +184,14 @@ rtl_tcp_source_f::rtl_tcp_source_f(size_t itemsize,
 
   d_tuner_type = RTLSDR_TUNER_UNKNOWN;
   d_tuner_gain_count = 0;
+  d_tuner_if_gain_count = 0;
 
   if (memcmp(dongle_info.magic, "RTL0", 4) == 0)
   {
     d_tuner_type = ntohl(dongle_info.tuner_type);
     d_tuner_gain_count = ntohl(dongle_info.tuner_gain_count);
+    if ( RTLSDR_TUNER_E4000 == d_tuner_type )
+      d_tuner_if_gain_count = 53;
   }
 }
 
@@ -296,5 +299,12 @@ void rtl_tcp_source_f::set_gain(int gain)
 void rtl_tcp_source_f::set_freq_corr(int ppm)
 {
   struct command cmd = { 0x05, htonl(ppm) };
+  send(d_socket, (const char*)&cmd, sizeof(cmd), 0);
+}
+
+void rtl_tcp_source_f::set_if_gain(int stage, int gain)
+{
+  uint32_t params = stage << 16 | (gain & 0xffff);
+  struct command cmd = { 0x06, htonl(params) };
   send(d_socket, (const char*)&cmd, sizeof(cmd), 0);
 }
