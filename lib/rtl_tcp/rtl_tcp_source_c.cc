@@ -60,12 +60,14 @@ rtl_tcp_source_c::rtl_tcp_source_c(const std::string &args) :
   gr_hier_block2("rtl_tcp_source_c",
                  gr_make_io_signature (0, 0, 0),
                  gr_make_io_signature (1, 1, sizeof (gr_complex))),
+  _no_tuner(false),
   _auto_gain(false),
   _if_gain(0)
 {
   std::string host = "127.0.0.1";
   unsigned short port = 1234;
   int payload_size = 16384;
+  unsigned int direct_samp = 0, offset_tune = 0;
 
   _freq = 0;
   _rate = 0;
@@ -87,6 +89,12 @@ rtl_tcp_source_c::rtl_tcp_source_c(const std::string &args) :
 
   if (dict.count("psize"))
     payload_size = boost::lexical_cast< int >( dict["psize"] );
+
+  if (dict.count("direct_samp"))
+    direct_samp = boost::lexical_cast< unsigned int >( dict["direct_samp"] );
+
+  if (dict.count("offset_tune"))
+    offset_tune = boost::lexical_cast< unsigned int >( dict["offset_tune"] );
 
   if (!host.length())
     host = "127.0.0.1";
@@ -110,6 +118,13 @@ rtl_tcp_source_c::rtl_tcp_source_c(const std::string &args) :
   }
 
   set_gain_mode(false); /* enable manual gain mode by default */
+
+  _src->set_direct_sampling(direct_samp);
+  if (direct_samp) {
+    _no_tuner = true;
+  }
+
+  _src->set_offset_tuning(offset_tune);
 
   /* rtl tcp source provides a stream of interleaved IQ floats */
   gr_deinterleave_sptr deinterleave = gr_make_deinterleave(sizeof(float));
@@ -185,6 +200,11 @@ double rtl_tcp_source_c::get_sample_rate( void )
 osmosdr::freq_range_t rtl_tcp_source_c::get_freq_range( size_t chan )
 {
   osmosdr::freq_range_t range;
+
+  if (_no_tuner) {
+    range += osmosdr::range_t( 0, double(28.8e6) ); // as far as we know
+    return range;
+  }
 
   enum rtlsdr_tuner tuner = _src->get_tuner_type();
 

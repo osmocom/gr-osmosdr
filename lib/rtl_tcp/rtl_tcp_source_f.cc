@@ -314,3 +314,15 @@ void rtl_tcp_source_f::set_agc_mode(int on)
   struct command cmd = { 0x08, htonl(on) };
   send(d_socket, (const char*)&cmd, sizeof(cmd), 0);
 }
+
+void rtl_tcp_source_f::set_direct_sampling(int on)
+{
+  struct command cmd = { 0x09, htonl(on) };
+  send(d_socket, (const char*)&cmd, sizeof(cmd), 0);
+}
+
+void rtl_tcp_source_f::set_offset_tuning(int on)
+{
+  struct command cmd = { 0x0a, htonl(on) };
+  send(d_socket, (const char*)&cmd, sizeof(cmd), 0);
+}

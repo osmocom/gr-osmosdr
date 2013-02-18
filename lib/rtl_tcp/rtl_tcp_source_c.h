@@ -78,6 +78,7 @@ public:
 
 private:
   double _freq, _rate, _gain, _corr;
+  bool _no_tuner;
   bool _auto_gain;
   double _if_gain;
   rtl_tcp_source_f_sptr _src;
