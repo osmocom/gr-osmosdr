@@ -308,3 +308,9 @@ void rtl_tcp_source_f::set_if_gain(int stage, int gain)
   struct command cmd = { 0x06, htonl(params) };
   send(d_socket, (const char*)&cmd, sizeof(cmd), 0);
 }
+
+void rtl_tcp_source_f::set_agc_mode(int on)
+{
+  struct command cmd = { 0x08, htonl(on) };
+  send(d_socket, (const char*)&cmd, sizeof(cmd), 0);
+}

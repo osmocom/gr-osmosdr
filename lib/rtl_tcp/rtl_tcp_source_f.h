@@ -112,6 +112,7 @@ public:
   void set_gain(int gain);
   void set_freq_corr(int ppm);
   void set_if_gain(int stage, int gain);
+  void set_agc_mode(int on);
 };
 
 

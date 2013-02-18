@@ -318,6 +318,7 @@ osmosdr::gain_range_t rtl_tcp_source_c::get_gain_range( const std::string & name
 bool rtl_tcp_source_c::set_gain_mode( bool automatic, size_t chan )
 {
   _src->set_gain_mode(int(!automatic));
+  _src->set_agc_mode(automatic);
 
   _auto_gain = automatic;
 
