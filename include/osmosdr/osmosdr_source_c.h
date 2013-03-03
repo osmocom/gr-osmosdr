@@ -229,6 +229,30 @@ public:
    * \return antenna the actual antenna's name
    */
   virtual std::string get_antenna( size_t chan = 0 ) = 0;
+
+  enum IQBalanceMode {
+    IQBalanceOff = 0,
+    IQBalanceManual,
+    IQBalanceAutomatic
+  };
+
+  /*!
+   * Set the RX frontend IQ balance mode.
+   *
+   * \param mode iq balance correction mode: 0 = Off, 1 = Manual, 2 = Automatic
+   * \param chan the channel index 0 to N-1
+   */
+  virtual void set_iq_balance_mode( int mode, size_t chan = 0 ) = 0;
+
+  /*!
+   * Set the RX frontend IQ balance correction.
+   * Use this to adjust the magnitude and phase of I and Q.
+   *
+   * \param correction the complex correction value
+   * \param chan the channel index 0 to N-1
+   */
+  virtual void set_iq_balance( const std::complex<double> &correction,
+                               size_t chan = 0 ) = 0;
 };
 
 #endif /* INCLUDED_OSMOSDR_SOURCE_C_H */

@@ -32,6 +32,7 @@ self.\$(id).set_sample_rate(\$sample_rate)
 \#if \$nchan() > $n
 self.\$(id).set_center_freq(\$freq$(n), $n)
 self.\$(id).set_freq_corr(\$corr$(n), $n)
+self.\$(id).set_iq_balance_mode(\$iq_balance_mode$(n), $n)
 self.\$(id).set_gain_mode(\$gain_mode$(n), $n)
 self.\$(id).set_gain(\$gain$(n), $n)
 self.\$(id).set_if_gain(\$if_gain$(n), $n)
@@ -45,6 +46,7 @@ self.\$(id).set_antenna(\$ant$(n), $n)
 	#for $n in range($max_nchan)
 	<callback>set_center_freq(\$freq$(n), $n)</callback>
 	<callback>set_freq_corr(\$corr$(n), $n)</callback>
+	<callback>set_iq_balance_mode(\$iq_balance_mode$(n), $n)</callback>
 	<callback>set_gain_mode(\$gain_mode$(n), $n)</callback>
 	<callback>set_gain(\$gain$(n), $n)</callback>
 	<callback>set_if_gain(\$if_gain$(n), $n)</callback>
@@ -149,6 +151,14 @@ The center frequency is the frequency the RF chain is tuned to.
 Freq. Corr.:
 The frequency correction factor in parts per million (ppm). Set to 0 if unknown.
 
+IQ Balance Mode:
+Controls the behavior of software IQ imbalance corrrection.
+  Off: Disable correction algorithm (pass through)
+  Manual: Keep last estimated correction when switched from Automatic to Manual
+  Automatic: Find the best solution to compensate for image signals.
+
+This functionality depends on http://cgit.osmocom.org/cgit/gr-iqbal/
+
 Gain Mode:
 Chooses between the manual (default) and automatic gain mode where appropriate.
 Currently, only rtlsdr devices support automatic gain mode.
@@ -188,6 +198,25 @@ PARAMS_TMPL = """
 		<hide>\#if \$nchan() > $n then 'none' else 'all'#</hide>
 	</param>
 	<param>
+		<name>Ch$(n): IQ Balance Mode</name>
+		<key>iq_balance_mode$(n)</key>
+		<value>0</value>
+		<type>int</type>
+		<hide>\#if \$nchan() > $n then 'none' else 'all'#</hide>
+		<option>
+			<name>Off</name>
+			<key>0</key>
+		</option>
+		<option>
+			<name>Manual</name>
+			<key>1</key>
+		</option>
+		<option>
+			<name>Automatic</name>
+			<key>2</key>
+		</option>
+	</param>
+	<param>
 		<name>Ch$(n): Gain Mode</name>
 		<key>gain_mode$(n)</key>
 		<value>0</value>
@@ -198,7 +227,7 @@ PARAMS_TMPL = """
 			<key>0</key>
 		</option>
 		<option>
-			<name>Auto</name>
+			<name>Automatic</name>
 			<key>1</key>
 		</option>
 	</param>

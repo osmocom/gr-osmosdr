@@ -22,6 +22,11 @@
 
 #include <osmosdr_source_c.h>
 
+#ifdef HAVE_IQBALANCE
+#include <iqbalance_optimize_c.h>
+#include <iqbalance_fix_cc.h>
+#endif
+
 #include <osmosdr_src_iface.h>
 
 #include <map>
@@ -57,6 +62,9 @@ public:
   std::string set_antenna( const std::string & antenna, size_t chan = 0 );
   std::string get_antenna( size_t chan = 0 );
 
+  void set_iq_balance_mode( int mode, size_t chan = 0 );
+  void set_iq_balance( const std::complex<double> &correction, size_t chan = 0 );
+
 private:
   osmosdr_source_c_impl (const std::string & args);  	// private constructor
 
@@ -72,6 +80,11 @@ private:
   std::map< size_t, double > _if_gain;
   std::map< size_t, std::string > _antenna;
   std::vector< osmosdr_src_iface * > _devs;
+#ifdef HAVE_IQBALANCE
+  std::vector< iqbalance_fix_cc * > _iq_fix;
+  std::vector< iqbalance_optimize_c * > _iq_opt;
+  std::map< size_t, std::pair<float, float> > _vals;
+#endif
 };
 
 #endif /* INCLUDED_OSMOSDR_SOURCE_C_IMPL_H */

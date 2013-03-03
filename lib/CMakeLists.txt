@@ -47,6 +47,13 @@ GR_OSMOSDR_APPEND_LIBS(
     ${GNURADIO_CORE_LIBRARIES}
 )
 
+if(GNURADIO_IQBALANCE_FOUND)
+    message(STATUS "Will build with gnuradio iqbalance support.")
+    add_definitions(-DHAVE_IQBALANCE=1)
+    include_directories(APPEND ${GNURADIO_IQBALANCE_INCLUDE_DIRS})
+    GR_OSMOSDR_APPEND_LIBS(${GNURADIO_IQBALANCE_LIBRARIES})
+endif()
+
 ########################################################################
 # Setup OsmoSDR component
 ########################################################################

@@ -173,70 +173,81 @@ osmosdr_source_c_impl::osmosdr_source_c_impl (const std::string &args)
 //    BOOST_FOREACH( dict_t::value_type &entry, dict )
 //      std::cerr << "'" << entry.first << "' = '" << entry.second << "'" << std::endl;
 
+    osmosdr_src_iface *iface = NULL;
+    gr_basic_block_sptr block;
+
 #ifdef ENABLE_OSMOSDR
     if ( dict.count("osmosdr") ) {
       osmosdr_src_c_sptr src = osmosdr_make_src_c( arg );
-
-      for (size_t i = 0; i < src->get_num_channels(); i++)
-        connect(src, i, self(), channel++);
-
-      _devs.push_back( src.get() );
+      block = src; iface = src.get();
     }
 #endif
 
 #ifdef ENABLE_FCD
     if ( dict.count("fcd") ) {
       fcd_source_sptr src = make_fcd_source( arg );
-      connect(src, 0, self(), channel++);
-      _devs.push_back( src.get() );
+      block = src; iface = src.get();
     }
 #endif
 
 #ifdef ENABLE_FILE
     if ( dict.count("file") ) {
       file_source_c_sptr src = make_file_source_c( arg );
-      connect(src, 0, self(), channel++);
-      _devs.push_back( src.get() );
+      block = src; iface = src.get();
     }
 #endif
 
 #ifdef ENABLE_RTL
     if ( dict.count("rtl") ) {
       rtl_source_c_sptr src = make_rtl_source_c( arg );
-      connect(src, 0, self(), channel++);
-      _devs.push_back( src.get() );
+      block = src; iface = src.get();
     }
 #endif
 
 #ifdef ENABLE_RTL_TCP
     if ( dict.count("rtl_tcp") ) {
       rtl_tcp_source_c_sptr src = make_rtl_tcp_source_c( arg );
-      connect(src, 0, self(), channel++);
-      _devs.push_back( src.get() );
+      block = src; iface = src.get();
     }
 #endif
 
 #ifdef ENABLE_UHD
     if ( dict.count("uhd") ) {
       uhd_source_c_sptr src = make_uhd_source_c( arg );
-
-      for (size_t i = 0; i < src->get_num_channels(); i++)
-        connect(src, i, self(), channel++);
-
-      _devs.push_back( src.get() );
+      block = src; iface = src.get();
     }
 #endif
 
 #ifdef ENABLE_MIRI
     if ( dict.count("miri") ) {
       miri_source_c_sptr src = make_miri_source_c( arg );
-
-      for (size_t i = 0; i < src->get_num_channels(); i++)
-        connect(src, i, self(), channel++);
-
-      _devs.push_back( src.get() );
+      block = src; iface = src.get();
     }
 #endif
+
+    if ( iface != NULL && long(block.get()) != 0 ) {
+      _devs.push_back( iface );
+
+      for (size_t i = 0; i < iface->get_num_channels(); i++) {
+#ifdef HAVE_IQBALANCE
+        iqbalance_optimize_c_sptr iq_opt = iqbalance_make_optimize_c( 0 );
+        iqbalance_fix_cc_sptr iq_fix = iqbalance_make_fix_cc();
+
+        connect(block, i, iq_fix, 0);
+        connect(iq_fix, 0, self(), channel++);
+
+        connect(block, i, iq_opt, 0);
+        msg_connect(iq_opt, "iqbal_corr", iq_fix, "iqbal_corr");
+
+        _iq_opt.push_back( iq_opt.get() );
+        _iq_fix.push_back( iq_fix.get() );
+#else
+        connect(block, i, self(), channel++);
+#endif
+      }
+    } else if ( (iface != NULL) || (long(block.get()) != 0) )
+      throw std::runtime_error("Eitner iface or block are NULL.");
+
   }
 
   if (!_devs.size())
@@ -304,6 +315,24 @@ double osmosdr_source_c_impl::set_sample_rate(double rate)
 #endif
     BOOST_FOREACH( osmosdr_src_iface *dev, _devs )
       sample_rate = dev->set_sample_rate(rate);
+
+#ifdef HAVE_IQBALANCE
+    size_t channel = 0;
+    BOOST_FOREACH( osmosdr_src_iface *dev, _devs ) {
+      for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++) {
+        if ( channel < _iq_opt.size() ) {
+          iqbalance_optimize_c *opt = _iq_opt[channel];
+
+          if ( opt->period() > 0 ) { /* optimize is enabled */
+            opt->set_period( dev->get_sample_rate() / 5 );
+            opt->reset();
+          }
+        }
+
+        channel++;
+      }
+    }
+#endif
 
     _sample_rate = sample_rate;
   }
@@ -541,4 +570,62 @@ std::string osmosdr_source_c_impl::get_antenna( size_t chan )
         return dev->get_antenna( dev_chan );
 
   return "";
+}
+
+void osmosdr_source_c_impl::set_iq_balance_mode( int mode, size_t chan )
+{
+#ifdef HAVE_IQBALANCE
+  size_t channel = 0;
+  BOOST_FOREACH( osmosdr_src_iface *dev, _devs ) {
+    for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++) {
+      if ( chan == channel++ ) {
+        if ( chan < _iq_opt.size() && chan < _iq_fix.size() ) {
+          iqbalance_optimize_c *opt = _iq_opt[chan];
+          iqbalance_fix_cc *fix = _iq_fix[chan];
+
+          if ( IQBalanceOff == mode  ) {
+            opt->set_period( 0 );
+            /* store current values in order to be able to restore them later */
+            _vals[ chan ] = std::pair< float, float >( fix->mag(), fix->phase() );
+            fix->set_mag( 0.0f );
+            fix->set_phase( 0.0f );
+          } else if ( IQBalanceManual == mode ) {
+            if ( opt->period() == 0 ) { /* transition from Off to Manual */
+              /* restore previous values */
+              std::pair< float, float > val = _vals[ chan ];
+              fix->set_mag( val.first );
+              fix->set_phase( val.second );
+            }
+            opt->set_period( 0 );
+          } else if ( IQBalanceAutomatic == mode ) {
+            opt->set_period( dev->get_sample_rate() / 5 );
+            opt->reset();
+          }
+        }
+      }
+    }
+  }
+#endif
+}
+
+void osmosdr_source_c_impl::set_iq_balance( const std::complex<double> &correction, size_t chan )
+{
+#ifdef HAVE_IQBALANCE
+  size_t channel = 0;
+  BOOST_FOREACH( osmosdr_src_iface *dev, _devs ) {
+    for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++) {
+      if ( chan == channel++ ) {
+        if ( chan < _iq_opt.size() && chan < _iq_fix.size() ) {
+          iqbalance_optimize_c *opt = _iq_opt[chan];
+          iqbalance_fix_cc *fix = _iq_fix[chan];
+
+          if ( opt->period() == 0 ) { /* automatic optimization desabled */
+            fix->set_mag( correction.real() );
+            fix->set_phase( correction.imag() );
+          }
+        }
+      }
+    }
+  }
+#endif
 }
