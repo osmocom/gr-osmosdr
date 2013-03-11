@@ -24,7 +24,8 @@
  * file included in your .cc file.
  */
 #ifdef HAVE_CONFIG_H
-#include "config.h"
+// FIXME: make it config.h again when they've fixed gnuradio master
+#include "gr_osmosdr_config.h"
 #endif
 
 #include <osmosdr_source_c_impl.h>
@@ -113,9 +114,9 @@ osmosdr_source_c_impl::osmosdr_source_c_impl (const std::string &args)
   dev_types.push_back("miri");
 #endif
 
-  std::cerr << "gr-osmosdr ("
-            << GR_OSMOSDR_VERSION << " / " << GR_OSMOSDR_LIBVER
-            << ") supported device types:" << std::endl;
+  std::cerr << "gr-osmosdr "
+            << "(" << GR_OSMOSDR_VERSION << " / " << GR_OSMOSDR_LIBVER << ") "
+            << "supported device types:" << std::endl;
   std::cerr << "    " << std::flush;
   BOOST_FOREACH(std::string dev_type, dev_types)
     std::cerr << dev_type << " ";

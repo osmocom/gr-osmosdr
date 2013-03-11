@@ -131,7 +131,7 @@ ADD_DEFINITIONS(-DHAVE_CONFIG_H=1)
 include_directories(APPEND ${CMAKE_CURRENT_BINARY_DIR})
 CONFIGURE_FILE(
     ${CMAKE_CURRENT_SOURCE_DIR}/config.h.in
-    ${CMAKE_CURRENT_BINARY_DIR}/config.h
+    ${CMAKE_CURRENT_BINARY_DIR}/gr_osmosdr_config.h
 @ONLY)
 
 ########################################################################
