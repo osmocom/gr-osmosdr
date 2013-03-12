@@ -21,7 +21,10 @@
 # This file included, use CMake directory variables
 ########################################################################
 
-include_directories(APPEND ${CMAKE_CURRENT_SOURCE_DIR} ${LIBRTLSDR_INCLUDE_DIR})
+include_directories(
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${LIBRTLSDR_INCLUDE_DIR}
+)
 
 set(rtl_srcs
     ${CMAKE_CURRENT_SOURCE_DIR}/rtl_source_c.cc

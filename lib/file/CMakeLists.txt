@@ -21,7 +21,9 @@
 # This file included, use CMake directory variables
 ########################################################################
 
-include_directories(APPEND ${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(
+    ${CMAKE_CURRENT_SOURCE_DIR}
+)
 
 set(file_srcs
     ${CMAKE_CURRENT_SOURCE_DIR}/file_source_c.cc
