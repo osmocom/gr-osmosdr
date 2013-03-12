@@ -25,7 +25,7 @@
  * file included in your .cc file.
  */
 #ifdef HAVE_CONFIG_H
-#include "config.h"
+#include "gr_osmosdr_config.h"
 #endif
 
 #include "miri_source_c.h"

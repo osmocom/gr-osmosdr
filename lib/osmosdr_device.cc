@@ -27,7 +27,7 @@
 #include <sstream>
 
 #ifdef HAVE_CONFIG_H
-#include "config.h"
+#include "gr_osmosdr_config.h"
 #endif
 /*
 #define ENABLE_OSMOSDR

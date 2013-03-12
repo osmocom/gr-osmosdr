@@ -24,7 +24,7 @@
  * file included in your .cc file.
  */
 #ifdef HAVE_CONFIG_H
-#include "config.h"
+#include "gr_osmosdr_config.h"
 #endif
 
 #include "osmosdr_snk_c.h"
