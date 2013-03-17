@@ -18,7 +18,7 @@
  * Boston, MA 02110-1301, USA.
  */
 
-#include <osmosdr_device.h>
+#include <osmosdr/osmosdr_device.h>
 #include <stdexcept>
 #include <boost/foreach.hpp>
 #include <boost/format.hpp>

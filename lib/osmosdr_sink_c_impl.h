@@ -20,7 +20,7 @@
 #ifndef INCLUDED_OSMOSDR_SINK_C_IMPL_H
 #define INCLUDED_OSMOSDR_SINK_C_IMPL_H
 
-#include <osmosdr_sink_c.h>
+#include <osmosdr/osmosdr_sink_c.h>
 
 class osmosdr_sink_c_impl : public osmosdr_sink_c
 {

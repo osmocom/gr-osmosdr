@@ -21,7 +21,7 @@
 #ifndef OSMOSDR_SRC_IFACE_H
 #define OSMOSDR_SRC_IFACE_H
 
-#include <osmosdr_ranges.h>
+#include <osmosdr/osmosdr_ranges.h>
 #include <gr_basic_block.h>
 
 class osmosdr_src_iface;

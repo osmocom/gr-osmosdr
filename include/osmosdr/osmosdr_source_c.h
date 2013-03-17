@@ -20,9 +20,9 @@
 #ifndef INCLUDED_OSMOSDR_SOURCE_C_H
 #define INCLUDED_OSMOSDR_SOURCE_C_H
 
-#include <osmosdr_api.h>
-#include <osmosdr_ranges.h>
-#include <gr_hier_block2.h>
+#include <osmosdr/osmosdr_api.h>
+#include <osmosdr/osmosdr_ranges.h>
+#include <gnuradio/gr_hier_block2.h>
 
 class osmosdr_source_c;
 

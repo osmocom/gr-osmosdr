@@ -3,7 +3,7 @@ PKG_CHECK_MODULES(PC_GNURADIO_CORE gnuradio-core)
 
 FIND_PATH(
     GNURADIO_CORE_INCLUDE_DIRS
-    NAMES gr_random.h
+    NAMES gr_core_api.h
     HINTS $ENV{GNURADIO_CORE_DIR}/include/gnuradio
         ${PC_GNURADIO_CORE_INCLUDEDIR}
         ${CMAKE_INSTALL_PREFIX}/include/gnuradio

@@ -21,8 +21,8 @@
 #ifndef INCLUDED_OSMOSDR_DEVICE_H
 #define INCLUDED_OSMOSDR_DEVICE_H
 
-#include <osmosdr_api.h>
-#include <osmosdr_pimpl.h>
+#include <osmosdr/osmosdr_api.h>
+#include <osmosdr/osmosdr_pimpl.h>
 #include <boost/noncopyable.hpp>
 #include <boost/lexical_cast.hpp>
 #include <stdexcept>

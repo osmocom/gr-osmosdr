@@ -20,7 +20,7 @@
 #ifndef INCLUDED_OSMOSDR_SOURCE_C_IMPL_H
 #define INCLUDED_OSMOSDR_SOURCE_C_IMPL_H
 
-#include <osmosdr_source_c.h>
+#include <osmosdr/osmosdr_source_c.h>
 
 #ifdef HAVE_IQBALANCE
 #include <iqbalance_optimize_c.h>

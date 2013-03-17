@@ -20,8 +20,8 @@
 #ifndef INCLUDED_OSMOSDR_SINK_C_H
 #define INCLUDED_OSMOSDR_SINK_C_H
 
-#include <osmosdr_api.h>
-#include <gr_hier_block2.h>
+#include <osmosdr/osmosdr_api.h>
+#include <gnuradio/gr_hier_block2.h>
 
 class osmosdr_sink_c;
 

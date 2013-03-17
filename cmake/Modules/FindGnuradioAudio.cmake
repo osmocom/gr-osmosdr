@@ -3,11 +3,11 @@ PKG_CHECK_MODULES(PC_GNURADIO_AUDIO gnuradio-audio)
 
 FIND_PATH(
     GNURADIO_AUDIO_INCLUDE_DIRS
-    NAMES gr_audio_api.h
-    HINTS $ENV{GNURADIO_AUDIO_DIR}/include/gnuradio
+    NAMES gnuradio/gr_audio_api.h
+    HINTS $ENV{GNURADIO_AUDIO_DIR}/include
         ${PC_GNURADIO_AUDIO_INCLUDEDIR}
-    PATHS /usr/local/include/gnuradio
-          /usr/include/gnuradio
+    PATHS /usr/local/include
+          /usr/include
 )
 
 FIND_LIBRARY(

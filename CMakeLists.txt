@@ -129,7 +129,7 @@ endif()
 # Setup the include and linker paths
 ########################################################################
 include_directories(
-    ${CMAKE_SOURCE_DIR}/include/osmosdr
+    ${CMAKE_SOURCE_DIR}/include
     ${CMAKE_SOURCE_DIR}/lib
     ${Boost_INCLUDE_DIRS}
     ${GRUEL_INCLUDE_DIRS}
