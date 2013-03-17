@@ -140,17 +140,4 @@ CONFIGURE_FILE(
 ADD_LIBRARY(gnuradio-osmosdr SHARED ${gr_osmosdr_srcs})
 TARGET_LINK_LIBRARIES(gnuradio-osmosdr ${gr_osmosdr_libs})
 SET_TARGET_PROPERTIES(gnuradio-osmosdr PROPERTIES DEFINE_SYMBOL "gnuradio_osmosdr_EXPORTS")
-SET_TARGET_PROPERTIES(gnuradio-osmosdr PROPERTIES SOVERSION "${MAJOR_VERSION}")
-SET_TARGET_PROPERTIES(gnuradio-osmosdr PROPERTIES VERSION "${MAJOR_VERSION}.${MINOR_VERSION}")
-IF(DEFINED GR_OSMOSDR_OUTPUT_NAME)
-    SET_TARGET_PROPERTIES(gnuradio-osmosdr PROPERTIES OUTPUT_NAME ${GR_OSMOSDR_OUTPUT_NAME})
-ENDIF(DEFINED GR_OSMOSDR_OUTPUT_NAME)
-
-########################################################################
-# Install libgnuradio-osmosdr library
-########################################################################
-INSTALL(TARGETS gnuradio-osmosdr
-    LIBRARY DESTINATION lib${LIB_SUFFIX} # .so/.dylib file
-    ARCHIVE DESTINATION lib${LIB_SUFFIX} # .lib file
-    RUNTIME DESTINATION bin              # .dll file
-)
+GR_LIBRARY_FOO(gnuradio-osmosdr)
