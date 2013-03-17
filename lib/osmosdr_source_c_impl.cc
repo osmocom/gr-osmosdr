@@ -31,6 +31,7 @@
 #include <gr_io_signature.h>
 #include <gr_noise_source_c.h>
 #include <gr_throttle.h>
+#include <gnuradio/gr_constants.h>
 
 #ifdef ENABLE_OSMOSDR
 #include <osmosdr_src_c.h>
@@ -113,10 +114,10 @@ osmosdr_source_c_impl::osmosdr_source_c_impl (const std::string &args)
   dev_types.push_back("miri");
 #endif
 
-  std::cerr << "gr-osmosdr ("
-            << GR_OSMOSDR_VERSION << " / " << GR_OSMOSDR_LIBVER
-            << ") supported device types:" << std::endl;
-  std::cerr << "    " << std::flush;
+  std::cerr << "gr-osmosdr "
+            << GR_OSMOSDR_VERSION " (" GR_OSMOSDR_LIBVER ") "
+            << "gnuradio " << gr_version() << std::endl;
+  std::cerr << "built-in device types: ";
   BOOST_FOREACH(std::string dev_type, dev_types)
     std::cerr << dev_type << " ";
   std::cerr << std::endl << std::flush;
