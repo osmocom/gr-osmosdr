@@ -22,6 +22,7 @@
 ########################################################################
 INCLUDE(GrPlatform) #define LIB_SUFFIX
 INCLUDE(GrMiscUtils)
+INCLUDE(GrComponent)
 
 ########################################################################
 # Helpful Macros
@@ -47,19 +48,20 @@ GR_OSMOSDR_APPEND_LIBS(
     ${GNURADIO_CORE_LIBRARIES}
 )
 
-if(GNURADIO_IQBALANCE_FOUND)
-    message(STATUS "Will build with gnuradio iqbalance support.")
-    add_definitions(-DHAVE_IQBALANCE=1)
-    include_directories(${GNURADIO_IQBALANCE_INCLUDE_DIRS})
-    GR_OSMOSDR_APPEND_LIBS(${GNURADIO_IQBALANCE_LIBRARIES})
-endif()
+########################################################################
+# Setup IQBalance component
+########################################################################
+GR_REGISTER_COMPONENT("Osmocom IQ Imbalance Correction" ENABLE_IQBALANCE GNURADIO_IQBALANCE_FOUND)
+if(ENABLE_OSMOSDR)
+add_definitions(-DHAVE_IQBALANCE=1)
+include_directories(${GNURADIO_IQBALANCE_INCLUDE_DIRS})
+GR_OSMOSDR_APPEND_LIBS(${GNURADIO_IQBALANCE_LIBRARIES})
+endif(ENABLE_OSMOSDR)
 
 ########################################################################
 # Setup OsmoSDR component
 ########################################################################
-include(GrComponent)
 GR_REGISTER_COMPONENT("sysmocom OsmoSDR" ENABLE_OSMOSDR LIBOSMOSDR_FOUND)
-
 if(ENABLE_OSMOSDR)
 GR_INCLUDE_SUBDIRECTORY(osmosdr)
 endif(ENABLE_OSMOSDR)
@@ -67,9 +69,7 @@ endif(ENABLE_OSMOSDR)
 ########################################################################
 # Setup FCD component
 ########################################################################
-include(GrComponent)
 GR_REGISTER_COMPONENT("FunCube Dongle" ENABLE_FCD GNURADIO_FCD_FOUND)
-
 if(ENABLE_FCD)
 GR_INCLUDE_SUBDIRECTORY(fcd)
 endif(ENABLE_FCD)
@@ -77,9 +77,7 @@ endif(ENABLE_FCD)
 ########################################################################
 # Setup File component
 ########################################################################
-include(GrComponent)
 GR_REGISTER_COMPONENT("IQ File Source" ENABLE_FILE GNURADIO_CORE_FOUND)
-
 if(ENABLE_FILE)
 GR_INCLUDE_SUBDIRECTORY(file)
 endif(ENABLE_FILE)
@@ -87,9 +85,7 @@ endif(ENABLE_FILE)
 ########################################################################
 # Setup RTL component
 ########################################################################
-include(GrComponent)
 GR_REGISTER_COMPONENT("Osmocom RTLSDR" ENABLE_RTL LIBRTLSDR_FOUND)
-
 if(ENABLE_RTL)
 GR_INCLUDE_SUBDIRECTORY(rtl)
 endif(ENABLE_RTL)
@@ -97,9 +93,7 @@ endif(ENABLE_RTL)
 ########################################################################
 # Setup RTL_TCP component
 ########################################################################
-include(GrComponent)
 GR_REGISTER_COMPONENT("RTLSDR TCP Client" ENABLE_RTL_TCP GNURADIO_CORE_FOUND)
-
 if(ENABLE_RTL_TCP)
 GR_INCLUDE_SUBDIRECTORY(rtl_tcp)
 endif(ENABLE_RTL_TCP)
@@ -107,9 +101,7 @@ endif(ENABLE_RTL_TCP)
 ########################################################################
 # Setup UHD component
 ########################################################################
-include(GrComponent)
 GR_REGISTER_COMPONENT("Ettus USRP Devices" ENABLE_UHD UHD_FOUND GNURADIO_UHD_FOUND)
-
 if(ENABLE_UHD)
 GR_INCLUDE_SUBDIRECTORY(uhd)
 endif(ENABLE_UHD)
@@ -117,9 +109,7 @@ endif(ENABLE_UHD)
 ########################################################################
 # Setup MiriSDR component
 ########################################################################
-include(GrComponent)
 GR_REGISTER_COMPONENT("Osmocom MiriSDR" ENABLE_MIRI LIBMIRISDR_FOUND)
-
 if(ENABLE_MIRI)
 GR_INCLUDE_SUBDIRECTORY(miri)
 endif(ENABLE_MIRI)
@@ -127,9 +117,7 @@ endif(ENABLE_MIRI)
 ########################################################################
 # Setup HackRF component
 ########################################################################
-include(GrComponent)
 GR_REGISTER_COMPONENT("HackRF Jawbreaker" ENABLE_HACKRF LIBHACKRF_FOUND)
-
 if(ENABLE_HACKRF)
 GR_INCLUDE_SUBDIRECTORY(hackrf)
 endif(ENABLE_HACKRF)
