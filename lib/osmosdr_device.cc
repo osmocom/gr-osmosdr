@@ -29,15 +29,7 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-/*
-#define ENABLE_OSMOSDR
-#define ENABLE_FCD
-#define ENABLE_FILE
-#define ENABLE_RTL
-#define ENABLE_RTL_TCP
-#define ENABLE_UHD
-#define ENABLE_MIRI
-*/
+
 #ifdef ENABLE_OSMOSDR
 #include <osmosdr_src_c.h>
 #endif
@@ -64,6 +56,10 @@
 
 #ifdef ENABLE_MIRI
 #include <miri_source_c.h>
+#endif
+
+#ifdef ENABLE_HACKRF
+#include <hackrf_source_c.h>
 #endif
 
 #include "osmosdr_arg_helpers.h"
@@ -144,6 +140,10 @@ devices_t device::find(const device_t &hint)
 #ifdef ENABLE_MIRI
   BOOST_FOREACH( std::string dev, miri_source_c::get_devices() )
     devices.push_back( device_t(dev) );
+#endif
+#ifdef ENABLE_HACKRF
+  BOOST_FOREACH( std::string dev, hackrf_source_c::get_devices() )
+  devices.push_back( device_t(dev) );
 #endif
 
   return devices;

@@ -116,13 +116,14 @@ find_package(GnuradioFCD)
 find_package(LibOsmoSDR)
 find_package(LibRTLSDR)
 find_package(LibMiriSDR)
+find_package(LibHackRF)
 
 if(NOT GRUEL_FOUND)
-    message(FATAL_ERROR "Gruel required to compile osmosdr")
+    message(FATAL_ERROR "Gruel required to compile gnuradio-osmosdr")
 endif()
 
 if(NOT GNURADIO_CORE_FOUND)
-    message(FATAL_ERROR "GnuRadio Core required to compile osmosdr")
+    message(FATAL_ERROR "GnuRadio Core required to compile gnuradio-osmosdr")
 endif()
 
 ########################################################################

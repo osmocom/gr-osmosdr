@@ -108,7 +108,7 @@ endif(ENABLE_RTL_TCP)
 # Setup UHD component
 ########################################################################
 include(GrComponent)
-GR_REGISTER_COMPONENT("Ettus UHD" ENABLE_UHD UHD_FOUND GNURADIO_UHD_FOUND)
+GR_REGISTER_COMPONENT("Ettus USRP Devices" ENABLE_UHD UHD_FOUND GNURADIO_UHD_FOUND)
 
 if(ENABLE_UHD)
 GR_INCLUDE_SUBDIRECTORY(uhd)
@@ -123,6 +123,16 @@ GR_REGISTER_COMPONENT("Osmocom MiriSDR" ENABLE_MIRI LIBMIRISDR_FOUND)
 if(ENABLE_MIRI)
 GR_INCLUDE_SUBDIRECTORY(miri)
 endif(ENABLE_MIRI)
+
+########################################################################
+# Setup HackRF component
+########################################################################
+include(GrComponent)
+GR_REGISTER_COMPONENT("HackRF Jawbreaker" ENABLE_HACKRF LIBHACKRF_FOUND)
+
+if(ENABLE_HACKRF)
+GR_INCLUDE_SUBDIRECTORY(hackrf)
+endif(ENABLE_HACKRF)
 
 ########################################################################
 # Setup configuration file

@@ -108,6 +108,7 @@ While primarily being developed for the OsmoSDR hardware, this block as well sup
 
  * FunCube Dongle through libgnuradio-fcd
  * OSMOCOM OsmoSDR Devices through libosmosdr
+ * Great Scott Gadgets HackRF through libhackrf
  * Ettus USRP Devices through Ettus UHD library
  * RTL2832U based DVB-T dongles through librtlsdr
  * RTL-TCP spectrum server (see librtlsdr project)
@@ -129,6 +130,7 @@ Optional arguments are placed into [] brackets, remove the brackets before using
 Lines ending with ... mean it's possible to bind devices together by specifying multiple device arguments separated with a space.
 
   fcd=0
+  hackrf=0
   miri=0[,buffers=32] ...
   rtl=serial_number ...
   rtl=0[,rtl_xtal=28.8e6][,tuner_xtal=28.8e6] ...

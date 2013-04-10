@@ -61,6 +61,10 @@
 #include <miri_source_c.h>
 #endif
 
+#ifdef ENABLE_HACKRF
+#include <hackrf_source_c.h>
+#endif
+
 #include <osmosdr_arg_helpers.h>
 
 /* This avoids throws in ctor of gr_hier_block2, as gnuradio is unable to deal
@@ -113,6 +117,9 @@ osmosdr_source_c_impl::osmosdr_source_c_impl (const std::string &args)
 #ifdef ENABLE_MIRI
   dev_types.push_back("miri");
 #endif
+#ifdef ENABLE_HACKRF
+  dev_types.push_back("hackrf");
+#endif
 
   std::cerr << "gr-osmosdr "
             << GR_OSMOSDR_VERSION " (" GR_OSMOSDR_LIBVER ") "
@@ -154,6 +161,10 @@ osmosdr_source_c_impl::osmosdr_source_c_impl (const std::string &args)
 #ifdef ENABLE_MIRI
   BOOST_FOREACH( std::string dev, miri_source_c::get_devices() )
     dev_list.push_back( dev );
+#endif
+#ifdef ENABLE_HACKRF
+  BOOST_FOREACH( std::string dev, hackrf_source_c::get_devices() )
+  dev_list.push_back( dev );
 #endif
 //  std::cerr << std::endl;
 //  BOOST_FOREACH( std::string dev, dev_list )
@@ -222,6 +233,13 @@ osmosdr_source_c_impl::osmosdr_source_c_impl (const std::string &args)
 #ifdef ENABLE_MIRI
     if ( dict.count("miri") ) {
       miri_source_c_sptr src = make_miri_source_c( arg );
+      block = src; iface = src.get();
+    }
+#endif
+
+#ifdef ENABLE_HACKRF
+    if ( dict.count("hackrf") ) {
+      hackrf_source_c_sptr src = make_hackrf_source_c( arg );
       block = src; iface = src.get();
     }
 #endif

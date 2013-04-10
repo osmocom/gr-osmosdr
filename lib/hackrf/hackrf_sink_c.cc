@@ -1,6 +1,6 @@
 /* -*- c++ -*- */
 /*
- * Copyright 2012 Dimitri Stolnikov <horiz0n@gmx.net>
+ * Copyright 2013 Dimitri Stolnikov <horiz0n@gmx.net>
  *
  * GNU Radio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,17 +27,17 @@
 #include "config.h"
 #endif
 
-#include <osmosdr_sink_c_impl.h>
-#include <gr_io_signature.h>
+#include "hackrf_sink_c.h"
+#include <gnuradio/gr_io_signature.h>
 
 /*
- * Create a new instance of osmosdr_sink_c_impl and return
+ * Create a new instance of hackrf_sink_c and return
  * a boost shared_ptr.  This is effectively the public constructor.
  */
-osmosdr_sink_c_sptr
-osmosdr_make_sink_c (const std::string &args)
+hackrf_sink_c_sptr
+make_hackrf_sink_c (const std::string &args)
 {
-  return gnuradio::get_initial_sptr(new osmosdr_sink_c_impl (args));
+  return gnuradio::get_initial_sptr(new hackrf_sink_c (args));
 }
 
 /*
@@ -57,10 +57,18 @@ static const int MAX_OUT = 0;	// maximum number of output streams
 /*
  * The private constructor
  */
-osmosdr_sink_c_impl::osmosdr_sink_c_impl (const std::string &args)
-  : gr_hier_block2 ("osmosdr_sink_c_impl",
+hackrf_sink_c::hackrf_sink_c (const std::string &args)
+  : gr_sync_block ("hackrf_sink_c",
         gr_make_io_signature (MIN_IN, MAX_IN, sizeof (gr_complex)),
         gr_make_io_signature (MIN_OUT, MAX_OUT, sizeof (gr_complex)))
+{
+
+}
+
+/*
+ * Our virtual destructor.
+ */
+hackrf_sink_c::~hackrf_sink_c ()
 {
 
 }
