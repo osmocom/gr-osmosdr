@@ -121,16 +121,8 @@ devices_t device::find(const device_t &hint)
   BOOST_FOREACH( std::string dev, fcd_source::get_devices() )
     devices.push_back( device_t(dev) );
 #endif
-#ifdef ENABLE_FILE
-  BOOST_FOREACH( std::string dev, file_source_c::get_devices() )
-    devices.push_back( device_t(dev) );
-#endif
 #ifdef ENABLE_RTL
   BOOST_FOREACH( std::string dev, rtl_source_c::get_devices() )
-    devices.push_back( device_t(dev) );
-#endif
-#ifdef ENABLE_RTL_TCP
-  BOOST_FOREACH( std::string dev, rtl_tcp_source_c::get_devices() )
     devices.push_back( device_t(dev) );
 #endif
 #ifdef ENABLE_UHD
@@ -144,6 +136,19 @@ devices_t device::find(const device_t &hint)
 #ifdef ENABLE_HACKRF
   BOOST_FOREACH( std::string dev, hackrf_source_c::get_devices() )
   devices.push_back( device_t(dev) );
+#endif
+
+  /* software-only sources should be appended at the very end,
+   * hopefully resulting in hardware sources to be shown first
+   * in a graphical interface etc... */
+
+#ifdef ENABLE_RTL_TCP
+  BOOST_FOREACH( std::string dev, rtl_tcp_source_c::get_devices() )
+    devices.push_back( device_t(dev) );
+#endif
+#ifdef ENABLE_FILE
+  BOOST_FOREACH( std::string dev, file_source_c::get_devices() )
+    devices.push_back( device_t(dev) );
 #endif
 
   return devices;
