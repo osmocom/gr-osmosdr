@@ -107,6 +107,7 @@ private:
   double get_gain( const std::string & name, size_t chan = 0 );
 
   double set_if_gain( double gain, size_t chan = 0 );
+  double set_bb_gain( double gain, size_t chan = 0 );
 
   std::vector< std::string > get_antennas( size_t chan = 0 );
   std::string set_antenna( const std::string & antenna, size_t chan = 0 );
@@ -145,8 +146,9 @@ private:
   double _center_freq;
   double _freq_corr;
   bool _auto_gain;
-  double _gain;
-  double _if_gain;
+  double _amp_gain;
+  double _lna_gain;
+  double _vga_gain;
   unsigned int _skipped;
   double _bandwidth;
 };

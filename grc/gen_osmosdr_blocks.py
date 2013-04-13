@@ -21,12 +21,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 MAIN_TMPL = """\
 <?xml version="1.0"?>
 <block>
-	<name>$(title) $sourk.title()</name>
-	<key>$(prefix)_$(sourk)_c</key>
-	<category>Sources</category>
-	<throttle>1</throttle>
-	<import>import osmosdr</import>
-	<make>osmosdr.$(sourk)_c( args="nchan=" + str(\$nchan) + " " + \$args )
+  <name>$(title) $sourk.title()</name>
+  <key>$(prefix)_$(sourk)_c</key>
+  <category>Sources</category>
+  <throttle>1</throttle>
+  <import>import osmosdr</import>
+  <make>osmosdr.$(sourk)_c( args="nchan=" + str(\$nchan) + " " + \$args )
 self.\$(id).set_sample_rate(\$sample_rate)
 #for $n in range($max_nchan)
 \#if \$nchan() > $n
@@ -36,72 +36,74 @@ self.\$(id).set_iq_balance_mode(\$iq_balance_mode$(n), $n)
 self.\$(id).set_gain_mode(\$gain_mode$(n), $n)
 self.\$(id).set_gain(\$gain$(n), $n)
 self.\$(id).set_if_gain(\$if_gain$(n), $n)
+self.\$(id).set_bb_gain(\$bb_gain$(n), $n)
 \#if \$ant$(n)()
 self.\$(id).set_antenna(\$ant$(n), $n)
 \#end if
 \#end if
 #end for
-	</make>
-	<callback>set_sample_rate(\$sample_rate)</callback>
-	#for $n in range($max_nchan)
-	<callback>set_center_freq(\$freq$(n), $n)</callback>
-	<callback>set_freq_corr(\$corr$(n), $n)</callback>
-	<callback>set_iq_balance_mode(\$iq_balance_mode$(n), $n)</callback>
-	<callback>set_gain_mode(\$gain_mode$(n), $n)</callback>
-	<callback>set_gain(\$gain$(n), $n)</callback>
-	<callback>set_if_gain(\$if_gain$(n), $n)</callback>
-	<callback>set_antenna(\$ant$(n), $n)</callback>
-	#end for
-	<param>
-		<name>$(dir.title())put Type</name>
-		<key>type</key>
-		<type>enum</type>
-		<option>
-			<name>Complex float32</name>
-			<key>fc32</key>
-			<opt>type:fc32</opt>
-		</option>
-	</param>
-	<param>
-		<name>Device Arguments</name>
-		<key>args</key>
-		<value></value>
-		<type>string</type>
-		<hide>
-			\#if \$args()
-				none
-			\#else
-				part
-			\#end if
-		</hide>
-	</param>
-	<param>
-		<name>Num Channels</name>
-		<key>nchan</key>
-		<value>1</value>
-		<type>int</type>
-		#for $n in range(1, $max_nchan+1)
-		<option>
-			<name>$(n)</name>
-			<key>$n</key>
-		</option>
-		#end for
-	</param>
-	<param>
-		<name>Sample Rate (sps)</name>
-		<key>sample_rate</key>
-		<value>samp_rate</value>
-		<type>real</type>
-	</param>
-	$params
-	<check>$max_nchan >= \$nchan</check>
-	<check>\$nchan > 0</check>
-	<$sourk>
-		<name>$dir</name>
-		<type>\$type.type</type>
-		<nports>\$nchan</nports>
-	</$sourk>
-	<doc>
+  </make>
+  <callback>set_sample_rate(\$sample_rate)</callback>
+  #for $n in range($max_nchan)
+  <callback>set_center_freq(\$freq$(n), $n)</callback>
+  <callback>set_freq_corr(\$corr$(n), $n)</callback>
+  <callback>set_iq_balance_mode(\$iq_balance_mode$(n), $n)</callback>
+  <callback>set_gain_mode(\$gain_mode$(n), $n)</callback>
+  <callback>set_gain(\$gain$(n), $n)</callback>
+  <callback>set_if_gain(\$if_gain$(n), $n)</callback>
+  <callback>set_bb_gain(\$bb_gain$(n), $n)</callback>
+  <callback>set_antenna(\$ant$(n), $n)</callback>
+  #end for
+  <param>
+    <name>$(dir.title())put Type</name>
+    <key>type</key>
+    <type>enum</type>
+    <option>
+      <name>Complex float32</name>
+      <key>fc32</key>
+      <opt>type:fc32</opt>
+    </option>
+  </param>
+  <param>
+    <name>Device Arguments</name>
+    <key>args</key>
+    <value></value>
+    <type>string</type>
+    <hide>
+      \#if \$args()
+        none
+      \#else
+        part
+      \#end if
+    </hide>
+  </param>
+  <param>
+    <name>Num Channels</name>
+    <key>nchan</key>
+    <value>1</value>
+    <type>int</type>
+    #for $n in range(1, $max_nchan+1)
+    <option>
+      <name>$(n)</name>
+      <key>$n</key>
+    </option>
+    #end for
+  </param>
+  <param>
+    <name>Sample Rate (sps)</name>
+    <key>sample_rate</key>
+    <value>samp_rate</value>
+    <type>real</type>
+  </param>
+  $params
+  <check>$max_nchan >= \$nchan</check>
+  <check>\$nchan > 0</check>
+  <$sourk>
+    <name>$dir</name>
+    <type>\$type.type</type>
+    <nports>\$nchan</nports>
+  </$sourk>
+  <doc>
 The OsmoSDR $sourk.title() block:
 
 While primarily being developed for the OsmoSDR hardware, this block as well supports:
@@ -155,22 +157,27 @@ The frequency correction factor in parts per million (ppm). Set to 0 if unknown.
 
 IQ Balance Mode:
 Controls the behavior of software IQ imbalance corrrection.
-  Off: Disable correction algorithm (pass through)
-  Manual: Keep last estimated correction when switched from Automatic to Manual
-  Automatic: Find the best solution to compensate for image signals.
+  Off: Disable correction algorithm (pass through).
+  Manual: Keep last estimated correction when switched from Automatic to Manual.
+  Automatic: Periodicallly find the best solution to compensate for image signals.
 
 This functionality depends on http://cgit.osmocom.org/cgit/gr-iqbal/
 
 Gain Mode:
 Chooses between the manual (default) and automatic gain mode where appropriate.
-Currently, only rtlsdr devices support automatic gain mode.
+To allow manual control of RF/IF/BB gain stages, manual gain mode must be configured.
+Currently, only RTL-SDR devices support automatic gain mode.
 
 RF Gain:
-Overall RF gain of the receiving device. For the new gain value to be applied, the manual gain mode must be enabled first.
+Overall RF gain of the receiving device.
 
 IF Gain:
-Overall IF gain of the receiving device. For the new gain value to be applied, the manual gain mode must be enabled first.
+Overall intermediate frequency gain of the receiving device.
 This setting has only effect for RTL-SDR and OsmoSDR devices with E4000 tuners. Observations lead to a reasonable gain range from 15 to 30dB.
+
+BB Gain:
+Overall baseband gain of the receiving device.
+This setting has only effect for HackRF Jawbreaker. Observations lead to a reasonable gain range from 15 to 30dB.
 
 Antenna:
 For devices with only one antenna, this may be left blank.
@@ -180,125 +187,132 @@ See the OsmoSDR project page for more detailed documentation:
 http://sdr.osmocom.org/trac/
 http://sdr.osmocom.org/trac/wiki/rtl-sdr
 http://sdr.osmocom.org/trac/wiki/GrOsmoSDR
-	</doc>
+  </doc>
 </block>
 """
 
 PARAMS_TMPL = """
-	<param>
-		<name>Ch$(n): Frequency (Hz)</name>
-		<key>freq$(n)</key>
-		<value>100e6</value>
-		<type>real</type>
-		<hide>\#if \$nchan() > $n then 'none' else 'all'#</hide>
-	</param>
-	<param>
-	<name>Ch$(n): Freq. Corr. (ppm)</name>
-		<key>corr$(n)</key>
-		<value>0</value>
-		<type>real</type>
-		<hide>\#if \$nchan() > $n then 'none' else 'all'#</hide>
-	</param>
-	<param>
-		<name>Ch$(n): IQ Balance Mode</name>
-		<key>iq_balance_mode$(n)</key>
-		<value>0</value>
-		<type>int</type>
-		<hide>\#if \$nchan() > $n then 'none' else 'all'#</hide>
-		<option>
-			<name>Off</name>
-			<key>0</key>
-		</option>
-		<option>
-			<name>Manual</name>
-			<key>1</key>
-		</option>
-		<option>
-			<name>Automatic</name>
-			<key>2</key>
-		</option>
-	</param>
-	<param>
-		<name>Ch$(n): Gain Mode</name>
-		<key>gain_mode$(n)</key>
-		<value>0</value>
-		<type>int</type>
-		<hide>\#if \$nchan() > $n then 'none' else 'all'#</hide>
-		<option>
-			<name>Manual</name>
-			<key>0</key>
-		</option>
-		<option>
-			<name>Automatic</name>
-			<key>1</key>
-		</option>
-	</param>
-	<param>
-		<name>Ch$(n): RF Gain (dB)</name>
-		<key>gain$(n)</key>
-		<value>10</value>
-		<type>real</type>
-		<hide>\#if \$nchan() > $n then 'none' else 'all'#</hide>
-	</param>
-	<param>
-		<name>Ch$(n): IF Gain (dB)</name>
-		<key>if_gain$(n)</key>
-		<value>24</value>
-		<type>real</type>
-		<hide>\#if \$nchan() > $n then 'none' else 'all'#</hide>
-	</param>
-	<param>
-		<name>Ch$(n): Antenna</name>
-		<key>ant$(n)</key>
-		<value></value>
-		<type>string</type>
-		<hide>
-			\#if not \$nchan() > $n
-				all
-			\#elif \$ant$(n)()
-				none
-			\#else
-				part
-			\#end if
-		</hide>
-	</param>
+  <param>
+    <name>Ch$(n): Frequency (Hz)</name>
+    <key>freq$(n)</key>
+    <value>100e6</value>
+    <type>real</type>
+    <hide>\#if \$nchan() > $n then 'none' else 'all'#</hide>
+  </param>
+  <param>
+  <name>Ch$(n): Freq. Corr. (ppm)</name>
+    <key>corr$(n)</key>
+    <value>0</value>
+    <type>real</type>
+    <hide>\#if \$nchan() > $n then 'none' else 'all'#</hide>
+  </param>
+  <param>
+    <name>Ch$(n): IQ Balance Mode</name>
+    <key>iq_balance_mode$(n)</key>
+    <value>0</value>
+    <type>int</type>
+    <hide>\#if \$nchan() > $n then 'none' else 'all'#</hide>
+    <option>
+      <name>Off</name>
+      <key>0</key>
+    </option>
+    <option>
+      <name>Manual</name>
+      <key>1</key>
+    </option>
+    <option>
+      <name>Automatic</name>
+      <key>2</key>
+    </option>
+  </param>
+  <param>
+    <name>Ch$(n): Gain Mode</name>
+    <key>gain_mode$(n)</key>
+    <value>0</value>
+    <type>int</type>
+    <hide>\#if \$nchan() > $n then 'none' else 'all'#</hide>
+    <option>
+      <name>Manual</name>
+      <key>0</key>
+    </option>
+    <option>
+      <name>Automatic</name>
+      <key>1</key>
+    </option>
+  </param>
+  <param>
+    <name>Ch$(n): RF Gain (dB)</name>
+    <key>gain$(n)</key>
+    <value>10</value>
+    <type>real</type>
+    <hide>\#if \$nchan() > $n then 'none' else 'all'#</hide>
+  </param>
+  <param>
+    <name>Ch$(n): IF Gain (dB)</name>
+    <key>if_gain$(n)</key>
+    <value>20</value>
+    <type>real</type>
+    <hide>\#if \$nchan() > $n then 'none' else 'all'#</hide>
+  </param>
+  <param>
+    <name>Ch$(n): BB Gain (dB)</name>
+    <key>bb_gain$(n)</key>
+    <value>20</value>
+    <type>real</type>
+    <hide>\#if \$nchan() > $n then 'none' else 'all'#</hide>
+  </param>
+  <param>
+    <name>Ch$(n): Antenna</name>
+    <key>ant$(n)</key>
+    <value></value>
+    <type>string</type>
+    <hide>
+      \#if not \$nchan() > $n
+        all
+      \#elif \$ant$(n)()
+        none
+      \#else
+        part
+      \#end if
+    </hide>
+  </param>
 """
 
 def parse_tmpl(_tmpl, **kwargs):
-	from Cheetah import Template
-	return str(Template.Template(_tmpl, kwargs))
+  from Cheetah import Template
+  return str(Template.Template(_tmpl, kwargs))
 
 max_num_channels = 5
 
 import os.path
 
 if __name__ == '__main__':
-	import sys
-	for file in sys.argv[1:]:
-		head, tail = os.path.split(file)
+  import sys
+  for file in sys.argv[1:]:
+    head, tail = os.path.split(file)
 
-		if tail.startswith('rtlsdr'):
-			title = 'RTLSDR'
-			prefix = 'rtlsdr'
-		elif tail.startswith('osmosdr'):
-			title = 'OsmoSDR'
-			prefix = 'osmosdr'
-		else: raise Exception, 'file %s has wrong syntax!'%tail
+    if tail.startswith('rtlsdr'):
+      title = 'RTLSDR'
+      prefix = 'rtlsdr'
+    elif tail.startswith('osmosdr'):
+      title = 'OsmoSDR'
+      prefix = 'osmosdr'
+    else: raise Exception, 'file %s has wrong syntax!'%tail
 
-		if tail.endswith ('source_c.xml'):
-			sourk = 'source'
-			dir = 'out'
-		elif tail.endswith ('sink_c.xml'):
-			sourk = 'sink'
-			dir = 'in'
-		else: raise Exception, 'is %s a source or sink?'%file
+    if tail.endswith ('source_c.xml'):
+      sourk = 'source'
+      dir = 'out'
+    elif tail.endswith ('sink_c.xml'):
+      sourk = 'sink'
+      dir = 'in'
+    else: raise Exception, 'is %s a source or sink?'%file
 
-		params = ''.join([parse_tmpl(PARAMS_TMPL, n=n) for n in range(max_num_channels)])
-		open(file, 'w').write(parse_tmpl(MAIN_TMPL,
-			max_nchan=max_num_channels,
-			params=params,
-			title=title,
-			prefix=prefix,
-			sourk=sourk,
-			dir=dir,
-		))
+    params = ''.join([parse_tmpl(PARAMS_TMPL, n=n) for n in range(max_num_channels)])
+    open(file, 'w').write(parse_tmpl(MAIN_TMPL,
+      max_nchan=max_num_channels,
+      params=params,
+      title=title,
+      prefix=prefix,
+      sourk=sourk,
+      dir=dir,
+    ))

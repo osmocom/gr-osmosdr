@@ -541,7 +541,7 @@ double osmosdr_source_c_impl::get_gain( const std::string & name, size_t chan )
   return 0;
 }
 
-double osmosdr_source_c_impl::set_if_gain(double gain, size_t chan)
+double osmosdr_source_c_impl::set_if_gain( double gain, size_t chan )
 {
   size_t channel = 0;
   BOOST_FOREACH( osmosdr_src_iface *dev, _devs )
@@ -550,6 +550,20 @@ double osmosdr_source_c_impl::set_if_gain(double gain, size_t chan)
         if ( _if_gain[ chan ] != gain ) {
           _if_gain[ chan ] = gain;
           return dev->set_if_gain( gain, dev_chan );
+        }
+
+  return 0;
+}
+
+double osmosdr_source_c_impl::set_bb_gain( double gain, size_t chan )
+{
+  size_t channel = 0;
+  BOOST_FOREACH( osmosdr_src_iface *dev, _devs )
+    for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
+      if ( chan == channel++ )
+        if ( _if_gain[ chan ] != gain ) {
+          _if_gain[ chan ] = gain;
+          return dev->set_bb_gain( gain, dev_chan );
         }
 
   return 0;

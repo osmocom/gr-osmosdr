@@ -208,6 +208,16 @@ public:
   virtual double set_if_gain( double gain, size_t chan = 0 ) = 0;
 
   /*!
+   * Set the BB gain for the underlying radio hardware.
+   * This function will automatically distribute the desired gain value over
+   * available BB gain stages in an appropriate way and return the actual value.
+   * \param gain the gain in dB
+   * \param chan the channel index 0 to N-1
+   * \return the actual gain in dB
+   */
+  virtual double set_bb_gain( double gain, size_t chan = 0 ) = 0;
+
+  /*!
    * Get the available antennas of the underlying radio hardware.
    * \param chan the channel index 0 to N-1
    * \return a vector of strings containing the names of available antennas
@@ -226,7 +236,7 @@ public:
   /*!
    * Get the actual underlying radio hardware antenna setting.
    * \param chan the channel index 0 to N-1
-   * \return antenna the actual antenna's name
+   * \return the actual antenna's name
    */
   virtual std::string get_antenna( size_t chan = 0 ) = 0;
 

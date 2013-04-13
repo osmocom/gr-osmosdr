@@ -83,7 +83,9 @@ hackrf_source_c::hackrf_source_c (const std::string &args)
     _center_freq(0),
     _freq_corr(0),
     _auto_gain(false),
-    _if_gain(0),
+    _amp_gain(0),
+    _lna_gain(0),
+    _vga_gain(0),
     _skipped(0)
 {
   int ret;
@@ -157,21 +159,17 @@ hackrf_source_c::hackrf_source_c (const std::string &args)
               << std::endl;
   }
 
-  ret = hackrf_sample_rate_set( _dev, 10000000 );
-  if (ret != HACKRF_SUCCESS)
-    throw std::runtime_error("Failed to set default samplerate.");
+  set_sample_rate( 5000000 );
 
-  ret = hackrf_set_amp_enable( _dev, 0 );
-  if (ret != HACKRF_SUCCESS)
-    throw std::runtime_error("Failed to disable the RX amplifier.");
+  set_gain( 0 ); /* disable AMP gain stage */
 
   hackrf_max2837_read( _dev, 8, &val );
   val |= 0x3; /* enable LNA & VGA control over SPI */
   hackrf_max2837_write( _dev, 8, val );
 
-  set_if_gain( 24 ); /* preset to a reasonable default (non-GRC use case) */
+  set_if_gain( 16 ); /* preset to a reasonable default (non-GRC use case) */
 
-  set_gain( 16 ); /* preset to a reasonable default (non-GRC use case) */
+  set_bb_gain( 20 ); /* preset to a reasonable default (non-GRC use case) */
 
   _buf = (unsigned short **) malloc(_buf_num * sizeof(unsigned short *));
 
@@ -365,7 +363,7 @@ double hackrf_source_c::set_sample_rate(double rate)
       _sample_rate = rate;
       set_bandwidth( rate );
     } else {
-      throw std::runtime_error( std::string( hackrf_error_name( (hackrf_error) ret ) ) );
+      throw std::runtime_error( std::string( __FUNCTION__ ) );
     }
   }
 
@@ -398,7 +396,7 @@ double hackrf_source_c::set_center_freq( double freq, size_t chan )
     if ( HACKRF_SUCCESS == ret ) {
       _center_freq = freq;
     } else {
-      throw std::runtime_error( std::string( hackrf_error_name( (hackrf_error) ret ) ) );
+      throw std::runtime_error( std::string( __FUNCTION__ ) );
     }
   }
 
@@ -428,28 +426,33 @@ std::vector<std::string> hackrf_source_c::get_gain_names( size_t chan )
 {
   std::vector< std::string > names;
 
-  names += "LNA";
+  names += "RF";
   names += "IF";
+  names += "BB";
 
   return names;
 }
 
 osmosdr::gain_range_t hackrf_source_c::get_gain_range( size_t chan )
 {
-  osmosdr::gain_range_t range;
-
-  range += osmosdr::range_t( 0, 40, 8 );
-
-  return range;
+  return get_gain_range( "RF", chan );
 }
 
 osmosdr::gain_range_t hackrf_source_c::get_gain_range( const std::string & name, size_t chan )
 {
+  if ( "RF" == name ) {
+    return osmosdr::gain_range_t( 0, 14, 14 );
+  }
+
   if ( "IF" == name ) {
+    return osmosdr::gain_range_t( 0, 40, 8 );
+  }
+
+  if ( "BB" == name ) {
     return osmosdr::gain_range_t( 0, 62, 2 );
   }
 
-  return get_gain_range( chan );
+  return osmosdr::gain_range_t();
 }
 
 bool hackrf_source_c::set_gain_mode( bool automatic, size_t chan )
@@ -466,7 +469,73 @@ bool hackrf_source_c::get_gain_mode( size_t chan )
 
 double hackrf_source_c::set_gain( double gain, size_t chan )
 {
-  osmosdr::gain_range_t rf_gains = get_gain_range( chan );
+  osmosdr::gain_range_t rf_gains = get_gain_range( "RF", chan );
+
+  if (_dev) {
+    double clip_gain = rf_gains.clip( gain, true );
+
+    std::map<double, int> reg_vals;
+    reg_vals[ 0 ] = 0;
+    reg_vals[ 14 ] = 1;
+
+    if ( reg_vals.count( clip_gain ) ) {
+      int value = reg_vals[ clip_gain ];
+#if 0
+      std::cerr << "amp gain: " << gain
+                << " clip_gain: " << clip_gain
+                << " value: " << value
+                << std::endl;
+#endif
+      if ( hackrf_set_amp_enable( _dev, value ) == HACKRF_SUCCESS )
+        _amp_gain = clip_gain;
+    }
+  }
+
+  return _amp_gain;
+}
+
+double hackrf_source_c::set_gain( double gain, const std::string & name, size_t chan)
+{
+  if ( "RF" == name ) {
+    return set_gain( gain, chan );
+  }
+
+  if ( "IF" == name ) {
+    return set_if_gain( gain, chan );
+  }
+
+  if ( "BB" == name ) {
+    return set_bb_gain( gain, chan );
+  }
+
+  return set_gain( gain, chan );
+}
+
+double hackrf_source_c::get_gain( size_t chan )
+{
+  return _amp_gain;
+}
+
+double hackrf_source_c::get_gain( const std::string & name, size_t chan )
+{
+  if ( "RF" == name ) {
+    return get_gain( chan );
+  }
+
+  if ( "IF" == name ) {
+    return _lna_gain;
+  }
+
+  if ( "BB" == name ) {
+    return _vga_gain;
+  }
+
+  return get_gain( chan );
+}
+
+double hackrf_source_c::set_if_gain(double gain, size_t chan)
+{
+  osmosdr::gain_range_t rf_gains = get_gain_range( "IF", chan );
 
   if (_dev) {
     double clip_gain = rf_gains.clip( gain, true );
@@ -482,48 +551,29 @@ double hackrf_source_c::set_gain( double gain, size_t chan )
 
     if ( reg_vals.count( rel_gain ) ) {
       int value = reg_vals[ rel_gain ];
-
-//      std::cerr << "lna gain: " << rel_gain << " value: " << value << std::endl;
-
+#if 0
+      std::cerr << "lna gain: " << gain
+                << " clip_gain: " << clip_gain
+                << " rel_gain: " << rel_gain
+                << " value: " << value
+                << std::endl;
+#endif
       uint16_t val;
       hackrf_max2837_read( _dev, 1, &val );
 
       val = (val & ~(7 << 2)) | ((value & 7) << 2);
 
       if ( hackrf_max2837_write( _dev, 1, val ) == HACKRF_SUCCESS )
-        _gain = clip_gain;
+        _lna_gain = clip_gain;
     }
   }
 
-  return get_gain( chan );
+  return _lna_gain;
 }
 
-double hackrf_source_c::set_gain( double gain, const std::string & name, size_t chan)
+double hackrf_source_c::set_bb_gain( double gain, size_t chan )
 {
-  if ( "IF" == name ) {
-    return set_if_gain( gain, chan );
-  }
-
-  return set_gain( gain, chan );
-}
-
-double hackrf_source_c::get_gain( size_t chan )
-{
-  return _gain;
-}
-
-double hackrf_source_c::get_gain( const std::string & name, size_t chan )
-{
-  if ( "IF" == name ) {
-    return _if_gain;
-  }
-
-  return get_gain( chan );
-}
-
-double hackrf_source_c::set_if_gain(double gain, size_t chan)
-{
-  osmosdr::gain_range_t if_gains = get_gain_range( "IF", chan );
+  osmosdr::gain_range_t if_gains = get_gain_range( "BB", chan );
 
   if (_dev) {
     double clip_gain = if_gains.clip( gain, true );
@@ -536,20 +586,24 @@ double hackrf_source_c::set_if_gain(double gain, size_t chan)
 
     if ( reg_vals.count( rel_gain ) ) {
       int value = reg_vals[ rel_gain ];
-
-//      std::cerr << "vga gain: " << rel_gain << " value: " << value << std::endl;
-
+#if 0
+      std::cerr << "vga gain: " << gain
+                << " clip_gain: " << clip_gain
+                << " rel_gain: " << rel_gain
+                << " value: " << value
+                << std::endl;
+#endif
       uint16_t val;
       hackrf_max2837_read( _dev, 5, &val );
 
       val = (val & ~0x1f) | (value & 0x1f);
 
       if ( hackrf_max2837_write( _dev, 5, val ) == HACKRF_SUCCESS )
-        _if_gain = clip_gain;
+        _vga_gain = clip_gain;
     }
   }
 
-  return gain;
+  return _vga_gain;
 }
 
 std::vector< std::string > hackrf_source_c::get_antennas( size_t chan )
@@ -586,7 +640,7 @@ void hackrf_source_c::set_bandwidth( double bandwidth, size_t chan )
     if ( HACKRF_SUCCESS == ret ) {
       _bandwidth = bw;
     } else {
-      throw std::runtime_error( std::string( hackrf_error_name( (hackrf_error) ret ) ) );
+      throw std::runtime_error( std::string( __FUNCTION__ ) );
     }
   }
 }
