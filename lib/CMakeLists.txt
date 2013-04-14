@@ -52,11 +52,11 @@ GR_OSMOSDR_APPEND_LIBS(
 # Setup IQBalance component
 ########################################################################
 GR_REGISTER_COMPONENT("Osmocom IQ Imbalance Correction" ENABLE_IQBALANCE GNURADIO_IQBALANCE_FOUND)
-if(ENABLE_OSMOSDR)
+if(ENABLE_IQBALANCE)
 add_definitions(-DHAVE_IQBALANCE=1)
 include_directories(${GNURADIO_IQBALANCE_INCLUDE_DIRS})
 GR_OSMOSDR_APPEND_LIBS(${GNURADIO_IQBALANCE_LIBRARIES})
-endif(ENABLE_OSMOSDR)
+endif(ENABLE_IQBALANCE)
 
 ########################################################################
 # Setup OsmoSDR component
