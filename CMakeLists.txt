@@ -115,6 +115,7 @@ find_package(LibOsmoSDR)
 find_package(LibRTLSDR)
 find_package(LibMiriSDR)
 find_package(LibHackRF)
+find_package(Doxygen)
 
 if(NOT GRUEL_FOUND)
     message(FATAL_ERROR "Gruel required to build " ${CMAKE_PROJECT_NAME})
