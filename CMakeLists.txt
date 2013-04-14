@@ -63,11 +63,6 @@ ENDIF(CMAKE_COMPILER_IS_GNUCXX)
 ########################################################################
 MESSAGE(STATUS "Configuring Boost C++ Libraries...")
 
-SET(BOOST_REQUIRED_COMPONENTS
-    thread
-    system
-)
-
 if(UNIX AND NOT BOOST_ROOT AND EXISTS "/usr/lib64")
     list(APPEND BOOST_LIBRARYDIR "/usr/lib64") #fedora 64-bit fix
 endif(UNIX AND NOT BOOST_ROOT AND EXISTS "/usr/lib64")
@@ -81,11 +76,14 @@ set(Boost_ADDITIONAL_VERSIONS
     "1.60.0" "1.60" "1.61.0" "1.61" "1.62.0" "1.62" "1.63.0" "1.63" "1.64.0" "1.64"
     "1.65.0" "1.65" "1.66.0" "1.66" "1.67.0" "1.67" "1.68.0" "1.68" "1.69.0" "1.69"
 )
-find_package(Boost 1.35 COMPONENTS ${BOOST_REQUIRED_COMPONENTS})
+
+find_package(Boost)
 
 if(NOT Boost_FOUND)
-    message(FATAL_ERROR "Boost required to compile osmosdr")
+    message(FATAL_ERROR "Boost required to build " ${CMAKE_PROJECT_NAME})
 endif()
+
+ADD_DEFINITIONS(-DBOOST_ALL_DYN_LINK)
 
 ########################################################################
 # Install directories
@@ -119,11 +117,11 @@ find_package(LibMiriSDR)
 find_package(LibHackRF)
 
 if(NOT GRUEL_FOUND)
-    message(FATAL_ERROR "Gruel required to compile gnuradio-osmosdr")
+    message(FATAL_ERROR "Gruel required to build " ${CMAKE_PROJECT_NAME})
 endif()
 
 if(NOT GNURADIO_CORE_FOUND)
-    message(FATAL_ERROR "GnuRadio Core required to compile gnuradio-osmosdr")
+    message(FATAL_ERROR "GnuRadio Core required to build " ${CMAKE_PROJECT_NAME})
 endif()
 
 ########################################################################
