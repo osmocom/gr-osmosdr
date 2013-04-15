@@ -216,6 +216,47 @@ public:
    * \return the actual antenna's name
    */
   virtual std::string get_antenna( size_t chan = 0 ) = 0;
+
+  /*!
+   * Set the RX frontend IQ balance mode.
+   *
+   * \param mode iq balance correction mode: 0 = Off, 1 = Manual, 2 = Automatic
+   * \param chan the channel index 0 to N-1
+   */
+  virtual void set_iq_balance_mode( int mode, size_t chan = 0 )
+    { return; }
+
+  /*!
+   * Set the RX frontend IQ balance correction.
+   * Use this to adjust the magnitude and phase of I and Q.
+   *
+   * \param correction the complex correction value
+   * \param chan the channel index 0 to N-1
+   */
+  virtual void set_iq_balance( const std::complex<double> &correction, size_t chan = 0 )
+    { return; }
+
+  /*!
+   * Set the bandpass filter on the radio frontend.
+   * \param bandwidth the filter bandwidth in Hz
+   * \param chan the channel index 0 to N-1
+   * \return the actual filter bandwidth in Hz
+   */
+  virtual double set_bandwidth( double bandwidth, size_t chan = 0 ) { return 0; }
+
+  /*!
+   * Get the actual bandpass filter setting on the radio frontend.
+   * \param chan the channel index 0 to N-1
+   * \return the actual filter bandwidth in Hz
+   */
+  virtual double get_bandwidth( size_t chan = 0 ) { return 0; }
+
+  /*!
+   * Get the possible bandpass filter settings on the radio frontend.
+   * \return a range of bandwidths in Hz
+   */
+  virtual osmosdr::meta_range_t get_bandwidth_range( size_t chan = 0 )
+      { return osmosdr::meta_range_t(); }
 };
 
 #endif // OSMOSDR_SRC_IFACE_H

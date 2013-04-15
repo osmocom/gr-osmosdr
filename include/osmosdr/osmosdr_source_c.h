@@ -263,6 +263,27 @@ public:
    */
   virtual void set_iq_balance( const std::complex<double> &correction,
                                size_t chan = 0 ) = 0;
+
+  /*!
+   * Set the bandpass filter on the radio frontend.
+   * \param bandwidth the filter bandwidth in Hz
+   * \param chan the channel index 0 to N-1
+   * \return the actual filter bandwidth in Hz
+   */
+  virtual double set_bandwidth( double bandwidth, size_t chan = 0 ) = 0;
+
+  /*!
+   * Get the actual bandpass filter setting on the radio frontend.
+   * \param chan the channel index 0 to N-1
+   * \return the actual filter bandwidth in Hz
+   */
+  virtual double get_bandwidth( size_t chan = 0 ) = 0;
+
+  /*!
+   * Get the possible bandpass filter settings on the radio frontend.
+   * \return a range of bandwidths in Hz
+   */
+  virtual osmosdr::meta_range_t get_bandwidth_range( size_t chan = 0 ) = 0;
 };
 
 #endif /* INCLUDED_OSMOSDR_SOURCE_C_H */

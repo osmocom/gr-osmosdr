@@ -66,6 +66,10 @@ public:
   void set_iq_balance_mode( int mode, size_t chan = 0 );
   void set_iq_balance( const std::complex<double> &correction, size_t chan = 0 );
 
+  double set_bandwidth( double bandwidth, size_t chan = 0 );
+  double get_bandwidth( size_t chan = 0 );
+  osmosdr::meta_range_t get_bandwidth_range( size_t chan = 0 );
+
 private:
   osmosdr_source_c_impl (const std::string & args);  	// private constructor
 
@@ -73,19 +77,22 @@ private:
   // access the private constructor.
   friend osmosdr_source_c_sptr osmosdr_make_source_c (const std::string & args);
 
+  std::vector< osmosdr_src_iface * > _devs;
+
   double _sample_rate;
   std::map< size_t, double > _center_freq;
   std::map< size_t, double > _freq_corr;
   std::map< size_t, bool > _gain_mode;
   std::map< size_t, double > _gain;
   std::map< size_t, double > _if_gain;
+  std::map< size_t, double > _bb_gain;
   std::map< size_t, std::string > _antenna;
-  std::vector< osmosdr_src_iface * > _devs;
 #ifdef HAVE_IQBALANCE
   std::vector< iqbalance_fix_cc * > _iq_fix;
   std::vector< iqbalance_optimize_c * > _iq_opt;
   std::map< size_t, std::pair<float, float> > _vals;
 #endif
+  std::map< size_t, double > _bandwidth;
 };
 
 #endif /* INCLUDED_OSMOSDR_SOURCE_C_IMPL_H */

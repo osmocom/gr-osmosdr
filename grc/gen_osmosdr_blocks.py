@@ -37,9 +37,8 @@ self.\$(id).set_gain_mode(\$gain_mode$(n), $n)
 self.\$(id).set_gain(\$gain$(n), $n)
 self.\$(id).set_if_gain(\$if_gain$(n), $n)
 self.\$(id).set_bb_gain(\$bb_gain$(n), $n)
-\#if \$ant$(n)()
 self.\$(id).set_antenna(\$ant$(n), $n)
-\#end if
+self.\$(id).set_bandwidth(\$bw$(n), $n)
 \#end if
 #end for
   </make>
@@ -53,6 +52,7 @@ self.\$(id).set_antenna(\$ant$(n), $n)
   <callback>set_if_gain(\$if_gain$(n), $n)</callback>
   <callback>set_bb_gain(\$bb_gain$(n), $n)</callback>
   <callback>set_antenna(\$ant$(n), $n)</callback>
+  <callback>set_bandwidth(\$bw$(n), $n)</callback>
   #end for
   <param>
     <name>$(dir.title())put Type</name>
@@ -183,6 +183,9 @@ Antenna:
 For devices with only one antenna, this may be left blank.
 Otherwise, the user should specify one of the possible antenna choices.
 
+Bandwidth:
+Set the bandpass filter on the radio frontend. To use the default (automatic) bandwidth filter setting, this should be zero.
+
 See the OsmoSDR project page for more detailed documentation:
 http://sdr.osmocom.org/trac/
 http://sdr.osmocom.org/trac/wiki/rtl-sdr
@@ -270,6 +273,21 @@ PARAMS_TMPL = """
       \#if not \$nchan() > $n
         all
       \#elif \$ant$(n)()
+        none
+      \#else
+        part
+      \#end if
+    </hide>
+  </param>
+  <param>
+    <name>Ch$(n): Bandwidth (Hz)</name>
+    <key>bw$(n)</key>
+    <value>0</value>
+    <type>real</type>
+    <hide>
+      \#if not \$nchan() > $n
+        all
+      \#elif \$bw$(n)()
         none
       \#else
         part

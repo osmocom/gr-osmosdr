@@ -561,8 +561,8 @@ double osmosdr_source_c_impl::set_bb_gain( double gain, size_t chan )
   BOOST_FOREACH( osmosdr_src_iface *dev, _devs )
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
       if ( chan == channel++ )
-        if ( _if_gain[ chan ] != gain ) {
-          _if_gain[ chan ] = gain;
+        if ( _bb_gain[ chan ] != gain ) {
+          _bb_gain[ chan ] = gain;
           return dev->set_bb_gain( gain, dev_chan );
         }
 
@@ -661,4 +661,40 @@ void osmosdr_source_c_impl::set_iq_balance( const std::complex<double> &correcti
     }
   }
 #endif
+}
+
+double osmosdr_source_c_impl::set_bandwidth( double bandwidth, size_t chan )
+{
+  size_t channel = 0;
+  BOOST_FOREACH( osmosdr_src_iface *dev, _devs )
+    for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
+      if ( chan == channel++ )
+        if ( _bandwidth[ chan ] != bandwidth ) {
+          _bandwidth[ chan ] = bandwidth;
+          return dev->set_bandwidth( bandwidth, dev_chan );
+        }
+
+  return 0;
+}
+
+double osmosdr_source_c_impl::get_bandwidth( size_t chan )
+{
+  size_t channel = 0;
+  BOOST_FOREACH( osmosdr_src_iface *dev, _devs )
+    for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
+      if ( chan == channel++ )
+        return dev->get_bandwidth( dev_chan );
+
+  return 0;
+}
+
+osmosdr::meta_range_t osmosdr_source_c_impl::get_bandwidth_range( size_t chan )
+{
+  size_t channel = 0;
+  BOOST_FOREACH( osmosdr_src_iface *dev, _devs )
+    for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
+      if ( chan == channel++ )
+        return dev->get_bandwidth_range( dev_chan );
+
+  return osmosdr::meta_range_t();
 }
