@@ -133,6 +133,20 @@ CONFIGURE_FILE(
 @ONLY)
 
 ########################################################################
+# Set up Windows DLL resource files
+########################################################################
+IF(MSVC)
+    include(${CMAKE_SOURCE_DIR}/cmake/Modules/GrVersion.cmake)
+
+    configure_file(
+        ${CMAKE_CURRENT_SOURCE_DIR}/gnuradio-osmosdr.rc.in
+        ${CMAKE_CURRENT_BINARY_DIR}/gnuradio-osmosdr.rc
+    @ONLY)
+
+    GR_OSMOSDR_APPEND_SRCS(${CMAKE_CURRENT_BINARY_DIR}/gnuradio-osmosdr.rc)
+ENDIF(MSVC)
+
+########################################################################
 # Setup libgnuradio-osmosdr library
 ########################################################################
 ADD_LIBRARY(gnuradio-osmosdr SHARED ${gr_osmosdr_srcs})
