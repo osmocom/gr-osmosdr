@@ -344,7 +344,7 @@ osmosdr::meta_range_t hackrf_source_c::get_sample_rates()
 {
   osmosdr::meta_range_t range;
 
-  range += osmosdr::range_t( 5e6 );
+  range += osmosdr::range_t( 5e6 ); /* out of spec but appears to work */
   range += osmosdr::range_t( 10e6 );
   range += osmosdr::range_t( 12.5e6 );
   range += osmosdr::range_t( 16e6 );
@@ -363,7 +363,7 @@ double hackrf_source_c::set_sample_rate(double rate)
       _sample_rate = rate;
       set_bandwidth( rate );
     } else {
-      throw std::runtime_error( std::string( __FUNCTION__ ) );
+      throw std::runtime_error( std::string( __FUNCTION__ ) + " has failed" );
     }
   }
 
@@ -396,7 +396,7 @@ double hackrf_source_c::set_center_freq( double freq, size_t chan )
     if ( HACKRF_SUCCESS == ret ) {
       _center_freq = freq;
     } else {
-      throw std::runtime_error( std::string( __FUNCTION__ ) );
+      throw std::runtime_error( std::string( __FUNCTION__ ) + " has failed" );
     }
   }
 
@@ -640,7 +640,7 @@ double hackrf_source_c::set_bandwidth( double bandwidth, size_t chan )
     if ( HACKRF_SUCCESS == ret ) {
       _bandwidth = bw;
     } else {
-      throw std::runtime_error( std::string( __FUNCTION__ ) );
+      throw std::runtime_error( std::string( __FUNCTION__ ) + " has failed" );
     }
   }
 

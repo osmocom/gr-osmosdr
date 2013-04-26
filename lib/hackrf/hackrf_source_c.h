@@ -75,7 +75,7 @@ private:
    */
   hackrf_source_c (const std::string & args);  	// private constructor
 
- public:
+public:
   ~hackrf_source_c (); 	// public destructor
 
   int work( int noutput_items,
