@@ -176,12 +176,6 @@ hackrf_source_c::hackrf_source_c (const std::string &args)
       _buf[i] = (unsigned short *) malloc(_buf_len);
   }
 
-  ret = hackrf_start_rx( _dev, _hackrf_rx_callback, (void *)this );
-  if (ret != HACKRF_SUCCESS)
-    std::cerr << "Failed to start streaming (" << ret << ")" << std::endl;
-
-  while ( ! hackrf_is_streaming( _dev ) );
-
 //  _thread = gruel::thread(_hackrf_wait, this);
 }
 
@@ -191,7 +185,6 @@ hackrf_source_c::hackrf_source_c (const std::string &args)
 hackrf_source_c::~hackrf_source_c ()
 {
   if (_dev) {
-    hackrf_stop_rx( _dev );
 //    _thread.join();
     hackrf_close( _dev );
     _dev = NULL;
@@ -251,6 +244,38 @@ void hackrf_source_c::_hackrf_wait(hackrf_source_c *obj)
 
 void hackrf_source_c::hackrf_wait()
 {
+}
+
+bool hackrf_source_c::start()
+{
+  if ( ! _dev )
+    return false;
+
+  int ret = hackrf_start_rx( _dev, _hackrf_rx_callback, (void *)this );
+  if (ret != HACKRF_SUCCESS) {
+    std::cerr << "Failed to start RX streaming (" << ret << ")" << std::endl;
+    return false;
+  }
+
+  while ( ! hackrf_is_streaming( _dev ) );
+
+  return (bool) hackrf_is_streaming( _dev );
+}
+
+bool hackrf_source_c::stop()
+{
+  if ( ! _dev )
+    return false;
+
+  int ret = hackrf_stop_rx( _dev );
+  if (ret != HACKRF_SUCCESS) {
+    std::cerr << "Failed to stop RX streaming (" << ret << ")" << std::endl;
+    return false;
+  }
+
+  while ( hackrf_is_streaming( _dev ) );
+
+  return ! (bool) hackrf_is_streaming( _dev );
 }
 
 int hackrf_source_c::work( int noutput_items,
