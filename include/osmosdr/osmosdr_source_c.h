@@ -281,6 +281,7 @@ public:
 
   /*!
    * Get the possible bandpass filter settings on the radio frontend.
+   * \param chan the channel index 0 to N-1
    * \return a range of bandwidths in Hz
    */
   virtual osmosdr::meta_range_t get_bandwidth_range( size_t chan = 0 ) = 0;
