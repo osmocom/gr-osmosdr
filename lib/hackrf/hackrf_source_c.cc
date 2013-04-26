@@ -44,7 +44,6 @@ using namespace boost::assign;
 
 #define BUF_LEN  (16 * 32 * 512) /* must be multiple of 512 */
 #define BUF_NUM   32
-#define BUF_SKIP  1 // buffers to skip due to initial garbage
 
 #define BYTES_PER_SAMPLE  2 // HackRF device delivers 8 bit unsigned IQ data
 
@@ -85,8 +84,7 @@ hackrf_source_c::hackrf_source_c (const std::string &args)
     _auto_gain(false),
     _amp_gain(0),
     _lna_gain(0),
-    _vga_gain(0),
-    _skipped(0)
+    _vga_gain(0)
 {
   int ret;
   uint16_t val;
@@ -227,11 +225,6 @@ int hackrf_source_c::_hackrf_rx_callback(hackrf_transfer *transfer)
 
 int hackrf_source_c::hackrf_rx_callback(unsigned char *buf, uint32_t len)
 {
-  if (_skipped < BUF_SKIP) {
-    _skipped++;
-    return 0;
-  }
-
   {
     boost::mutex::scoped_lock lock( _buf_mutex );
 

@@ -137,7 +137,6 @@ private:
   unsigned int _buf_used;
   boost::mutex _buf_mutex;
   boost::condition_variable _buf_cond;
-  bool _running;
 
   unsigned int _buf_offset;
   int _samp_avail;
@@ -149,7 +148,6 @@ private:
   double _amp_gain;
   double _lna_gain;
   double _vga_gain;
-  unsigned int _skipped;
   double _bandwidth;
 };
 
