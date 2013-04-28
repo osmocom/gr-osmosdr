@@ -45,7 +45,7 @@ using namespace boost::assign;
 #define BUF_LEN  (16 * 32 * 512) /* must be multiple of 512 */
 #define BUF_NUM   32
 
-#define BYTES_PER_SAMPLE  2 // HackRF device delivers 8 bit unsigned IQ data
+#define BYTES_PER_SAMPLE  2 /* HackRF device produces 8 bit unsigned IQ data */
 
 int hackrf_source_c::_usage = 0;
 boost::mutex hackrf_source_c::_usage_mutex;
@@ -274,6 +274,9 @@ bool hackrf_source_c::stop()
   }
 
   while ( hackrf_is_streaming( _dev ) );
+
+  /* FIXME: hackrf_stop_rx should wait until the device is ready for a start */
+  usleep(100000); /* required if we want to immediately start() again */
 
   return ! (bool) hackrf_is_streaming( _dev );
 }
