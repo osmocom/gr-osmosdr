@@ -20,6 +20,15 @@
 include(GrPython)
 
 GR_PYTHON_INSTALL(
+    FILES
+    osmocom_siggen_base.py
+    DESTINATION ${GR_PYTHON_DIR}/osmosdr
+)
+
+GR_PYTHON_INSTALL(
     PROGRAMS
-    DESTINATION bin
+    osmocom_fft
+    osmocom_siggen
+    osmocom_siggen_gui
+    DESTINATION ${GR_RUNTIME_DIR}
 )
