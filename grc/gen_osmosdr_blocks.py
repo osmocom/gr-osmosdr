@@ -23,7 +23,7 @@ MAIN_TMPL = """\
 <block>
   <name>$(title) $sourk.title()</name>
   <key>$(prefix)_$(sourk)_c</key>
-  <category>Sources</category>
+  <category>$($sourk.title())s</category>
   <throttle>1</throttle>
   <import>import osmosdr</import>
   <make>osmosdr.$(sourk)_c( args="nchan=" + str(\$nchan) + " " + \$args )
@@ -104,7 +104,7 @@ self.\$(id).set_bandwidth(\$bw$(n), $n)
     <nports>\$nchan</nports>
   </$sourk>
   <doc>
-The OsmoSDR $sourk.title() block:
+The OSMOCOM block:
 
 While primarily being developed for the OsmoSDR hardware, this block as well supports:
 
@@ -131,6 +131,7 @@ Examples:
 Optional arguments are placed into [] brackets, remove the brackets before using them! Specific variable values are separated with a |, choose one of them. Variable values containing spaces shall be enclosed in '' as demonstrated in examples section below.
 Lines ending with ... mean it's possible to bind devices together by specifying multiple device arguments separated with a space.
 
+Source Mode:
   fcd=0
   hackrf=0
   miri=0[,buffers=32] ...
@@ -142,6 +143,9 @@ Lines ending with ... mean it's possible to bind devices together by specifying 
   uhd[,serial=...][,lo_offset=0][,mcr=52e6][,nchan=2][,subdev='\\\\'B:0 A:0\\\\''] ...
   osmosdr=0[,mcr=64e6][,nchan=5][,buffers=32][,buflen=N*512] ...
   file='/path/to/your file',rate=1e6[,freq=100e6][,repeat=true][,throttle=true] ...
+
+Sink Mode:
+  hackrf=0[,buffers=32]
 
 Num Channels:
 Selects the total number of channels in this multi-device configuration. Required when specifying multiple device arguments.
@@ -310,10 +314,10 @@ if __name__ == '__main__':
     head, tail = os.path.split(file)
 
     if tail.startswith('rtlsdr'):
-      title = 'RTLSDR'
+      title = 'RTL-SDR'
       prefix = 'rtlsdr'
     elif tail.startswith('osmosdr'):
-      title = 'OsmoSDR'
+      title = 'OSMOCOM'
       prefix = 'osmosdr'
     else: raise Exception, 'file %s has wrong syntax!'%tail
 

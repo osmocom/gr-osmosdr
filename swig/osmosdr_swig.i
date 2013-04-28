@@ -13,7 +13,7 @@
 %{
 #include "osmosdr/osmosdr_device.h"
 #include "osmosdr/osmosdr_source_c.h"
-//#include "osmosdr/osmosdr_sink_c.h"
+#include "osmosdr/osmosdr_sink_c.h"
 %}
 
 %template(string_vector_t) std::vector<std::string>;
@@ -34,8 +34,8 @@
 GR_SWIG_BLOCK_MAGIC(osmosdr,source_c);
 %include "osmosdr/osmosdr_source_c.h"
 
-//GR_SWIG_BLOCK_MAGIC(osmosdr,sink_c);
-//%include "osmosdr/osmosdr_sink_c.h"
+GR_SWIG_BLOCK_MAGIC(osmosdr,sink_c);
+%include "osmosdr/osmosdr_sink_c.h"
 
 #if SWIGGUILE
 %scheme %{

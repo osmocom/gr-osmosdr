@@ -20,9 +20,28 @@
 #ifndef INCLUDED_HACKRF_SINK_C_H
 #define INCLUDED_HACKRF_SINK_C_H
 
-#include <boost/shared_ptr.hpp>
+#include <gruel/thread.h>
+#include <gnuradio/gr_sync_block.h>
+
+#include <boost/thread/mutex.hpp>
+#include <boost/thread/condition_variable.hpp>
+
+#include <libhackrf/hackrf.h>
+
+#include "osmosdr_snk_iface.h"
 
 class hackrf_sink_c;
+
+typedef struct circular_buffer
+{
+  void *buffer;     // data buffer
+  void *buffer_end; // end of data buffer
+  size_t capacity;  // maximum number of items in the buffer
+  size_t count;     // number of items in the buffer
+  size_t sz;        // size of each item in the buffer
+  void *head;       // pointer to head
+  void *tail;       // pointer to tail
+} circular_buffer_t;
 
 /*
  * We use boost::shared_ptr's instead of raw pointers for all access
@@ -46,7 +65,9 @@ typedef boost::shared_ptr<hackrf_sink_c> hackrf_sink_c_sptr;
  */
 hackrf_sink_c_sptr make_hackrf_sink_c (const std::string & args = "");
 
-class hackrf_sink_c
+class hackrf_sink_c :
+    public gr_sync_block,
+    public osmosdr_snk_iface
 {
 private:
   // The friend declaration allows hackrf_make_sink_c to
@@ -56,7 +77,78 @@ private:
   hackrf_sink_c (const std::string & args);  	// private constructor
 
 public:
-  ~hackrf_source_c (); 	// public destructor
+  ~hackrf_sink_c (); 	// public destructor
+
+  bool start();
+  bool stop();
+
+  int work( int noutput_items,
+            gr_vector_const_void_star &input_items,
+            gr_vector_void_star &output_items );
+
+  static std::vector< std::string > get_devices();
+
+  size_t get_num_channels( void );
+
+  osmosdr::meta_range_t get_sample_rates( void );
+  double set_sample_rate( double rate );
+  double get_sample_rate( void );
+
+  osmosdr::freq_range_t get_freq_range( size_t chan = 0 );
+  double set_center_freq( double freq, size_t chan = 0 );
+  double get_center_freq( size_t chan = 0 );
+  double set_freq_corr( double ppm, size_t chan = 0 );
+  double get_freq_corr( size_t chan = 0 );
+
+  std::vector<std::string> get_gain_names( size_t chan = 0 );
+  osmosdr::gain_range_t get_gain_range( size_t chan = 0 );
+  osmosdr::gain_range_t get_gain_range( const std::string & name, size_t chan = 0 );
+  bool set_gain_mode( bool automatic, size_t chan = 0 );
+  bool get_gain_mode( size_t chan = 0 );
+  double set_gain( double gain, size_t chan = 0 );
+  double set_gain( double gain, const std::string & name, size_t chan = 0 );
+  double get_gain( size_t chan = 0 );
+  double get_gain( const std::string & name, size_t chan = 0 );
+
+  double set_if_gain( double gain, size_t chan = 0 );
+  double set_bb_gain( double gain, size_t chan = 0 );
+
+  std::vector< std::string > get_antennas( size_t chan = 0 );
+  std::string set_antenna( const std::string & antenna, size_t chan = 0 );
+  std::string get_antenna( size_t chan = 0 );
+
+  double set_bandwidth( double bandwidth, size_t chan = 0 );
+  double get_bandwidth( size_t chan = 0 );
+  osmosdr::meta_range_t get_bandwidth_range( size_t chan = 0 );
+
+private:
+  static int _hackrf_tx_callback(hackrf_transfer* transfer);
+  int hackrf_tx_callback(unsigned char *buffer, uint32_t length);
+  static void _hackrf_wait(hackrf_sink_c *obj);
+  void hackrf_wait();
+
+  static int _usage;
+  static boost::mutex _usage_mutex;
+
+  std::vector<gr_complex> _lut;
+
+  hackrf_device *_dev;
+//  gruel::thread _thread;
+
+  circular_buffer_t _cbuf;
+  unsigned char *_buf;
+  unsigned int _buf_num;
+  unsigned int _buf_used;
+  boost::mutex _buf_mutex;
+  boost::condition_variable _buf_cond;
+
+  double _sample_rate;
+  double _center_freq;
+  double _freq_corr;
+  bool _auto_gain;
+  double _amp_gain;
+  double _vga_gain;
+  double _bandwidth;
 };
 
 #endif /* INCLUDED_HACKRF_SINK_C_H */

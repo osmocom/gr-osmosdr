@@ -28,6 +28,7 @@ include_directories(
 
 set(hackrf_srcs
     ${CMAKE_CURRENT_SOURCE_DIR}/hackrf_source_c.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/hackrf_sink_c.cc
 )
 
 ########################################################################

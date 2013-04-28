@@ -34,7 +34,7 @@ endmacro(GEN_BLOCK_XML)
 
 GEN_BLOCK_XML(gen_osmosdr_blocks.py    rtlsdr_source_c.xml)
 GEN_BLOCK_XML(gen_osmosdr_blocks.py    osmosdr_source_c.xml)
-#GEN_BLOCK_XML(gen_osmosdr_blocks.py    osmosdr_sink_c.xml)
+GEN_BLOCK_XML(gen_osmosdr_blocks.py    osmosdr_sink_c.xml)
 
 add_custom_target(osmosdr_grc_xml_blocks ALL DEPENDS ${xml_blocks})
 
