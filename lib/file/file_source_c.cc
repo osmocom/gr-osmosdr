@@ -136,9 +136,7 @@ double file_source_c::get_sample_rate( void )
 
 osmosdr::freq_range_t file_source_c::get_freq_range( size_t chan )
 {
-  osmosdr::freq_range_t range(_freq, _freq);
-
-  return range;
+  return osmosdr::freq_range_t(_freq, _freq);
 }
 
 double file_source_c::set_center_freq( double freq, size_t chan )
@@ -168,9 +166,7 @@ std::vector<std::string> file_source_c::get_gain_names( size_t chan )
 
 osmosdr::gain_range_t file_source_c::get_gain_range( size_t chan )
 {
-  osmosdr::gain_range_t range(0, 0);
-
-  return range;
+  return osmosdr::gain_range_t();
 }
 
 osmosdr::gain_range_t file_source_c::get_gain_range( const std::string & name, size_t chan )
