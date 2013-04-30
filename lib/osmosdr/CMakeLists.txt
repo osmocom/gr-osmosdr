@@ -27,7 +27,6 @@ include_directories(
 )
 
 set(osmosdr_srcs
-    ${CMAKE_CURRENT_SOURCE_DIR}/osmosdr_snk_c.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/osmosdr_src_c.cc
 )
 
