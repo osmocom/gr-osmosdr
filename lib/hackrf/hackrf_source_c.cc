@@ -649,7 +649,7 @@ std::string hackrf_source_c::get_antenna( size_t chan )
 double hackrf_source_c::set_bandwidth( double bandwidth, size_t chan )
 {
   int ret;
-//  osmosdr::meta_range_t bandwidths = get_bandwidth_range( chan );
+//  osmosdr::freq_range_t bandwidths = get_bandwidth_range( chan );
 
   if ( bandwidth == 0.0 ) /* bandwidth of 0 means automatic filter selection */
     bandwidth = _sample_rate;
@@ -673,9 +673,9 @@ double hackrf_source_c::get_bandwidth( size_t chan )
   return _bandwidth;
 }
 
-osmosdr::meta_range_t hackrf_source_c::get_bandwidth_range( size_t chan )
+osmosdr::freq_range_t hackrf_source_c::get_bandwidth_range( size_t chan )
 {
-  osmosdr::meta_range_t bandwidths;
+  osmosdr::freq_range_t bandwidths;
 
   // TODO: read out from libhackrf when an API is available
 

@@ -254,8 +254,8 @@ public:
    * \param chan the channel index 0 to N-1
    * \return a range of bandwidths in Hz
    */
-  virtual osmosdr::meta_range_t get_bandwidth_range( size_t chan = 0 )
-    { return osmosdr::meta_range_t(); }
+  virtual osmosdr::freq_range_t get_bandwidth_range( size_t chan = 0 )
+    { return osmosdr::freq_range_t(); }
 };
 
 #endif // OSMOSDR_SRC_IFACE_H

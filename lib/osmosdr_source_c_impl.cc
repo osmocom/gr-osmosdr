@@ -312,15 +312,13 @@ size_t osmosdr_source_c_impl::get_num_channels()
 
 osmosdr::meta_range_t osmosdr_source_c_impl::get_sample_rates()
 {
-  osmosdr::meta_range_t rates(0, 0, 0);
-
-  if (!_devs.empty())
-    rates = _devs[0]->get_sample_rates(); // assume same devices used in the group
+  if ( ! _devs.empty() )
+    return _devs[0]->get_sample_rates(); // assume same devices used in the group
 #if 0
   else
     throw std::runtime_error(NO_DEVICES_MSG);
 #endif
-  return rates;
+  return osmosdr::meta_range_t();;
 }
 
 double osmosdr_source_c_impl::set_sample_rate(double rate)
@@ -688,7 +686,7 @@ double osmosdr_source_c_impl::get_bandwidth( size_t chan )
   return 0;
 }
 
-osmosdr::meta_range_t osmosdr_source_c_impl::get_bandwidth_range( size_t chan )
+osmosdr::freq_range_t osmosdr_source_c_impl::get_bandwidth_range( size_t chan )
 {
   size_t channel = 0;
   BOOST_FOREACH( osmosdr_src_iface *dev, _devs )
@@ -696,5 +694,5 @@ osmosdr::meta_range_t osmosdr_source_c_impl::get_bandwidth_range( size_t chan )
       if ( chan == channel++ )
         return dev->get_bandwidth_range( dev_chan );
 
-  return osmosdr::meta_range_t();
+  return osmosdr::freq_range_t();
 }

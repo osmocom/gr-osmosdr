@@ -63,7 +63,7 @@ public:
 
   double set_bandwidth( double bandwidth, size_t chan = 0 );
   double get_bandwidth( size_t chan = 0 );
-  osmosdr::meta_range_t get_bandwidth_range( size_t chan = 0 );
+  osmosdr::freq_range_t get_bandwidth_range( size_t chan = 0 );
 
 private:
   osmosdr_sink_c_impl (const std::string & args);  	// private constructor
