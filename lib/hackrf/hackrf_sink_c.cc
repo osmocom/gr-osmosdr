@@ -665,7 +665,7 @@ std::string hackrf_sink_c::set_antenna( const std::string & antenna, size_t chan
 
 std::string hackrf_sink_c::get_antenna( size_t chan )
 {
-  return "ANT";
+  return "TX/RX";
 }
 
 double hackrf_sink_c::set_bandwidth( double bandwidth, size_t chan )

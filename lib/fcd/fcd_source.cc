@@ -241,5 +241,5 @@ std::string fcd_source::set_antenna( const std::string & antenna, size_t chan )
 
 std::string fcd_source::get_antenna( size_t chan )
 {
-  return "ANT";
+  return "RX";
 }

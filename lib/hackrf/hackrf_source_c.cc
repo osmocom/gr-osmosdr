@@ -643,7 +643,7 @@ std::string hackrf_source_c::set_antenna( const std::string & antenna, size_t ch
 
 std::string hackrf_source_c::get_antenna( size_t chan )
 {
-  return "ANT";
+  return "TX/RX";
 }
 
 double hackrf_source_c::set_bandwidth( double bandwidth, size_t chan )

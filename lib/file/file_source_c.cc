@@ -200,11 +200,7 @@ double file_source_c::get_gain( const std::string & name, size_t chan )
 
 std::vector< std::string > file_source_c::get_antennas( size_t chan )
 {
-  std::vector< std::string > antennas;
-
-  antennas += get_antenna(chan);
-
-  return antennas;
+  return std::vector< std::string >();
 }
 
 std::string file_source_c::set_antenna( const std::string & antenna, size_t chan )
@@ -214,5 +210,5 @@ std::string file_source_c::set_antenna( const std::string & antenna, size_t chan
 
 std::string file_source_c::get_antenna( size_t chan )
 {
-  return "ANT";
+  return "";
 }

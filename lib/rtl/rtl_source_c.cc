@@ -682,5 +682,5 @@ std::string rtl_source_c::set_antenna( const std::string & antenna, size_t chan 
 
 std::string rtl_source_c::get_antenna( size_t chan )
 {
-  return "ANT";
+  return "RX";
 }

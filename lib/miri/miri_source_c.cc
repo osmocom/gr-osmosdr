@@ -448,5 +448,5 @@ std::string miri_source_c::set_antenna( const std::string & antenna, size_t chan
 
 std::string miri_source_c::get_antenna( size_t chan )
 {
-  return "ANT";
+  return "RX";
 }
