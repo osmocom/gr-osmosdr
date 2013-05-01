@@ -63,6 +63,12 @@ ENDIF(CMAKE_COMPILER_IS_GNUCXX)
 ########################################################################
 MESSAGE(STATUS "Configuring Boost C++ Libraries...")
 
+# Although not required on my system, some users have linking issues without
+SET(BOOST_REQUIRED_COMPONENTS
+    thread
+    system
+)
+
 if(UNIX AND NOT BOOST_ROOT AND EXISTS "/usr/lib64")
     list(APPEND BOOST_LIBRARYDIR "/usr/lib64") #fedora 64-bit fix
 endif(UNIX AND NOT BOOST_ROOT AND EXISTS "/usr/lib64")
@@ -77,7 +83,7 @@ set(Boost_ADDITIONAL_VERSIONS
     "1.65.0" "1.65" "1.66.0" "1.66" "1.67.0" "1.67" "1.68.0" "1.68" "1.69.0" "1.69"
 )
 
-find_package(Boost)
+find_package(Boost COMPONENTS ${BOOST_REQUIRED_COMPONENTS})
 
 if(NOT Boost_FOUND)
     message(FATAL_ERROR "Boost required to build " ${CMAKE_PROJECT_NAME})
