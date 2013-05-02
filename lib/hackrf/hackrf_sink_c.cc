@@ -34,6 +34,7 @@
 #include <boost/format.hpp>
 #include <boost/detail/endian.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/thread/thread.hpp>
 
 #include <gnuradio/gr_io_signature.h>
 
@@ -313,7 +314,8 @@ bool hackrf_sink_c::stop()
   while ( hackrf_is_streaming( _dev ) );
 
   /* FIXME: hackrf_stop_tx should wait until the device is ready for a start */
-  usleep(100000); /* required if we want to immediately start() again */
+  /* required if we want to immediately start() again */
+  boost::this_thread::sleep( boost::posix_time::milliseconds(100) );
 
   return ! (bool) hackrf_is_streaming( _dev );
 }
