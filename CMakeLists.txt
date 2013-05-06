@@ -43,6 +43,15 @@ include(GrVersion) #setup version info
 ########################################################################
 # Compiler specific setup
 ########################################################################
+
+ SET(USE_SIMD "no" CACHE STRING "Use SIMD instructions")
+ SET(USE_SIMD_VALUES "no" "SSE2" "AVX")
+ SET_PROPERTY(CACHE USE_SIMD PROPERTY STRINGS ${USE_SIMD_VALUES})
+ LIST(FIND USE_SIMD_VALUES ${USE_SIMD} USE_SIMD_INDEX)
+ IF(${USE_SIMD_INDEX} EQUAL -1)
+   message(FATAL_ERROR "Option ${USE_SIMD} not supported, valid entries are ${USE_SIMD_VALUES}")
+ ENDIF()
+
 IF(CMAKE_COMPILER_IS_GNUCXX)
     ADD_DEFINITIONS(-Wall)
     ADD_DEFINITIONS(-Wextra)
@@ -56,6 +65,23 @@ IF(CMAKE_COMPILER_IS_GNUCXX)
         ADD_DEFINITIONS(-fvisibility=hidden)
         ADD_DEFINITIONS(-fvisibility-inlines-hidden)
     ENDIF(NOT WIN32)
+    IF(USE_SIMD MATCHES SSE2)
+        ADD_DEFINITIONS(-msse2)
+        ADD_DEFINITIONS(-DUSE_SSE2)
+    ENDIF()
+    IF(USE_SIMD MATCHES AVX)
+        ADD_DEFINITIONS(-march=native)
+        ADD_DEFINITIONS(-DUSE_AVX)
+    ENDIF()
+ELSEIF(MSVC)
+    IF(USE_SIMD MATCHES SSE2)
+        ADD_DEFINITIONS(/arch:SSE2)
+        ADD_DEFINITIONS(-DUSE_SSE2)
+    ENDIF()
+    IF(USE_SIMD MATCHES AVX)
+        ADD_DEFINITIONS(/arch:AVX)
+        ADD_DEFINITIONS(-DUSE_AVX)
+    ENDIF()
 ENDIF(CMAKE_COMPILER_IS_GNUCXX)
 
 ########################################################################

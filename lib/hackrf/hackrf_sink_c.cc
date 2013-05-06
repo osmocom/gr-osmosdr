@@ -29,6 +29,12 @@
 
 #include <stdexcept>
 #include <iostream>
+#include <algorithm>
+#ifdef USE_AVX
+#include <immintrin.h>
+#elif USE_SSE2
+#include <emmintrin.h>
+#endif
 
 #include <boost/assign.hpp>
 #include <boost/format.hpp>
@@ -126,10 +132,10 @@ hackrf_sink_c_sptr make_hackrf_sink_c (const std::string & args)
  * are connected to this block.  In this case, we accept
  * only 0 input and 1 output.
  */
-static const int MIN_IN = 1;	// mininum number of input streams
-static const int MAX_IN = 1;	// maximum number of input streams
-static const int MIN_OUT = 0;	// minimum number of output streams
-static const int MAX_OUT = 0;	// maximum number of output streams
+static const int MIN_IN = 1;  // mininum number of input streams
+static const int MAX_IN = 1;  // maximum number of input streams
+static const int MIN_OUT = 0;  // minimum number of output streams
+static const int MAX_OUT = 0;  // maximum number of output streams
 
 /*
  * The private constructor
@@ -320,9 +326,74 @@ bool hackrf_sink_c::stop()
   return ! (bool) hackrf_is_streaming( _dev );
 }
 
+
+#ifdef USE_AVX
+void convert_avx(const float* inbuf, unsigned char* outbuf,const unsigned int count)
+{
+  __m256 mulme = _mm256_set_ps(127.0f, 127.0f, 127.0f, 127.0f, 127.0f, 127.0f, 127.0f, 127.0f);
+  __m128i addme = _mm_set_epi16(127, 127, 127, 127, 127, 127, 127, 127);
+
+  for(unsigned int i=0; i<count;i++){
+
+  __m256i itmp3 = _mm256_cvtps_epi32(_mm256_mul_ps(_mm256_loadu_ps(&inbuf[i*16+0]), mulme));
+  __m256i itmp4 = _mm256_cvtps_epi32(_mm256_mul_ps(_mm256_loadu_ps(&inbuf[i*16+8]), mulme));
+
+  __m128i a1 = _mm256_extractf128_si256(itmp3, 1);
+  __m128i a0 = _mm256_castsi256_si128(itmp3);
+  __m128i a3 = _mm256_extractf128_si256(itmp4, 1);
+  __m128i a2 = _mm256_castsi256_si128(itmp4);
+
+  __m128i outshorts1 = _mm_add_epi16(_mm_packs_epi32(a0, a1), addme);
+  __m128i outshorts2 = _mm_add_epi16(_mm_packs_epi32(a2, a3), addme);
+  __m128i outbytes = _mm_packus_epi16(outshorts1, outshorts2);
+
+  _mm_storeu_si128 ((__m128i*)&outbuf[i*16], outbytes);
+  }
+}
+
+#elif USE_SSE2
+void convert_sse2(const float* inbuf, unsigned char* outbuf,const unsigned int count)
+{
+  const register __m128 mulme = _mm_set_ps( 127.0f, 127.0f, 127.0f, 127.0f );
+  __m128i addme = _mm_set_epi16( 127, 127, 127, 127, 127, 127, 127, 127);
+  __m128 itmp1,itmp2,itmp3,itmp4;
+  __m128i otmp1,otmp2,otmp3,otmp4;
+
+  __m128i outshorts1,outshorts2;
+  __m128i outbytes;
+
+  for(unsigned int i=0; i<count;i++){
+
+  itmp1 = _mm_mul_ps(_mm_loadu_ps(&inbuf[i*16+0]), mulme);
+  itmp2 = _mm_mul_ps(_mm_loadu_ps(&inbuf[i*16+4]), mulme);
+  itmp3 = _mm_mul_ps(_mm_loadu_ps(&inbuf[i*16+8]), mulme);
+  itmp4 = _mm_mul_ps(_mm_loadu_ps(&inbuf[i*16+12]), mulme);
+
+  otmp1 = _mm_cvtps_epi32(itmp1);
+  otmp2 = _mm_cvtps_epi32(itmp2);
+  otmp3 = _mm_cvtps_epi32(itmp3);
+  otmp4 = _mm_cvtps_epi32(itmp4);
+
+  outshorts1 = _mm_add_epi16(_mm_packs_epi32(otmp1, otmp2), addme);
+  outshorts2 = _mm_add_epi16(_mm_packs_epi32(otmp3, otmp4), addme);
+
+  outbytes = _mm_packus_epi16(outshorts1, outshorts2);
+
+  _mm_storeu_si128 ((__m128i*)&outbuf[i*16], outbytes);
+  }
+}
+#endif
+
+void convert_default(float* inbuf, unsigned char* outbuf,const unsigned int count)
+{
+  for(unsigned int i=0; i<count;i++){
+    outbuf[i]= inbuf[i]*127+127;
+  }
+}
+
 int hackrf_sink_c::work( int noutput_items,
-                         gr_vector_const_void_star &input_items,
-                         gr_vector_void_star &output_items )
+  gr_vector_const_void_star &input_items,
+  gr_vector_void_star &output_items )
 {
   const gr_complex *in = (const gr_complex *) input_items[0];
 
@@ -334,34 +405,40 @@ int hackrf_sink_c::work( int noutput_items,
   }
 
   unsigned char *buf = _buf + _buf_used;
-
-  int items_consumed = 0;
   unsigned int prev_buf_used = _buf_used;
 
-  for (int i = 0; i < noutput_items; i++) {
-    if ( _buf_used + BYTES_PER_SAMPLE > BUF_LEN ) {
-      {
-        boost::mutex::scoped_lock lock( _buf_mutex );
+  unsigned int remaining = (BUF_LEN-_buf_used)/2; //complex
 
-        if ( ! cb_push_back( &_cbuf, _buf ) ) {
-          _buf_used = prev_buf_used;
-          items_consumed = 0;
-          std::cerr << "O" << std::flush;
-          break;
-        } else {
-//          std::cerr << "." << std::flush;
-        }
+  unsigned int count = std::min((unsigned int)noutput_items,remaining);
+  unsigned int sse_rem = count/8; // 8 complex = 16f==512bit for avx
+  unsigned int nosse_rem = count%8; // remainder
+
+#ifdef USE_AVX
+  convert_avx((float*)in, buf, sse_rem);
+  convert_default((float*)(in+sse_rem*8), buf+(sse_rem*8*2), nosse_rem*2);
+#elif USE_SSE2
+  convert_sse2((float*)in, buf, sse_rem);
+  convert_default((float*)(in+sse_rem*8), buf+(sse_rem*8*2), nosse_rem*2);
+#else
+  convert_default((float*)in, buf, count*2);
+#endif
+
+  _buf_used += (sse_rem*8+nosse_rem)*2;
+  int items_consumed = sse_rem*8+nosse_rem;
+
+  if(noutput_items >= remaining) {
+    {
+      boost::mutex::scoped_lock lock( _buf_mutex );
+
+      if ( ! cb_push_back( &_cbuf, _buf ) ) {
+        _buf_used = prev_buf_used;
+        items_consumed = 0;
+        std::cerr << "O" << std::flush;
+      } else {
+        //          std::cerr << "." << std::flush;
+        _buf_used = 0;
       }
-
-      _buf_used = 0;
-      break;
     }
-
-    *buf++ = (in[i].real() + 1.0) * 127;
-    *buf++ = (in[i].imag() + 1.0) * 127;
-
-    _buf_used += BYTES_PER_SAMPLE;
-    items_consumed++;
   }
 
   noutput_items = items_consumed;
