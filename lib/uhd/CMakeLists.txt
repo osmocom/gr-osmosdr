@@ -28,6 +28,7 @@ include_directories(
 )
 
 set(uhd_srcs
+    ${CMAKE_CURRENT_SOURCE_DIR}/uhd_sink_c.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/uhd_source_c.cc
 )
 

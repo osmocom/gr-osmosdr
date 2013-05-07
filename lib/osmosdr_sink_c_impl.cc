@@ -34,6 +34,9 @@
 
 #include "osmosdr_sink_c_impl.h"
 
+#ifdef ENABLE_UHD
+#include "uhd_sink_c.h"
+#endif
 #ifdef ENABLE_HACKRF
 #include "hackrf_sink_c.h"
 #endif
@@ -69,6 +72,9 @@ osmosdr_sink_c_impl::osmosdr_sink_c_impl (const std::string &args)
 
   std::vector< std::string > dev_types;
 
+#ifdef ENABLE_UHD
+  dev_types.push_back("uhd");
+#endif
 #ifdef ENABLE_HACKRF
   dev_types.push_back("hackrf");
 #endif
@@ -76,7 +82,7 @@ osmosdr_sink_c_impl::osmosdr_sink_c_impl (const std::string &args)
   std::cerr << "gr-osmosdr "
             << GR_OSMOSDR_VERSION " (" GR_OSMOSDR_LIBVER ") "
             << "gnuradio " << gr_version() << std::endl;
-  std::cerr << "built-in device types: ";
+  std::cerr << "built-in sink types: ";
   BOOST_FOREACH(std::string dev_type, dev_types)
     std::cerr << dev_type << " ";
   std::cerr << std::endl << std::flush;
@@ -94,9 +100,13 @@ osmosdr_sink_c_impl::osmosdr_sink_c_impl (const std::string &args)
   try {
 #endif
   std::vector< std::string > dev_list;
+#ifdef ENABLE_UHD
+  BOOST_FOREACH( std::string dev, uhd_sink_c::get_devices() )
+    dev_list.push_back( dev );
+#endif
 #ifdef ENABLE_HACKRF
   BOOST_FOREACH( std::string dev, hackrf_sink_c::get_devices() )
-  dev_list.push_back( dev );
+    dev_list.push_back( dev );
 #endif
 //  std::cerr << std::endl;
 //  BOOST_FOREACH( std::string dev, dev_list )
@@ -120,10 +130,16 @@ osmosdr_sink_c_impl::osmosdr_sink_c_impl (const std::string &args)
     osmosdr_snk_iface *iface = NULL;
     gr_basic_block_sptr block;
 
+#ifdef ENABLE_UHD
+    if ( dict.count("uhd") ) {
+      uhd_sink_c_sptr sink = make_uhd_sink_c( arg );
+      block = sink; iface = sink.get();
+    }
+#endif
 #ifdef ENABLE_HACKRF
     if ( dict.count("hackrf") ) {
-      hackrf_sink_c_sptr src = make_hackrf_sink_c( arg );
-      block = src; iface = src.get();
+      hackrf_sink_c_sptr sink = make_hackrf_sink_c( arg );
+      block = sink; iface = sink.get();
     }
 #endif
 

@@ -146,6 +146,7 @@ Source Mode:
 
 Sink Mode:
   hackrf=0[,buffers=32]
+  uhd[,serial=...][,lo_offset=0][,mcr=52e6][,nchan=2][,subdev='\\\\'B:0 A:0\\\\''] ...
 
 Num Channels:
 Selects the total number of channels in this multi-device configuration. Required when specifying multiple device arguments.
