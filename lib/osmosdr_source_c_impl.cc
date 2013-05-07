@@ -124,7 +124,7 @@ osmosdr_source_c_impl::osmosdr_source_c_impl (const std::string &args)
   std::cerr << "gr-osmosdr "
             << GR_OSMOSDR_VERSION " (" GR_OSMOSDR_LIBVER ") "
             << "gnuradio " << gr_version() << std::endl;
-  std::cerr << "built-in device types: ";
+  std::cerr << "built-in source types: ";
   BOOST_FOREACH(std::string dev_type, dev_types)
     std::cerr << dev_type << " ";
   std::cerr << std::endl << std::flush;
@@ -164,7 +164,7 @@ osmosdr_source_c_impl::osmosdr_source_c_impl (const std::string &args)
 #endif
 #ifdef ENABLE_HACKRF
   BOOST_FOREACH( std::string dev, hackrf_source_c::get_devices() )
-  dev_list.push_back( dev );
+    dev_list.push_back( dev );
 #endif
 //  std::cerr << std::endl;
 //  BOOST_FOREACH( std::string dev, dev_list )

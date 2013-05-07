@@ -20,9 +20,8 @@
 #ifndef UHD_SOURCE_C_H
 #define UHD_SOURCE_C_H
 
-#include <gr_hier_block2.h>
-
-#include <gr_uhd_usrp_source.h>
+#include <gnuradio/gr_hier_block2.h>
+#include <gnuradio/gr_uhd_usrp_source.h>
 
 #include "osmosdr_src_iface.h"
 

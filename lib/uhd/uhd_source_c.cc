@@ -24,9 +24,7 @@
 
 //#include <uhd/property_tree.hpp>
 
-#include <gr_io_signature.h>
-
-#include <osmosdr_arg_helpers.h>
+#include "osmosdr_arg_helpers.h"
 
 #include "uhd_source_c.h"
 
