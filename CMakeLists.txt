@@ -44,7 +44,11 @@ include(GrVersion) #setup version info
 # Compiler specific setup
 ########################################################################
 
+IF(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64|x86")
+ SET(USE_SIMD "SSE2" CACHE STRING "Use SIMD instructions")
+ELSE()
  SET(USE_SIMD "no" CACHE STRING "Use SIMD instructions")
+ENDIF()
  SET(USE_SIMD_VALUES "no" "SSE2" "AVX")
  SET_PROPERTY(CACHE USE_SIMD PROPERTY STRINGS ${USE_SIMD_VALUES})
  LIST(FIND USE_SIMD_VALUES ${USE_SIMD} USE_SIMD_INDEX)

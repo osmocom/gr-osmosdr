@@ -441,11 +441,9 @@ int hackrf_sink_c::work( int noutput_items,
     }
   }
 
-  noutput_items = items_consumed;
-
   // Tell runtime system how many input items we consumed on
   // each input stream.
-  consume_each(noutput_items);
+  consume_each(items_consumed);
 
   // Tell runtime system how many output items we produced.
   return 0;
