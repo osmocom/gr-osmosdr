@@ -426,7 +426,7 @@ int hackrf_sink_c::work( int noutput_items,
   _buf_used += (sse_rem*8+nosse_rem)*2;
   int items_consumed = sse_rem*8+nosse_rem;
 
-  if(noutput_items >= remaining) {
+  if((unsigned int)noutput_items >= remaining) {
     {
       boost::mutex::scoped_lock lock( _buf_mutex );
 
