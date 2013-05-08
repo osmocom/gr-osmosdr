@@ -258,9 +258,7 @@ bool hackrf_source_c::start()
     return false;
   }
 
-  while ( ! hackrf_is_streaming( _dev ) );
-
-  return (bool) hackrf_is_streaming( _dev );
+  return true;
 }
 
 bool hackrf_source_c::stop()
@@ -274,13 +272,7 @@ bool hackrf_source_c::stop()
     return false;
   }
 
-  while ( hackrf_is_streaming( _dev ) );
-
-  /* FIXME: hackrf_stop_rx should wait until the device is ready for a start */
-  /* required if we want to immediately start() again */
-  boost::this_thread::sleep( boost::posix_time::milliseconds(100) );
-
-  return ! (bool) hackrf_is_streaming( _dev );
+  return true;
 }
 
 int hackrf_source_c::work( int noutput_items,
@@ -292,7 +284,7 @@ int hackrf_source_c::work( int noutput_items,
   bool running = false;
 
   if ( _dev )
-    running = (bool) hackrf_is_streaming( _dev );
+    running = (hackrf_is_streaming( _dev ) == HACKRF_TRUE);
 
   {
     boost::mutex::scoped_lock lock( _buf_mutex );
@@ -301,7 +293,7 @@ int hackrf_source_c::work( int noutput_items,
       _buf_cond.wait( lock );
   }
 
-  if (!running)
+  if ( ! running )
     return WORK_DONE;
 
   unsigned short *buf = _buf[_buf_head] + _buf_offset;

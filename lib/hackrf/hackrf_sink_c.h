@@ -130,8 +130,6 @@ private:
   static int _usage;
   static boost::mutex _usage_mutex;
 
-  std::vector<gr_complex> _lut;
-
   hackrf_device *_dev;
 //  gruel::thread _thread;
 

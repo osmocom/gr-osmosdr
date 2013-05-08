@@ -269,13 +269,11 @@ int hackrf_sink_c::hackrf_tx_callback(unsigned char *buffer, uint32_t length)
       memset(buffer, 0, length);
       std::cerr << "U" << std::flush;
     } else {
-//      std::cerr << ":" << std::flush;
+//      std::cerr << "-" << std::flush;
       _buf_cond.notify_one();
     }
   }
-
 #endif
-
   return 0; // TODO: return -1 on error/stop
 }
 
@@ -301,9 +299,7 @@ bool hackrf_sink_c::start()
     return false;
   }
 
-  while ( ! hackrf_is_streaming( _dev ) );
-
-  return (bool) hackrf_is_streaming( _dev );
+  return true;
 }
 
 bool hackrf_sink_c::stop()
@@ -317,15 +313,8 @@ bool hackrf_sink_c::stop()
     return false;
   }
 
-  while ( hackrf_is_streaming( _dev ) );
-
-  /* FIXME: hackrf_stop_tx should wait until the device is ready for a start */
-  /* required if we want to immediately start() again */
-  boost::this_thread::sleep( boost::posix_time::milliseconds(100) );
-
-  return ! (bool) hackrf_is_streaming( _dev );
+  return true;
 }
-
 
 #ifdef USE_AVX
 void convert_avx(const float* inbuf, unsigned char* outbuf,const unsigned int count)
@@ -392,8 +381,8 @@ void convert_default(float* inbuf, unsigned char* outbuf,const unsigned int coun
 }
 
 int hackrf_sink_c::work( int noutput_items,
-  gr_vector_const_void_star &input_items,
-  gr_vector_void_star &output_items )
+                         gr_vector_const_void_star &input_items,
+                         gr_vector_void_star &output_items )
 {
   const gr_complex *in = (const gr_complex *) input_items[0];
 
@@ -435,7 +424,7 @@ int hackrf_sink_c::work( int noutput_items,
         items_consumed = 0;
         std::cerr << "O" << std::flush;
       } else {
-        //          std::cerr << "." << std::flush;
+//        std::cerr << "+" << std::flush;
         _buf_used = 0;
       }
     }
