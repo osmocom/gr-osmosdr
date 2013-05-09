@@ -21,9 +21,7 @@
 #
 
 SAMP_RATE_KEY = 'samp_rate'
-LINK_RATE_KEY = 'link_rate'
-GAIN_KEY = 'gain'
-IF_GAIN_KEY = 'if_gain'
+GAIN_KEY = lambda x: 'gain:'+x
 BWIDTH_KEY = 'bwidth'
 TX_FREQ_KEY = 'tx_freq'
 FREQ_CORR_KEY = 'freq_corr'
@@ -33,8 +31,7 @@ WAVEFORM_FREQ_KEY = 'waveform_freq'
 WAVEFORM_OFFSET_KEY = 'waveform_offset'
 WAVEFORM2_FREQ_KEY = 'waveform2_freq'
 FREQ_RANGE_KEY = 'freq_range'
-GAIN_RANGE_KEY = 'gain_range'
-IF_GAIN_RANGE_KEY = 'if_gain_range'
+GAIN_RANGE_KEY = lambda x: 'gain_range:'+x
 BWIDTH_RANGE_KEY = 'bwidth_range'
 TYPE_KEY = 'type'
 
@@ -50,12 +47,12 @@ import math
 
 n2s = eng_notation.num_to_str
 
-waveforms = { gr.GR_SIN_WAVE   : "Complex Sinusoid",
+waveforms = { gr.GR_SIN_WAVE   : "Sinusoid",
               gr.GR_CONST_WAVE : "Constant",
               gr.GR_GAUSSIAN   : "Gaussian Noise",
               gr.GR_UNIFORM    : "Uniform Noise",
-              "2tone"          : "Two Tone",
-              "sweep"          : "Sweep" }
+              "2tone"          : "Two Tone (IMD)",
+              "sweep"          : "Freq. Sweep" }
 
 #
 # GUI-unaware GNU Radio flowgraph.  This may be used either with command
@@ -79,8 +76,10 @@ class top_block(gr.top_block, pubsub):
 
         #subscribe set methods
         self.subscribe(SAMP_RATE_KEY, self.set_samp_rate)
-        self.subscribe(GAIN_KEY, self.set_gain)
-        self.subscribe(IF_GAIN_KEY, self.set_if_gain)
+
+        for name in self.get_gain_names():
+            self.subscribe(GAIN_KEY(name), (lambda gain,self=self,name=name: self.set_named_gain(gain, name)))
+
         self.subscribe(BWIDTH_KEY, self.set_bandwidth)
         self.subscribe(TX_FREQ_KEY, self.set_freq)
         self.subscribe(FREQ_CORR_KEY, self.set_freq_corr)
@@ -90,58 +89,50 @@ class top_block(gr.top_block, pubsub):
         self.subscribe(TYPE_KEY, self.set_waveform)
 
         #force update on pubsub keys
-        for key in (SAMP_RATE_KEY, GAIN_KEY, IF_GAIN_KEY, BWIDTH_KEY,
+        for key in (SAMP_RATE_KEY, GAIN_KEY, BWIDTH_KEY,
                     TX_FREQ_KEY, FREQ_CORR_KEY, AMPLITUDE_KEY,
                     WAVEFORM_FREQ_KEY, WAVEFORM_OFFSET_KEY, WAVEFORM2_FREQ_KEY):
-#            print "key: ", key, "=", self[key]
+            #print key, "=", self[key]
             self[key] = self[key]
         self[TYPE_KEY] = options.type #set type last
 
     def _setup_osmosdr(self, options):
         self._sink = osmosdr.sink_c(options.args)
-        self._sink.set_sample_rate(options.samp_rate)
+
+        if options.samp_rate is None:
+            options.samp_rate = self._sink.get_sample_rates().start()
+
+        self.set_samp_rate(options.samp_rate)
 
         # Set the gain from options
         if(options.gain):
-            self._sink.set_gain(options.gain)
+            gain = self._sink.set_gain(options.gain)
+            if self._verbose:
+                print "Set gain to:", gain
 
         # Set the antenna
         if(options.antenna):
-            self._sink.set_antenna(options.antenna, 0)
+            ant = self._sink.set_antenna(options.antenna, 0)
+            if self._verbose:
+                print "Set antenna to:", ant
 
         self.publish(FREQ_RANGE_KEY, self._sink.get_freq_range)
-        self.publish(GAIN_RANGE_KEY, self._get_rf_gain_range)
-        self.publish(IF_GAIN_RANGE_KEY, self._get_if_gain_range)
+
+        for name in self.get_gain_names():
+            self.publish(GAIN_RANGE_KEY(name), (lambda self=self,name=name: self._sink.get_gain_range(name)))
+
         self.publish(BWIDTH_RANGE_KEY, self._sink.get_bandwidth_range)
-        self.publish(GAIN_KEY, self._get_rf_gain)
-        self.publish(IF_GAIN_KEY, self._get_if_gain)
+
+        for name in self.get_gain_names():
+            self.publish(GAIN_KEY(name), (lambda self=self,name=name: self._sink.get_gain(name)))
+
         self.publish(BWIDTH_KEY, self._sink.get_bandwidth)
 
-    def _get_rf_gain_range(self):
-        return self._sink.get_gain_range("RF")
-
-    def _get_if_gain_range(self):
-        return self._sink.get_gain_range("IF")
-
-    def _get_rf_gain(self):
-        return self._sink.get_gain("RF")
-
-    def _get_if_gain(self):
-        return self._sink.get_gain("IF")
-
-    def _set_tx_amplitude(self, ampl):
-        """
-        Sets the transmit amplitude
-        @param ampl the amplitude or None for automatic
-        """
-        ampl_range = self[AMPL_RANGE_KEY]
-        if ampl is None:
-            ampl = (ampl_range[1] - ampl_range[0])*0.3 + ampl_range[0]
-        self[AMPLITUDE_KEY] = max(ampl_range[0], min(ampl, ampl_range[1]))
+    def get_gain_names(self):
+        return self._sink.get_gain_names()
 
     def set_samp_rate(self, sr):
-        self._sink.set_sample_rate(sr)
-        sr = self._sink.get_sample_rate()
+        sr = self._sink.set_sample_rate(sr)
 
         if self[TYPE_KEY] in (gr.GR_SIN_WAVE, gr.GR_CONST_WAVE):
             self._src.set_sampling_freq(self[SAMP_RATE_KEY])
@@ -159,64 +150,53 @@ class top_block(gr.top_block, pubsub):
 
         return True
 
-    def set_gain(self, gain):
+    def set_named_gain(self, gain, name):
         if gain is None:
-            g = self[GAIN_RANGE_KEY]
+            g = self[GAIN_RANGE_KEY(name)]
             gain = float(g.start()+g.stop())/2
             if self._verbose:
-                print "Using auto-calculated mid-point RF gain"
-            self[GAIN_KEY] = gain
+                print "Using auto-calculated mid-point gain"
+            self[GAIN_KEY(name)] = gain
             return
-        gain = self._sink.set_gain(gain, "RF")
-        if self._verbose:
-            print "Set RF gain to:", gain
 
-    def set_if_gain(self, gain):
-        if gain is None:
-            g = self[IF_GAIN_RANGE_KEY]
-            gain = float(g.start()+g.stop())/2
-            if self._verbose:
-                print "Using auto-calculated mid-point IF gain"
-            self[IF_GAIN_KEY] = gain
-            return
-        gain = self._sink.set_gain(gain, "IF")
+        gain = self._sink.set_gain(gain, name)
         if self._verbose:
-            print "Set IF gain to:", gain
+            print "Set " + name + " gain to:", gain
 
     def set_bandwidth(self, bw):
         bw = self._sink.set_bandwidth(bw)
         if self._verbose:
             print "Set bandwidth to:", bw
 
-    def set_freq(self, target_freq):
-
-        if target_freq is None:
+    def set_freq(self, freq):
+        if freq is None:
             f = self[FREQ_RANGE_KEY]
-            target_freq = float(f.start()+f.stop())/2.0
+            freq = float(f.start()+f.stop())/2.0
             if self._verbose:
                 print "Using auto-calculated mid-point frequency"
-            self[TX_FREQ_KEY] = target_freq
+            self[TX_FREQ_KEY] = freq
             return
 
-        tr = self._sink.set_center_freq(target_freq)
-        if tr is not None:
-            self._freq = tr
+        freq = self._sink.set_center_freq(freq)
+        if freq is not None:
+            self._freq = freq
             if self._verbose:
-                print "Set center frequency to", tr
+                print "Set center frequency to", freq
         elif self._verbose:
             print "Failed to set freq."
-        return tr
+        return freq
 
     def set_freq_corr(self, ppm):
         if ppm is None:
+            ppm = 0.0
             if self._verbose:
-                print "Setting freq corrrection to 0"
-            self[FREQ_CORR_KEY] = 0
+                print "Using frequency corrrection of", ppm
+            self[FREQ_CORR_KEY] = ppm
             return
 
         ppm = self._sink.set_freq_corr(ppm)
         if self._verbose:
-            print "Set freq correction to:", ppm
+            print "Set frequency correction to:", ppm
 
     def set_waveform_freq(self, freq):
         if self[TYPE_KEY] == gr.GR_SIN_WAVE:
@@ -242,11 +222,11 @@ class top_block(gr.top_block, pubsub):
         self.lock()
         self.disconnect_all()
         if type == gr.GR_SIN_WAVE or type == gr.GR_CONST_WAVE:
-            self._src = gr.sig_source_c(self[SAMP_RATE_KEY],      # Sample rate
-                                        type,                # Waveform type
-                                        self[WAVEFORM_FREQ_KEY], # Waveform frequency
-                                        self[AMPLITUDE_KEY],     # Waveform amplitude
-                                        self[WAVEFORM_OFFSET_KEY])        # Waveform offset
+            self._src = gr.sig_source_c(self[SAMP_RATE_KEY],        # Sample rate
+                                        type,                       # Waveform type
+                                        self[WAVEFORM_FREQ_KEY],    # Waveform frequency
+                                        self[AMPLITUDE_KEY],        # Waveform amplitude
+                                        self[WAVEFORM_OFFSET_KEY])  # Waveform offset
         elif type == gr.GR_GAUSSIAN or type == gr.GR_UNIFORM:
             self._src = gr.noise_source_c(type, self[AMPLITUDE_KEY])
         elif type == "2tone":
@@ -330,8 +310,8 @@ def get_options():
                       help="Device args, [default=%default]")
     parser.add_option("-A", "--antenna", type="string", default=None,
                       help="Select Rx Antenna where appropriate")
-    parser.add_option("-s", "--samp-rate", type="eng_float", default=1e6,
-                      help="Set sample rate (bandwidth) [default=%default]")
+    parser.add_option("-s", "--samp-rate", type="eng_float", default=None,
+                      help="Set sample rate (bandwidth), minimum by default")
     parser.add_option("-g", "--gain", type="eng_float", default=None,
                       help="Set gain in dB (default is midpoint)")
     parser.add_option("-f", "--tx-freq", type="eng_float", default=None,
@@ -359,7 +339,7 @@ def get_options():
     parser.add_option("--sweep", dest="type", action="store_const", const="sweep",
                       help="Generate a swept sine wave")
     parser.add_option("", "--amplitude", type="eng_float", default=0.3,
-                      help="Set output amplitude to AMPL (0.0-1.0) [default=%default]",
+                      help="Set output amplitude to AMPL (0.1-1.0) [default=%default]",
                       metavar="AMPL")
     parser.add_option("-v", "--verbose", action="store_true", default=False,
                       help="Use verbose console output [default=%default]")

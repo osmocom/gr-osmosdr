@@ -29,6 +29,6 @@ GR_PYTHON_INSTALL(
     PROGRAMS
     osmocom_fft
     osmocom_siggen
-    osmocom_siggen_gui
+    osmocom_siggen_nogui
     DESTINATION ${GR_RUNTIME_DIR}
 )
