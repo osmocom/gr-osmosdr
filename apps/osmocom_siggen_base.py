@@ -38,12 +38,17 @@ TYPE_KEY = 'type'
 def setter(ps, key, val): ps[key] = val
 
 import osmosdr
+from gnuradio import blocks
+from gnuradio import filter
+from gnuradio import digital
 from gnuradio import gr, gru, eng_notation
 from gnuradio.gr.pubsub import pubsub
 from gnuradio.eng_option import eng_option
 from optparse import OptionParser
 import sys
 import math
+import numpy
+import random
 
 n2s = eng_notation.num_to_str
 
@@ -52,7 +57,62 @@ waveforms = { gr.GR_SIN_WAVE   : "Sinusoid",
               gr.GR_GAUSSIAN   : "Gaussian Noise",
               gr.GR_UNIFORM    : "Uniform Noise",
               "2tone"          : "Two Tone (IMD)",
-              "sweep"          : "Freq. Sweep" }
+              "sweep"          : "Freq. Sweep",
+              "gsm"            : "GSM Bursts" }
+
+class gsm_source_c(gr.hier_block2):
+    def __init__(self, sample_rate, amplitude):
+        gr.hier_block2.__init__(self, "gsm_source_c",
+            gr.io_signature(0, 0, 0), # Input signature
+            gr.io_signature(1, 1, gr.sizeof_gr_complex)) # Output signature
+
+        self._bits = gr.vector_source_b(self.gen_gsm_seq(), True)
+
+        self._symb_rate = 270833
+        self._samples_per_symbol = 2
+
+        bits_per_symbol = 1
+        self._pack = gr.unpacked_to_packed_bb(bits_per_symbol, gr.GR_MSB_FIRST)
+
+        self._mod = digital.gmsk_mod( self._samples_per_symbol, bt=0.35 )
+
+        self._interpolate = filter.fractional_interpolator_cc( 0,
+            (self._symb_rate * self._samples_per_symbol) / sample_rate )
+
+        self._scale = gr.multiply_const_cc(amplitude)
+
+        self.connect(self._bits, self._pack, self._mod, self._interpolate, self._scale, self)
+
+    def set_amplitude(self, amplitude):
+        self._scale.set_k(amplitude)
+
+    def set_sampling_freq(self, sample_rate):
+        self._interpolate.set_interp_ratio( (self._symb_rate * self._samples_per_symbol) / sample_rate )
+
+    def gen_gsm_burst(self, l):
+        chunks = [
+            [0,0,0],
+            list(numpy.random.randint(0, 2, 58)),
+            [0,0,1,0,0,1,0,1,1,1,0,0,0,0,1,0,0,0,1,0,0,1,0,1,1,1],
+            list(numpy.random.randint(0, 2, 58)),
+            [0,0,0],
+            [1] * (l-148)
+        ]
+        return map(int, sum(chunks,[]))
+
+    def gen_gsm_frame(self):
+        return \
+            self.gen_gsm_burst(158) + \
+            self.gen_gsm_burst(158) + \
+            self.gen_gsm_burst(158) + \
+            self.gen_gsm_burst(159) + \
+            self.gen_gsm_burst(158) + \
+            self.gen_gsm_burst(158) + \
+            self.gen_gsm_burst(158) + \
+            self.gen_gsm_burst(159)
+
+    def gen_gsm_seq(self):
+        return sum([self.gen_gsm_frame() for i in range(10)], [])
 
 #
 # GUI-unaware GNU Radio flowgraph.  This may be used either with command
@@ -142,6 +202,8 @@ class top_block(gr.top_block, pubsub):
         elif self[TYPE_KEY] == "sweep":
             self._src1.set_sampling_freq(self[SAMP_RATE_KEY])
             self._src2.set_sampling_freq(self[WAVEFORM_FREQ_KEY]*2*math.pi/self[SAMP_RATE_KEY])
+        elif self[TYPE_KEY] == "gsm":
+            self._src.set_sampling_freq(self[SAMP_RATE_KEY])
         else:
             return True # Waveform not yet set
 
@@ -262,6 +324,8 @@ class top_block(gr.top_block, pubsub):
             self._src2 = gr.frequency_modulator_fc(self[WAVEFORM_FREQ_KEY]*2*math.pi/self[SAMP_RATE_KEY])
             self._src = gr.multiply_const_cc(self[AMPLITUDE_KEY])
             self.connect(self._src1,self._src2,self._src)
+        elif type == "gsm":
+            self._src = gsm_source_c(self[SAMP_RATE_KEY], self[AMPLITUDE_KEY])
         else:
             raise RuntimeError("Unknown waveform type")
 
@@ -279,8 +343,9 @@ class top_block(gr.top_block, pubsub):
             elif type == "sweep":
                 print "Sweeping across %sHz to %sHz" % (n2s(-self[WAVEFORM_FREQ_KEY]/2.0),n2s(self[WAVEFORM_FREQ_KEY]/2.0))
                 print "Sweep rate: %sHz" % (n2s(self[WAVEFORM2_FREQ_KEY]),)
+            elif type == "gsm":
+                print "GSM Burst Sequence"
             print "TX amplitude:", self[AMPLITUDE_KEY]
-
 
     def set_amplitude(self, amplitude):
         if amplitude < 0.0 or amplitude > 1.0:
@@ -295,6 +360,8 @@ class top_block(gr.top_block, pubsub):
             self._src2.set_amplitude(amplitude/2.0)
         elif self[TYPE_KEY] == "sweep":
             self._src.set_k(amplitude)
+        elif self[TYPE_KEY] == "gsm":
+            self._src.set_amplitude(amplitude)
         else:
             return True # Waveform not yet set
 
@@ -338,6 +405,8 @@ def get_options():
                       help="Generate Two Tone signal for IMD testing")
     parser.add_option("--sweep", dest="type", action="store_const", const="sweep",
                       help="Generate a swept sine wave")
+    parser.add_option("--gsm", dest="type", action="store_const", const="gsm",
+                      help="Generate GMSK modulated GSM Burst Sequence")
     parser.add_option("", "--amplitude", type="eng_float", default=0.3,
                       help="Set output amplitude to AMPL (0.1-1.0) [default=%default]",
                       metavar="AMPL")
