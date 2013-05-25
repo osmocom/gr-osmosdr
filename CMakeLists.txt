@@ -141,7 +141,7 @@ set(GR_PKG_LIBEXEC_DIR  ${GR_LIBEXEC_DIR}/${CMAKE_PROJECT_NAME})
 set(GRC_BLOCKS_DIR      ${GR_PKG_DATA_DIR}/grc/blocks)
 
 ########################################################################
-# Find gnuradio build dependencies
+# Find build dependencies
 ########################################################################
 find_package(Gruel)
 find_package(GnuradioCore)
@@ -197,14 +197,37 @@ add_custom_target(uninstall
 )
 
 ########################################################################
+# Enable python component
+########################################################################
+find_package(PythonLibs)
+find_package(SWIG)
+
+if(SWIG_FOUND)
+    message(STATUS "Minimum SWIG version required is 1.3.31")
+    set(SWIG_VERSION_CHECK FALSE)
+    if("${SWIG_VERSION}" VERSION_GREATER "1.3.30")
+        set(SWIG_VERSION_CHECK TRUE)
+    endif()
+endif(SWIG_FOUND)
+
+include(GrComponent)
+GR_REGISTER_COMPONENT("Python support" ENABLE_PYTHON
+    PYTHONLIBS_FOUND
+    SWIG_FOUND
+    SWIG_VERSION_CHECK
+)
+
+########################################################################
 # Add subdirectories
 ########################################################################
 add_subdirectory(include/osmosdr)
 add_subdirectory(lib)
-add_subdirectory(swig)
-add_subdirectory(python)
-add_subdirectory(grc)
-add_subdirectory(apps)
+if(ENABLE_PYTHON)
+    add_subdirectory(swig)
+    add_subdirectory(python)
+    add_subdirectory(grc)
+    add_subdirectory(apps)
+endif(ENABLE_PYTHON)
 add_subdirectory(docs)
 
 ########################################################################
