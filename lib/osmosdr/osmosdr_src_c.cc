@@ -74,25 +74,12 @@ osmosdr_src_c::osmosdr_src_c (const std::string &args)
     _skipped(0)
 {
   int ret;
-  unsigned int dev_index = 0, mcr = 0;
-  size_t nchan = 1;
+  unsigned int dev_index = 0;
 
   dict_t dict = params_to_dict(args);
 
   if (dict.count("osmosdr"))
     dev_index = boost::lexical_cast< unsigned int >( dict["osmosdr"] );
-
-  if (dict.count("mcr"))
-    mcr = (unsigned int) boost::lexical_cast< double >( dict["mcr"] );
-
-  if (mcr != 0)
-    throw std::runtime_error("FIXME: Setting the MCR is not supported.");
-
-  if (dict.count("nchan"))
-    nchan = boost::lexical_cast< size_t >( dict["nchan"] );
-
-  if (nchan != 1)
-    throw std::runtime_error("FIXME: Values of nchan != 1 are not supported.");
 
   _buf_num = _buf_len = _buf_head = _buf_used = _buf_offset = 0;
 
