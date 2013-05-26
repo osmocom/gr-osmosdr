@@ -90,12 +90,12 @@ hackrf_source_c::hackrf_source_c (const std::string &args)
   int ret;
   uint16_t val;
 
-//  dict_t dict = params_to_dict(args);
+  dict_t dict = params_to_dict(args);
 
   _buf_num = _buf_len = _buf_head = _buf_used = _buf_offset = 0;
 
-//  if (dict.count("buffers"))
-//    _buf_num = boost::lexical_cast< unsigned int >( dict["buffers"] );
+  if (dict.count("buffers"))
+    _buf_num = boost::lexical_cast< unsigned int >( dict["buffers"] );
 
 //  if (dict.count("buflen"))
 //    _buf_len = boost::lexical_cast< unsigned int >( dict["buflen"] );
