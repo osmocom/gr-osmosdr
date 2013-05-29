@@ -3,12 +3,12 @@ PKG_CHECK_MODULES(PC_GNURADIO_IQBALANCE gnuradio-iqbalance)
 
 FIND_PATH(
     GNURADIO_IQBALANCE_INCLUDE_DIRS
-    NAMES iqbalance_api.h
-    HINTS $ENV{GNURADIO_IQBALANCE_DIR}/include/iqbalance
+    NAMES iqbalance/api.h
+    HINTS $ENV{GNURADIO_IQBALANCE_DIR}/include
         ${PC_GNURADIO_IQBALANCE_INCLUDEDIR}
-        ${CMAKE_INSTALL_PREFIX}/include/iqbalance
-    PATHS /usr/local/include/iqbalance
-          /usr/include/iqbalance
+        ${CMAKE_INSTALL_PREFIX}/include
+    PATHS /usr/local/include
+          /usr/include
 )
 
 FIND_LIBRARY(

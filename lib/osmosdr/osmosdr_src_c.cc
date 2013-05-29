@@ -28,7 +28,7 @@
 #endif
 
 #include "osmosdr_src_c.h"
-#include <gr_io_signature.h>
+#include <gnuradio/io_signature.h>
 
 #include <boost/assign.hpp>
 #include <boost/format.hpp>
@@ -39,7 +39,7 @@
 
 #include <osmosdr.h>
 
-#include <osmosdr_arg_helpers.h>
+#include "osmosdr_arg_helpers.h"
 
 using namespace boost::assign;
 
@@ -63,8 +63,8 @@ osmosdr_make_src_c (const std::string &args)
  * The private constructor
  */
 osmosdr_src_c::osmosdr_src_c (const std::string &args)
-  : gr_sync_block ("osmosdr_src_c",
-        gr_make_io_signature (0, 0, sizeof (gr_complex)),
+  : gr::sync_block ("osmosdr_src_c",
+        gr::io_signature::make(0, 0, sizeof (gr_complex)),
         args_to_io_signature(args)),
     _dev(NULL),
     _buf(NULL),
@@ -139,7 +139,7 @@ osmosdr_src_c::osmosdr_src_c (const std::string &args)
       _buf[i] = (unsigned short *) malloc(_buf_len);
   }
 
-  _thread = gruel::thread(_osmosdr_wait, this);
+  _thread = gr::thread::thread(_osmosdr_wait, this);
 }
 
 /*

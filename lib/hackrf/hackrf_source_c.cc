@@ -28,7 +28,7 @@
 #endif
 
 #include "hackrf_source_c.h"
-#include <gnuradio/gr_io_signature.h>
+#include <gnuradio/io_signature.h>
 
 #include <boost/assign.hpp>
 #include <boost/format.hpp>
@@ -39,7 +39,7 @@
 #include <stdexcept>
 #include <iostream>
 
-#include <osmosdr_arg_helpers.h>
+#include "osmosdr_arg_helpers.h"
 
 using namespace boost::assign;
 
@@ -59,7 +59,7 @@ hackrf_source_c_sptr make_hackrf_source_c (const std::string & args)
 /*
  * Specify constraints on number of input and output streams.
  * This info is used to construct the input and output signatures
- * (2nd & 3rd args to gr_block's constructor).  The input and
+ * (2nd & 3rd args to gr::block's constructor).  The input and
  * output signatures are used by the runtime system to
  * check that a valid number and type of inputs and outputs
  * are connected to this block.  In this case, we accept
@@ -74,9 +74,9 @@ static const int MAX_OUT = 1;	// maximum number of output streams
  * The private constructor
  */
 hackrf_source_c::hackrf_source_c (const std::string &args)
-  : gr_sync_block ("hackrf_source_c",
-        gr_make_io_signature (MIN_IN, MAX_IN, sizeof (gr_complex)),
-        gr_make_io_signature (MIN_OUT, MAX_OUT, sizeof (gr_complex))),
+  : gr::sync_block ("hackrf_source_c",
+        gr::io_signature::make(MIN_IN, MAX_IN, sizeof (gr_complex)),
+        gr::io_signature::make(MIN_OUT, MAX_OUT, sizeof (gr_complex))),
     _dev(NULL),
     _buf(NULL),
     _sample_rate(0),
@@ -177,7 +177,7 @@ hackrf_source_c::hackrf_source_c (const std::string &args)
       _buf[i] = (unsigned short *) malloc(_buf_len);
   }
 
-//  _thread = gruel::thread(_hackrf_wait, this);
+//  _thread = gr::thread::thread(_hackrf_wait, this);
 }
 
 /*

@@ -25,7 +25,7 @@
 #include <vector>
 #include <map>
 
-#include <gr_io_signature.h>
+#include <gnuradio/io_signature.h>
 
 #include <boost/lexical_cast.hpp>
 #include <boost/tokenizer.hpp>
@@ -106,7 +106,7 @@ struct is_nchan_argument
   }
 };
 
-inline gr_io_signature_sptr args_to_io_signature( const std::string &args )
+inline gr::io_signature::sptr args_to_io_signature( const std::string &args )
 {
   size_t max_nchan = 0;
   size_t dev_nchan = 0;
@@ -147,7 +147,7 @@ inline gr_io_signature_sptr args_to_io_signature( const std::string &args )
     throw std::runtime_error("Wrong device arguments specified. Missing nchan?");
 
   const size_t nchan = std::max<size_t>(dev_nchan, 1); // assume at least one
-  return gr_make_io_signature(nchan, nchan, sizeof(gr_complex));
+  return gr::io_signature::make(nchan, nchan, sizeof(gr_complex));
 }
 
 #endif // OSMOSDR_ARG_HELPERS_H

@@ -25,13 +25,13 @@
 #include <boost/assign.hpp>
 #include <boost/algorithm/string.hpp>
 
-#include <gr_io_signature.h>
-#include <gr_deinterleave.h>
-#include <gr_float_to_complex.h>
+#include <gnuradio/io_signature.h>
+#include <gnuradio/blocks/deinterleave.h>
+#include <gnuradio/blocks/float_to_complex.h>
 
 #include "rtl_tcp_source_c.h"
 
-#include <osmosdr_arg_helpers.h>
+#include "osmosdr_arg_helpers.h"
 
 using namespace boost::assign;
 
@@ -57,9 +57,9 @@ rtl_tcp_source_c_sptr make_rtl_tcp_source_c(const std::string &args)
 }
 
 rtl_tcp_source_c::rtl_tcp_source_c(const std::string &args) :
-  gr_hier_block2("rtl_tcp_source_c",
-                 gr_make_io_signature (0, 0, 0),
-                 gr_make_io_signature (1, 1, sizeof (gr_complex))),
+  gr::hier_block2("rtl_tcp_source_c",
+                 gr::io_signature::make(0, 0, 0),
+                 gr::io_signature::make(1, 1, sizeof (gr_complex))),
   _no_tuner(false),
   _auto_gain(false),
   _if_gain(0)
@@ -127,10 +127,12 @@ rtl_tcp_source_c::rtl_tcp_source_c(const std::string &args) :
   _src->set_offset_tuning(offset_tune);
 
   /* rtl tcp source provides a stream of interleaved IQ floats */
-  gr_deinterleave_sptr deinterleave = gr_make_deinterleave(sizeof(float));
+  gr::blocks::deinterleave::sptr deinterleave = \
+      gr::blocks::deinterleave::make( sizeof(float) );
 
   /* block to convert deinterleaved floats to a complex stream */
-  gr_float_to_complex_sptr f2c = gr_make_float_to_complex(1);
+  gr::blocks::float_to_complex::sptr f2c = \
+      gr::blocks::float_to_complex::make( 1 );
 
   connect(_src, 0, deinterleave, 0);
   connect(deinterleave, 0, f2c, 0); /* I */

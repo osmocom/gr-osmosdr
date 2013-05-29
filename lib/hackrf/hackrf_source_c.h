@@ -22,8 +22,8 @@
 #ifndef INCLUDED_HACKRF_SOURCE_C_H
 #define INCLUDED_HACKRF_SOURCE_C_H
 
-#include <gruel/thread.h>
-#include <gnuradio/gr_sync_block.h>
+#include <gnuradio/thread/thread.h>
+#include <gnuradio/sync_block.h>
 
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/condition_variable.hpp>
@@ -36,7 +36,7 @@ class hackrf_source_c;
 
 /*
  * We use boost::shared_ptr's instead of raw pointers for all access
- * to gr_blocks (and many other data structures).  The shared_ptr gets
+ * to gr::blocks (and many other data structures).  The shared_ptr gets
  * us transparent reference counting, which greatly simplifies storage
  * management issues.  This is especially helpful in our hybrid
  * C++ / Python system.
@@ -61,7 +61,7 @@ hackrf_source_c_sptr make_hackrf_source_c (const std::string & args = "");
  * \ingroup block
  */
 class hackrf_source_c :
-    public gr_sync_block,
+    public gr::sync_block,
     public osmosdr_src_iface
 {
 private:
@@ -132,7 +132,7 @@ private:
   std::vector<gr_complex> _lut;
 
   hackrf_device *_dev;
-  gruel::thread _thread;
+  gr::thread::thread _thread;
   unsigned short **_buf;
   unsigned int _buf_num;
   unsigned int _buf_len;

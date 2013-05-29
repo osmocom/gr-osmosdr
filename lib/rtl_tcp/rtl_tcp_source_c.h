@@ -20,7 +20,7 @@
 #ifndef RTL_TCP_SOURCE_C_H
 #define RTL_TCP_SOURCE_C_H
 
-#include <gr_hier_block2.h>
+#include <gnuradio/hier_block2.h>
 
 #include "osmosdr_src_iface.h"
 
@@ -33,7 +33,7 @@ typedef boost::shared_ptr< rtl_tcp_source_c > rtl_tcp_source_c_sptr;
 rtl_tcp_source_c_sptr make_rtl_tcp_source_c( const std::string & args = "" );
 
 class rtl_tcp_source_c :
-    public gr_hier_block2,
+    public gr::hier_block2,
     public osmosdr_src_iface
 {
 private:

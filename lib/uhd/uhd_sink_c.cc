@@ -36,9 +36,9 @@ uhd_sink_c_sptr make_uhd_sink_c(const std::string &args)
 }
 
 uhd_sink_c::uhd_sink_c(const std::string &args) :
-    gr_hier_block2("uhd_sink_c",
+    gr::hier_block2("uhd_sink_c",
                    args_to_io_signature(args),
-                   gr_make_io_signature (0, 0, 0)),
+                   gr::io_signature::make(0, 0, 0)),
     _lo_offset(0.0f)
 {
   size_t nchan = 1;
@@ -63,9 +63,9 @@ uhd_sink_c::uhd_sink_c(const std::string &args) :
     }
   }
 
-  _snk = uhd_make_usrp_sink( arguments,
-                             uhd::io_type_t::COMPLEX_FLOAT32,
-                             nchan );
+  _snk = gr::uhd::usrp_sink::make( arguments,
+                                   uhd::io_type_t::COMPLEX_FLOAT32,
+                                   nchan );
 
   if (dict.count("subdev")) {
     _snk->set_subdev_spec( dict["subdev"] );

@@ -20,8 +20,8 @@
 #ifndef UHD_SINK_C_H
 #define UHD_SINK_C_H
 
-#include <gnuradio/gr_hier_block2.h>
-#include <gnuradio/gr_uhd_usrp_sink.h>
+#include <gnuradio/hier_block2.h>
+#include <gnuradio/uhd/usrp_sink.h>
 
 #include "osmosdr_snk_iface.h"
 
@@ -32,7 +32,7 @@ typedef boost::shared_ptr< uhd_sink_c > uhd_sink_c_sptr;
 uhd_sink_c_sptr make_uhd_sink_c(const std::string &args = "");
 
 class uhd_sink_c :
-    public gr_hier_block2,
+    public gr::hier_block2,
     public osmosdr_snk_iface
 {
 private:
@@ -73,7 +73,7 @@ public:
 
 private:
   double _lo_offset;
-  boost::shared_ptr<uhd_usrp_sink> _snk;
+  gr::uhd::usrp_sink::sptr _snk;
 };
 
 #endif // UHD_SINK_C_H

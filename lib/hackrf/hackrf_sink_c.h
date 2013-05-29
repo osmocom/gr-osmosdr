@@ -20,8 +20,8 @@
 #ifndef INCLUDED_HACKRF_SINK_C_H
 #define INCLUDED_HACKRF_SINK_C_H
 
-#include <gruel/thread.h>
-#include <gnuradio/gr_sync_block.h>
+#include <gnuradio/thread/thread.h>
+#include <gnuradio/sync_block.h>
 
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/condition_variable.hpp>
@@ -45,7 +45,7 @@ typedef struct circular_buffer
 
 /*
  * We use boost::shared_ptr's instead of raw pointers for all access
- * to gr_blocks (and many other data structures).  The shared_ptr gets
+ * to gr::blocks (and many other data structures).  The shared_ptr gets
  * us transparent reference counting, which greatly simplifies storage
  * management issues.  This is especially helpful in our hybrid
  * C++ / Python system.
@@ -66,7 +66,7 @@ typedef boost::shared_ptr<hackrf_sink_c> hackrf_sink_c_sptr;
 hackrf_sink_c_sptr make_hackrf_sink_c (const std::string & args = "");
 
 class hackrf_sink_c :
-    public gr_sync_block,
+    public gr::sync_block,
     public osmosdr_snk_iface
 {
 private:
@@ -131,7 +131,7 @@ private:
   static boost::mutex _usage_mutex;
 
   hackrf_device *_dev;
-//  gruel::thread _thread;
+//  gr::thread::thread _thread;
 
   circular_buffer_t _cbuf;
   unsigned char *_buf;

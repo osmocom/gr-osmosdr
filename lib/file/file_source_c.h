@@ -20,7 +20,7 @@
 #ifndef FILE_SOURCE_C_H
 #define FILE_SOURCE_C_H
 
-#include <gr_hier_block2.h>
+#include <gnuradio/hier_block2.h>
 
 #include "osmosdr_src_iface.h"
 
@@ -31,7 +31,7 @@ typedef boost::shared_ptr< file_source_c > file_source_c_sptr;
 file_source_c_sptr make_file_source_c( const std::string & args = "" );
 
 class file_source_c :
-    public gr_hier_block2,
+    public gr::hier_block2,
     public osmosdr_src_iface
 {
 private:

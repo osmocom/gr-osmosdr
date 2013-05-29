@@ -42,7 +42,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/thread/thread.hpp>
 
-#include <gnuradio/gr_io_signature.h>
+#include <gnuradio/io_signature.h>
 
 #include "hackrf_sink_c.h"
 
@@ -126,7 +126,7 @@ hackrf_sink_c_sptr make_hackrf_sink_c (const std::string & args)
 /*
  * Specify constraints on number of input and output streams.
  * This info is used to construct the input and output signatures
- * (2nd & 3rd args to gr_block's constructor).  The input and
+ * (2nd & 3rd args to gr::block's constructor).  The input and
  * output signatures are used by the runtime system to
  * check that a valid number and type of inputs and outputs
  * are connected to this block.  In this case, we accept
@@ -141,9 +141,9 @@ static const int MAX_OUT = 0;  // maximum number of output streams
  * The private constructor
  */
 hackrf_sink_c::hackrf_sink_c (const std::string &args)
-  : gr_sync_block ("hackrf_sink_c",
-        gr_make_io_signature (MIN_IN, MAX_IN, sizeof (gr_complex)),
-        gr_make_io_signature (MIN_OUT, MAX_OUT, sizeof (gr_complex))),
+  : gr::sync_block ("hackrf_sink_c",
+        gr::io_signature::make(MIN_IN, MAX_IN, sizeof (gr_complex)),
+        gr::io_signature::make(MIN_OUT, MAX_OUT, sizeof (gr_complex))),
     _dev(NULL),
     _buf(NULL),
     _sample_rate(0),
@@ -219,7 +219,7 @@ hackrf_sink_c::hackrf_sink_c (const std::string &args)
 
   cb_init( &_cbuf, _buf_num, BUF_LEN );
 
-//  _thread = gruel::thread(_hackrf_wait, this);
+//  _thread = gr::thread::thread(_hackrf_wait, this);
 }
 
 /*

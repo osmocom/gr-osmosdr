@@ -24,13 +24,13 @@
 
 #include <boost/assign.hpp>
 
-#include <gr_io_signature.h>
-#include <gr_file_source.h>
-#include <gr_throttle.h>
+#include <gnuradio/io_signature.h>
+#include <gnuradio/blocks/file_source.h>
+#include <gnuradio/blocks/throttle.h>
 
 #include "file_source_c.h"
 
-#include <osmosdr_arg_helpers.h>
+#include "osmosdr_arg_helpers.h"
 
 using namespace boost::assign;
 
@@ -40,9 +40,9 @@ file_source_c_sptr make_file_source_c(const std::string &args)
 }
 
 file_source_c::file_source_c(const std::string &args) :
-  gr_hier_block2("file_source_c",
-                 gr_make_io_signature (0, 0, 0),
-                 gr_make_io_signature (1, 1, sizeof (gr_complex)))
+  gr::hier_block2("file_source_c",
+                 gr::io_signature::make(0, 0, 0),
+                 gr::io_signature::make(1, 1, sizeof (gr_complex)))
 {
   std::string filename;
   bool repeat = true;
@@ -76,12 +76,13 @@ file_source_c::file_source_c(const std::string &args) :
   if (0 == _rate)
     throw std::runtime_error("Parameter 'rate' is missing in arguments.");
 
-  gr_file_source_sptr src = gr_make_file_source( sizeof(gr_complex),
-                                                 filename.c_str(),
-                                                 repeat );
+  gr::blocks::file_source::sptr src = \
+      gr::blocks::file_source::make( sizeof(gr_complex),
+                                     filename.c_str(),
+                                     repeat );
 
   if (throttle) {
-    gr_throttle::sptr throttle = gr_make_throttle( sizeof(gr_complex), _rate );
+    gr::blocks::throttle::sptr throttle = gr::blocks::throttle::make( sizeof(gr_complex), _rate );
 
     connect( src, 0, throttle, 0 );
     connect( throttle, 0, self(), 0 );

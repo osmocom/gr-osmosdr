@@ -16,6 +16,15 @@
 #include "osmosdr/osmosdr_sink_c.h"
 %}
 
+// Workaround for a SWIG 2.0.4 bug with templates. Probably needs to be looked in to.
+%{
+#if PY_VERSION_HEX >= 0x03020000
+# define SWIGPY_SLICE_ARG(obj) ((PyObject*) (obj))
+#else
+# define SWIGPY_SLICE_ARG(obj) ((PySliceObject*) (obj))
+#endif
+%}
+
 %template(string_vector_t) std::vector<std::string>;
 
 //%template(size_vector_t) std::vector<size_t>;
@@ -37,12 +46,3 @@ GR_SWIG_BLOCK_MAGIC(osmosdr,source_c);
 GR_SWIG_BLOCK_MAGIC(osmosdr,sink_c);
 %include "osmosdr/osmosdr_sink_c.h"
 
-#if SWIGGUILE
-%scheme %{
-(load-extension-global "libguile-gnuradio-osmosdr_swig" "scm_init_gnuradio_osmosdr_swig_module")
-%}
-
-%goops %{
-(use-modules (gnuradio gnuradio_core_runtime))
-%}
-#endif

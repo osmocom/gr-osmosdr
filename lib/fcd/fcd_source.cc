@@ -25,11 +25,11 @@
 #include <boost/assign.hpp>
 #include <boost/foreach.hpp>
 
-#include <gr_io_signature.h>
+#include <gnuradio/io_signature.h>
 
-#include <fcd_source.h>
+#include "fcd_source.h"
 
-#include <osmosdr_arg_helpers.h>
+#include "osmosdr_arg_helpers.h"
 
 using namespace boost::assign;
 
@@ -74,9 +74,9 @@ static std::vector< std::string > _get_devices()
 }
 
 fcd_source::fcd_source(const std::string &args) :
-  gr_hier_block2("fcd_source",
-                 gr_make_io_signature (0, 0, 0),
-                 gr_make_io_signature (1, 1, sizeof (gr_complex)))
+  gr::hier_block2("fcd_source",
+                 gr::io_signature::make(0, 0, 0),
+                 gr::io_signature::make(1, 1, sizeof (gr_complex)))
 {
   std::string dev_name;
   unsigned int dev_index = 0;
@@ -93,7 +93,7 @@ fcd_source::fcd_source(const std::string &args) :
   else
     throw std::runtime_error("No FunCube Dongle found.");
 
-  _src = fcd_make_source_c( dev_name );
+  _src = gr::fcd::source_c::make( dev_name );
 
   connect( _src, 0, self(), 0 );
 }

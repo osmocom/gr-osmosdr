@@ -22,7 +22,7 @@
 
 
 #include <rtl_tcp_source_f.h>
-#include <gr_io_signature.h>
+#include <gnuradio/io_signature.h>
 #include <stdexcept>
 #include <errno.h>
 #include <stdio.h>
@@ -88,9 +88,9 @@ rtl_tcp_source_f::rtl_tcp_source_f(size_t itemsize,
                                    int payload_size,
                                    bool eof,
                                    bool wait)
-  : gr_sync_block ("rtl_tcp_source_f",
-                   gr_make_io_signature(0, 0, 0),
-                   gr_make_io_signature(1, 1, sizeof(float))),
+  : gr::sync_block ("rtl_tcp_source_f",
+                   gr::io_signature::make(0, 0, 0),
+                   gr::io_signature::make(1, 1, sizeof(float))),
     d_itemsize(itemsize),
     d_payload_size(payload_size),
     d_eof(eof),

@@ -27,10 +27,10 @@
 #include "config.h"
 #endif
 
-#include <gnuradio/gr_io_signature.h>
-#include <gnuradio/gr_constants.h>
-#include <gnuradio/gr_throttle.h>
-#include <gnuradio/gr_null_sink.h>
+#include <gnuradio/io_signature.h>
+#include <gnuradio/constants.h>
+#include <gnuradio/blocks/throttle.h>
+#include <gnuradio/blocks/null_sink.h>
 
 #include "osmosdr_sink_c_impl.h"
 
@@ -43,7 +43,7 @@
 
 #include "osmosdr_arg_helpers.h"
 
-/* This avoids throws in ctor of gr_hier_block2, as gnuradio is unable to deal
+/* This avoids throws in ctor of gr::hier_block2, as gnuradio is unable to deal
  with this behavior in a clean way. The GR maintainer Rondeau has been informed. */
 #define WORKAROUND_GR_HIER_BLOCK2_BUG
 
@@ -61,9 +61,9 @@ osmosdr_make_sink_c (const std::string &args)
  * The private constructor
  */
 osmosdr_sink_c_impl::osmosdr_sink_c_impl (const std::string &args)
-  : gr_hier_block2 ("osmosdr_sink_c_impl",
+  : gr::hier_block2 ("osmosdr_sink_c_impl",
         args_to_io_signature(args),
-        gr_make_io_signature (0, 0, 0))
+        gr::io_signature::make(0, 0, 0))
 {
   size_t channel = 0;
   bool device_specified = false;
@@ -81,7 +81,7 @@ osmosdr_sink_c_impl::osmosdr_sink_c_impl (const std::string &args)
 
   std::cerr << "gr-osmosdr "
             << GR_OSMOSDR_VERSION " (" GR_OSMOSDR_LIBVER ") "
-            << "gnuradio " << gr_version() << std::endl;
+            << "gnuradio " << gr::version() << std::endl;
   std::cerr << "built-in sink types: ";
   BOOST_FOREACH(std::string dev_type, dev_types)
     std::cerr << dev_type << " ";
@@ -128,7 +128,7 @@ osmosdr_sink_c_impl::osmosdr_sink_c_impl (const std::string &args)
 //      std::cerr << "'" << entry.first << "' = '" << entry.second << "'" << std::endl;
 
     osmosdr_snk_iface *iface = NULL;
-    gr_basic_block_sptr block;
+    gr::basic_block_sptr block;
 
 #ifdef ENABLE_UHD
     if ( dict.count("uhd") ) {
@@ -163,7 +163,7 @@ osmosdr_sink_c_impl::osmosdr_sink_c_impl (const std::string &args)
     size_t missing_chans = output_signature()->max_streams() - channel;
 
     std::cerr << "Trying to fill up " << missing_chans
-              << " missing channel(s) with null sinks.\n"
+              << " missing channel(s) with null sink(s).\n"
               << "This is being done to prevent the application from crashing\n"
               << "due to a gnuradio bug. The maintainers have been informed.\n"
               << std::endl;
@@ -171,9 +171,12 @@ osmosdr_sink_c_impl::osmosdr_sink_c_impl (const std::string &args)
     for (size_t i = 0; i < missing_chans; i++) {
       /* we try to prevent the whole application from crashing by faking
        * the missing hardware (channels) with a null sink */
-      gr_null_sink_sptr null_sink =  gr_make_null_sink( sizeof(gr_complex) );
 
-      gr_throttle::sptr throttle = gr_make_throttle(sizeof(gr_complex), 1e6);
+      gr::blocks::null_sink::sptr null_sink = \
+          gr::blocks::null_sink::make( sizeof(gr_complex) );
+
+      gr::blocks::throttle::sptr throttle = \
+          gr::blocks::throttle::make( sizeof(gr_complex), 1e5 );
 
       connect(self(), channel++, throttle, 0);
       connect(throttle, 0, null_sink, 0);

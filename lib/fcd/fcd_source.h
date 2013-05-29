@@ -20,9 +20,9 @@
 #ifndef FCD_SOURCE_H
 #define FCD_SOURCE_H
 
-#include <gr_hier_block2.h>
+#include <gnuradio/hier_block2.h>
 
-#include <fcd_source_c.h>
+#include <gnuradio/fcd/source_c.h>
 
 #include "osmosdr_src_iface.h"
 
@@ -33,7 +33,7 @@ typedef boost::shared_ptr< fcd_source > fcd_source_sptr;
 fcd_source_sptr make_fcd_source( const std::string & args = "" );
 
 class fcd_source :
-    public gr_hier_block2,
+    public gr::hier_block2,
     public osmosdr_src_iface
 {
 private:
@@ -73,7 +73,7 @@ public:
   std::string get_antenna( size_t chan = 0 );
 
 private:
-  fcd_source_c_sptr _src;
+  gr::fcd::source_c::sptr _src;
   double _gain, _freq;
   int32_t _correct;
 };

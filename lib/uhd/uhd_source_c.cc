@@ -36,8 +36,8 @@ uhd_source_c_sptr make_uhd_source_c(const std::string &args)
 }
 
 uhd_source_c::uhd_source_c(const std::string &args) :
-    gr_hier_block2("uhd_source_c",
-                   gr_make_io_signature (0, 0, 0),
+    gr::hier_block2("uhd_source_c",
+                   gr::io_signature::make(0, 0, 0),
                    args_to_io_signature(args)),
     _lo_offset(0.0f)
 {
@@ -63,9 +63,9 @@ uhd_source_c::uhd_source_c(const std::string &args) :
     }
   }
 
-  _src = uhd_make_usrp_source( arguments,
-                               uhd::io_type_t::COMPLEX_FLOAT32,
-                               nchan );
+  _src = gr::uhd::usrp_source::make( arguments,
+                                     uhd::io_type_t::COMPLEX_FLOAT32,
+                                     nchan );
 
   if (dict.count("subdev")) {
     _src->set_subdev_spec( dict["subdev"] );

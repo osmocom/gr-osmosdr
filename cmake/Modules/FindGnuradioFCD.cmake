@@ -3,7 +3,7 @@ PKG_CHECK_MODULES(PC_GNURADIO_FCD gnuradio-fcd)
 
 FIND_PATH(
     GNURADIO_FCD_INCLUDE_DIRS
-    NAMES gnuradio/fcd_api.h
+    NAMES gnuradio/fcd/api.h
     HINTS $ENV{GNURADIO_FCD_DIR}/include
         ${PC_GNURADIO_FCD_INCLUDEDIR}
     PATHS /usr/local/include

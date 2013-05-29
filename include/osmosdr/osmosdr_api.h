@@ -22,7 +22,7 @@
 #ifndef INCLUDED_OSMOSDR_API_H
 #define INCLUDED_OSMOSDR_API_H
 
-#include <gruel/attributes.h>
+#include <gnuradio/attributes.h>
 
 #ifdef gnuradio_osmosdr_EXPORTS
 #  define OSMOSDR_API __GR_ATTR_EXPORT

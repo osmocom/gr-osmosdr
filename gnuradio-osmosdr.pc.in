@@ -7,7 +7,7 @@ Name: @CPACK_PACKAGE_NAME@
 Description: @CPACK_PACKAGE_DESCRIPTION_SUMMARY@
 URL: http://sdr.osmocom.org/trac/
 Version: @CPACK_PACKAGE_VERSION@
-Requires: gnuradio-core
+Requires: gnuradio-runtime gnuradio-blocks
 Requires.private: @GR_OSMOSDR_PC_REQUIRES@
 Conflicts:
 Cflags: -I${includedir} @GR_OSMOSDR_PC_CFLAGS@

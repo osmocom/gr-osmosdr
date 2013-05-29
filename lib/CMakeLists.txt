@@ -44,8 +44,8 @@ GR_OSMOSDR_APPEND_SRCS(
 
 GR_OSMOSDR_APPEND_LIBS(
     ${Boost_LIBRARIES}
-    ${GRUEL_LIBRARIES}
-    ${GNURADIO_CORE_LIBRARIES}
+    ${GNURADIO_RUNTIME_LIBRARIES}
+    ${GNURADIO_BLOCKS_LIBRARIES}
 )
 
 ########################################################################
@@ -77,7 +77,7 @@ endif(ENABLE_FCD)
 ########################################################################
 # Setup File component
 ########################################################################
-GR_REGISTER_COMPONENT("IQ File Source" ENABLE_FILE GNURADIO_CORE_FOUND)
+GR_REGISTER_COMPONENT("IQ File Source" ENABLE_FILE GNURADIO_BLOCKS_FOUND)
 if(ENABLE_FILE)
 GR_INCLUDE_SUBDIRECTORY(file)
 endif(ENABLE_FILE)
@@ -93,7 +93,7 @@ endif(ENABLE_RTL)
 ########################################################################
 # Setup RTL_TCP component
 ########################################################################
-GR_REGISTER_COMPONENT("RTLSDR TCP Client" ENABLE_RTL_TCP GNURADIO_CORE_FOUND)
+GR_REGISTER_COMPONENT("RTLSDR TCP Client" ENABLE_RTL_TCP GNURADIO_BLOCKS_FOUND)
 if(ENABLE_RTL_TCP)
 GR_INCLUDE_SUBDIRECTORY(rtl_tcp)
 endif(ENABLE_RTL_TCP)

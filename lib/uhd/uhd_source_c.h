@@ -20,8 +20,8 @@
 #ifndef UHD_SOURCE_C_H
 #define UHD_SOURCE_C_H
 
-#include <gnuradio/gr_hier_block2.h>
-#include <gnuradio/gr_uhd_usrp_source.h>
+#include <gnuradio/hier_block2.h>
+#include <gnuradio/uhd/usrp_source.h>
 
 #include "osmosdr_src_iface.h"
 
@@ -32,7 +32,7 @@ typedef boost::shared_ptr< uhd_source_c > uhd_source_c_sptr;
 uhd_source_c_sptr make_uhd_source_c(const std::string &args = "");
 
 class uhd_source_c :
-    public gr_hier_block2,
+    public gr::hier_block2,
     public osmosdr_src_iface
 {
 private:
@@ -73,7 +73,7 @@ public:
 
 private:
   double _lo_offset;
-  boost::shared_ptr<uhd_usrp_source> _src;
+  gr::uhd::usrp_source::sptr _src;
 };
 
 #endif // UHD_SOURCE_C_H

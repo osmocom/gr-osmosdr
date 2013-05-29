@@ -21,8 +21,8 @@
 #ifndef RTL_TCP_SOURCE_F_H
 #define RTL_TCP_SOURCE_F_H
 
-#include <gr_sync_block.h>
-#include <gruel/thread.h>
+#include <gnuradio/sync_block.h>
+#include <gnuradio/thread/thread.h>
 
 #if defined(_WIN32)
 // if not posix, assume winsock
@@ -65,7 +65,7 @@ rtl_tcp_source_f_sptr make_rtl_tcp_source_f (
     bool eof = false,
     bool wait = false);
 
-class rtl_tcp_source_f : public gr_sync_block
+class rtl_tcp_source_f : public gr::sync_block
 {
 private:
   size_t        d_itemsize;

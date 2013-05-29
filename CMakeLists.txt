@@ -143,8 +143,8 @@ set(GRC_BLOCKS_DIR      ${GR_PKG_DATA_DIR}/grc/blocks)
 ########################################################################
 # Find build dependencies
 ########################################################################
-find_package(Gruel)
-find_package(GnuradioCore)
+set(GR_REQUIRED_COMPONENTS RUNTIME BLOCKS)
+find_package(Gnuradio "3.7.0")
 find_package(GnuradioIQBalance)
 find_package(UHD)
 find_package(GnuradioUHD)
@@ -155,12 +155,8 @@ find_package(LibMiriSDR)
 find_package(LibHackRF)
 find_package(Doxygen)
 
-if(NOT GRUEL_FOUND)
-    message(FATAL_ERROR "Gruel required to build " ${CMAKE_PROJECT_NAME})
-endif()
-
-if(NOT GNURADIO_CORE_FOUND)
-    message(FATAL_ERROR "GnuRadio Core required to build " ${CMAKE_PROJECT_NAME})
+if(NOT GNURADIO_RUNTIME_FOUND)
+    message(FATAL_ERROR "GnuRadio Runtime required to build " ${CMAKE_PROJECT_NAME})
 endif()
 
 ########################################################################
@@ -170,14 +166,12 @@ include_directories(
     ${CMAKE_SOURCE_DIR}/include
     ${CMAKE_SOURCE_DIR}/lib
     ${Boost_INCLUDE_DIRS}
-    ${GRUEL_INCLUDE_DIRS}
-    ${GNURADIO_CORE_INCLUDE_DIRS}
+    ${GNURADIO_RUNTIME_INCLUDE_DIRS}
 )
 
 link_directories(
     ${Boost_LIBRARY_DIRS}
-    ${GRUEL_LIBRARY_DIRS}
-    ${GNURADIO_CORE_LIBRARY_DIRS}
+    ${GNURADIO_RUNTIME_LIBRARY_DIRS}
 )
 
 # Set component parameters

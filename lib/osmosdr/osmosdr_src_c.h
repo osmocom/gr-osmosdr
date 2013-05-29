@@ -20,9 +20,9 @@
 #ifndef INCLUDED_OSMOSDR_SRC_C_H
 #define INCLUDED_OSMOSDR_SRC_C_H
 
-#include <gr_sync_block.h>
+#include <gnuradio/sync_block.h>
 
-#include <gruel/thread.h>
+#include <gnuradio/thread/thread.h>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/condition_variable.hpp>
 
@@ -33,7 +33,7 @@ typedef struct osmosdr_dev osmosdr_dev_t;
 
 /*
  * We use boost::shared_ptr's instead of raw pointers for all access
- * to gr_blocks (and many other data structures).  The shared_ptr gets
+ * to gr::blocks (and many other data structures).  The shared_ptr gets
  * us transparent reference counting, which greatly simplifies storage
  * management issues.  This is especially helpful in our hybrid
  * C++ / Python system.
@@ -57,10 +57,10 @@ osmosdr_src_c_sptr osmosdr_make_src_c (const std::string & args = "");
  * \brief Provides a stream of complex samples.
  * \ingroup block
  *
- * \sa osmosdr_sink_c for a version that subclasses gr_hier_block2.
+ * \sa osmosdr_sink_c for a version that subclasses gr::hier_block2.
  */
 class osmosdr_src_c :
-    public gr_sync_block,
+    public gr::sync_block,
     public osmosdr_src_iface
 {
 private:
@@ -118,7 +118,7 @@ private:
   void osmosdr_wait();
 
   osmosdr_dev_t *_dev;
-  gruel::thread _thread;
+  gr::thread::thread _thread;
   unsigned short **_buf;
   unsigned int _buf_num;
   unsigned int _buf_len;

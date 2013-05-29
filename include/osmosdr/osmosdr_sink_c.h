@@ -22,13 +22,13 @@
 
 #include <osmosdr/osmosdr_api.h>
 #include <osmosdr/osmosdr_ranges.h>
-#include <gnuradio/gr_hier_block2.h>
+#include <gnuradio/hier_block2.h>
 
 class osmosdr_sink_c;
 
 /*
  * We use boost::shared_ptr's instead of raw pointers for all access
- * to gr_blocks (and many other data structures).  The shared_ptr gets
+ * to gr::blocks (and many other data structures).  The shared_ptr gets
  * us transparent reference counting, which greatly simplifies storage
  * management issues.  This is especially helpful in our hybrid
  * C++ / Python system.
@@ -52,9 +52,9 @@ OSMOSDR_API osmosdr_sink_c_sptr osmosdr_make_sink_c ( const std::string & args =
  * \brief Takes a stream of complex samples.
  * \ingroup block
  *
- * This uses the preferred technique: subclassing gr_hier_block2.
+ * This uses the preferred technique: subclassing gr::hier_block2.
  */
-class OSMOSDR_API osmosdr_sink_c : virtual public gr_hier_block2
+class OSMOSDR_API osmosdr_sink_c : virtual public gr::hier_block2
 {
 public:
   /*!
