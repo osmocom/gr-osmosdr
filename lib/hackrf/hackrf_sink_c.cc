@@ -204,7 +204,7 @@ hackrf_sink_c::hackrf_sink_c (const std::string &args)
               << std::endl;
   }
 
-  set_sample_rate( 5000000 );
+  set_sample_rate( get_sample_rates().start() );
 
   set_gain( 0 ); /* disable AMP gain stage by default */
 
@@ -463,7 +463,7 @@ osmosdr::meta_range_t hackrf_sink_c::get_sample_rates()
 {
   osmosdr::meta_range_t range;
 
-  range += osmosdr::range_t( 5e6 ); /* out of spec but appears to work */
+  range += osmosdr::range_t( 8e6 );
   range += osmosdr::range_t( 10e6 );
   range += osmosdr::range_t( 12.5e6 );
   range += osmosdr::range_t( 16e6 );
@@ -634,7 +634,7 @@ double hackrf_sink_c::set_if_gain( double gain, size_t chan )
   if (_dev) {
     double clip_gain = if_gains.clip( gain, true );
 
-    if ( hackrf_set_txvga_gain( _dev, uint32_t(value) ) == HACKRF_SUCCESS )
+    if ( hackrf_set_txvga_gain( _dev, uint32_t(clip_gain) ) == HACKRF_SUCCESS )
     _vga_gain = clip_gain;
   }
 
