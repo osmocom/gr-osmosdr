@@ -88,7 +88,6 @@ hackrf_source_c::hackrf_source_c (const std::string &args)
     _vga_gain(0)
 {
   int ret;
-  uint16_t val;
 
   dict_t dict = params_to_dict(args);
 
@@ -160,11 +159,7 @@ hackrf_source_c::hackrf_source_c (const std::string &args)
 
   set_sample_rate( 5000000 );
 
-  set_gain( 0 ); /* disable AMP gain stage */
-
-  hackrf_max2837_read( _dev, 8, &val );
-  val |= 0x3; /* enable LNA & VGA control over SPI */
-  hackrf_max2837_write( _dev, 8, val );
+  set_gain( 0 ); /* disable AMP gain stage by default */
 
   set_if_gain( 16 ); /* preset to a reasonable default (non-GRC use case) */
 
@@ -368,7 +363,7 @@ osmosdr::meta_range_t hackrf_source_c::get_sample_rates()
   return range;
 }
 
-double hackrf_source_c::set_sample_rate(double rate)
+double hackrf_source_c::set_sample_rate( double rate )
 {
   int ret;
 
@@ -488,22 +483,10 @@ double hackrf_source_c::set_gain( double gain, size_t chan )
 
   if (_dev) {
     double clip_gain = rf_gains.clip( gain, true );
+    uint8_t value = clip_gain == 14.0f ? 1 : 0;
 
-    std::map<double, int> reg_vals;
-    reg_vals[ 0 ] = 0;
-    reg_vals[ 14 ] = 1;
-
-    if ( reg_vals.count( clip_gain ) ) {
-      int value = reg_vals[ clip_gain ];
-#if 0
-      std::cerr << "amp gain: " << gain
-                << " clip_gain: " << clip_gain
-                << " value: " << value
-                << std::endl;
-#endif
-      if ( hackrf_set_amp_enable( _dev, value ) == HACKRF_SUCCESS )
-        _amp_gain = clip_gain;
-    }
+    if ( hackrf_set_amp_enable( _dev, value ) == HACKRF_SUCCESS )
+      _amp_gain = clip_gain;
   }
 
   return _amp_gain;
@@ -554,33 +537,9 @@ double hackrf_source_c::set_if_gain(double gain, size_t chan)
 
   if (_dev) {
     double clip_gain = rf_gains.clip( gain, true );
-    double rel_gain = fabs( rf_gains.stop() - clip_gain );
 
-    std::map<double, int> reg_vals;
-    reg_vals[ 0 ] = 0;
-    reg_vals[ 8 ] = 4;
-    reg_vals[ 16 ] = 2;
-    reg_vals[ 24 ] = 6;
-    reg_vals[ 32 ] = 3;
-    reg_vals[ 40 ] = 7;
-
-    if ( reg_vals.count( rel_gain ) ) {
-      int value = reg_vals[ rel_gain ];
-#if 0
-      std::cerr << "lna gain: " << gain
-                << " clip_gain: " << clip_gain
-                << " rel_gain: " << rel_gain
-                << " value: " << value
-                << std::endl;
-#endif
-      uint16_t val;
-      hackrf_max2837_read( _dev, 1, &val );
-
-      val = (val & ~(7 << 2)) | ((value & 7) << 2);
-
-      if ( hackrf_max2837_write( _dev, 1, val ) == HACKRF_SUCCESS )
-        _lna_gain = clip_gain;
-    }
+    if ( hackrf_set_lna_gain( _dev, uint32_t(clip_gain) ) == HACKRF_SUCCESS )
+      _lna_gain = clip_gain;
   }
 
   return _lna_gain;
@@ -592,30 +551,9 @@ double hackrf_source_c::set_bb_gain( double gain, size_t chan )
 
   if (_dev) {
     double clip_gain = if_gains.clip( gain, true );
-    double rel_gain = fabs( if_gains.stop() - clip_gain );
 
-    std::map<double, int> reg_vals;
-
-    for ( int i = 0; i < 31; i++ )
-      reg_vals[ 2.0 * i ] = i;
-
-    if ( reg_vals.count( rel_gain ) ) {
-      int value = reg_vals[ rel_gain ];
-#if 0
-      std::cerr << "vga gain: " << gain
-                << " clip_gain: " << clip_gain
-                << " rel_gain: " << rel_gain
-                << " value: " << value
-                << std::endl;
-#endif
-      uint16_t val;
-      hackrf_max2837_read( _dev, 5, &val );
-
-      val = (val & ~0x1f) | (value & 0x1f);
-
-      if ( hackrf_max2837_write( _dev, 5, val ) == HACKRF_SUCCESS )
-        _vga_gain = clip_gain;
-    }
+    if ( hackrf_set_vga_gain( _dev, uint32_t(clip_gain) ) == HACKRF_SUCCESS )
+      _vga_gain = clip_gain;
   }
 
   return _vga_gain;
