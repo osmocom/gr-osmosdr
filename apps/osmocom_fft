@@ -95,7 +95,7 @@ class app_top_block(stdgui2.std_top_block, pubsub):
 
         self._verbose = options.verbose
 
-        self.src = osmosdr.source_c(options.args)
+        self.src = osmosdr.source(options.args)
 
         # Set the antenna
         if(options.antenna):

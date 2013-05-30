@@ -40,6 +40,7 @@ def setter(ps, key, val): ps[key] = val
 import osmosdr
 from gnuradio import blocks
 from gnuradio import filter
+from gnuradio import analog
 from gnuradio import digital
 from gnuradio import gr, gru, eng_notation
 from gnuradio.gr.pubsub import pubsub
@@ -52,13 +53,13 @@ import random
 
 n2s = eng_notation.num_to_str
 
-waveforms = { gr.GR_SIN_WAVE   : "Sinusoid",
-              gr.GR_CONST_WAVE : "Constant",
-              gr.GR_GAUSSIAN   : "Gaussian Noise",
-              gr.GR_UNIFORM    : "Uniform Noise",
-              "2tone"          : "Two Tone (IMD)",
-              "sweep"          : "Freq. Sweep",
-              "gsm"            : "GSM Bursts" }
+waveforms = { analog.GR_SIN_WAVE    : "Sinusoid",
+              analog.GR_CONST_WAVE  : "Constant",
+              analog.GR_GAUSSIAN    : "Gaussian Noise",
+              analog.GR_UNIFORM     : "Uniform Noise",
+              "2tone"               : "Two Tone (IMD)",
+              "sweep"               : "Freq. Sweep",
+              "gsm"                 : "GSM Bursts" }
 
 class gsm_source_c(gr.hier_block2):
     def __init__(self, sample_rate, amplitude):
@@ -66,20 +67,20 @@ class gsm_source_c(gr.hier_block2):
             gr.io_signature(0, 0, 0), # Input signature
             gr.io_signature(1, 1, gr.sizeof_gr_complex)) # Output signature
 
-        self._bits = gr.vector_source_b(self.gen_gsm_seq(), True)
+        self._bits = blocks.vector_source_b(self.gen_gsm_seq(), True)
 
         self._symb_rate = 270833
         self._samples_per_symbol = 2
 
         bits_per_symbol = 1
-        self._pack = gr.unpacked_to_packed_bb(bits_per_symbol, gr.GR_MSB_FIRST)
+        self._pack = blocks.unpacked_to_packed_bb(bits_per_symbol, gr.GR_MSB_FIRST)
 
         self._mod = digital.gmsk_mod( self._samples_per_symbol, bt=0.35 )
 
-        self._interpolate = filter.fractional_interpolator_cc( 0,
+        self._interpolate = filter.fractional_resampler_cc( 0,
             (self._symb_rate * self._samples_per_symbol) / sample_rate )
 
-        self._scale = gr.multiply_const_cc(amplitude)
+        self._scale = blocks.multiply_const_cc(amplitude)
 
         self.connect(self._bits, self._pack, self._mod, self._interpolate, self._scale, self)
 
@@ -157,7 +158,7 @@ class top_block(gr.top_block, pubsub):
         self[TYPE_KEY] = options.type #set type last
 
     def _setup_osmosdr(self, options):
-        self._sink = osmosdr.sink_c(options.args)
+        self._sink = osmosdr.sink(options.args)
 
         if options.samp_rate is None:
             options.samp_rate = self._sink.get_sample_rates().start()
@@ -194,7 +195,7 @@ class top_block(gr.top_block, pubsub):
     def set_samp_rate(self, sr):
         sr = self._sink.set_sample_rate(sr)
 
-        if self[TYPE_KEY] in (gr.GR_SIN_WAVE, gr.GR_CONST_WAVE):
+        if self[TYPE_KEY] in (analog.GR_SIN_WAVE, analog.GR_CONST_WAVE):
             self._src.set_sampling_freq(self[SAMP_RATE_KEY])
         elif self[TYPE_KEY] == "2tone":
             self._src1.set_sampling_freq(self[SAMP_RATE_KEY])
@@ -261,7 +262,7 @@ class top_block(gr.top_block, pubsub):
             print "Set frequency correction to:", ppm
 
     def set_waveform_freq(self, freq):
-        if self[TYPE_KEY] == gr.GR_SIN_WAVE:
+        if self[TYPE_KEY] == analog.GR_SIN_WAVE:
             self._src.set_frequency(freq)
         elif self[TYPE_KEY] == "2tone":
             self._src1.set_frequency(freq)
@@ -283,29 +284,29 @@ class top_block(gr.top_block, pubsub):
     def set_waveform(self, type):
         self.lock()
         self.disconnect_all()
-        if type == gr.GR_SIN_WAVE or type == gr.GR_CONST_WAVE:
-            self._src = gr.sig_source_c(self[SAMP_RATE_KEY],        # Sample rate
+        if type == analog.GR_SIN_WAVE or type == analog.GR_CONST_WAVE:
+            self._src = analog.sig_source_c(self[SAMP_RATE_KEY],        # Sample rate
                                         type,                       # Waveform type
                                         self[WAVEFORM_FREQ_KEY],    # Waveform frequency
                                         self[AMPLITUDE_KEY],        # Waveform amplitude
                                         self[WAVEFORM_OFFSET_KEY])  # Waveform offset
-        elif type == gr.GR_GAUSSIAN or type == gr.GR_UNIFORM:
-            self._src = gr.noise_source_c(type, self[AMPLITUDE_KEY])
+        elif type == analog.GR_GAUSSIAN or type == analog.GR_UNIFORM:
+            self._src = analog.noise_source_c(type, self[AMPLITUDE_KEY])
         elif type == "2tone":
-            self._src1 = gr.sig_source_c(self[SAMP_RATE_KEY],
-                                         gr.GR_SIN_WAVE,
+            self._src1 = analog.sig_source_c(self[SAMP_RATE_KEY],
+                                         analog.GR_SIN_WAVE,
                                          self[WAVEFORM_FREQ_KEY],
                                          self[AMPLITUDE_KEY]/2.0,
                                          0)
             if(self[WAVEFORM2_FREQ_KEY] is None):
                 self[WAVEFORM2_FREQ_KEY] = -self[WAVEFORM_FREQ_KEY]
 
-            self._src2 = gr.sig_source_c(self[SAMP_RATE_KEY],
-                                         gr.GR_SIN_WAVE,
+            self._src2 = analog.sig_source_c(self[SAMP_RATE_KEY],
+                                         analog.GR_SIN_WAVE,
                                          self[WAVEFORM2_FREQ_KEY],
                                          self[AMPLITUDE_KEY]/2.0,
                                          0)
-            self._src = gr.add_cc()
+            self._src = blocks.add_cc()
             self.connect(self._src1,(self._src,0))
             self.connect(self._src2,(self._src,1))
         elif type == "sweep":
@@ -316,13 +317,13 @@ class top_block(gr.top_block, pubsub):
             if self[WAVEFORM2_FREQ_KEY] is None:
                 self[WAVEFORM2_FREQ_KEY] = 0.1
 
-            self._src1 = gr.sig_source_f(self[SAMP_RATE_KEY],
-                                         gr.GR_TRI_WAVE,
+            self._src1 = analog.sig_source_f(self[SAMP_RATE_KEY],
+                                         analog.GR_TRI_WAVE,
                                          self[WAVEFORM2_FREQ_KEY],
                                          1.0,
                                          -0.5)
-            self._src2 = gr.frequency_modulator_fc(self[WAVEFORM_FREQ_KEY]*2*math.pi/self[SAMP_RATE_KEY])
-            self._src = gr.multiply_const_cc(self[AMPLITUDE_KEY])
+            self._src2 = analog.frequency_modulator_fc(self[WAVEFORM_FREQ_KEY]*2*math.pi/self[SAMP_RATE_KEY])
+            self._src = blocks.multiply_const_cc(self[AMPLITUDE_KEY])
             self.connect(self._src1,self._src2,self._src)
         elif type == "gsm":
             self._src = gsm_source_c(self[SAMP_RATE_KEY], self[AMPLITUDE_KEY])
@@ -334,7 +335,7 @@ class top_block(gr.top_block, pubsub):
 
         if self._verbose:
             print "Set baseband modulation to:", waveforms[type]
-            if type == gr.GR_SIN_WAVE:
+            if type == analog.GR_SIN_WAVE:
                 print "Modulation frequency: %sHz" % (n2s(self[WAVEFORM_FREQ_KEY]),)
                 print "Initial phase:", self[WAVEFORM_OFFSET_KEY]
             elif type == "2tone":
@@ -353,7 +354,7 @@ class top_block(gr.top_block, pubsub):
                 print "Amplitude out of range:", amplitude
             return False
 
-        if self[TYPE_KEY] in (gr.GR_SIN_WAVE, gr.GR_CONST_WAVE, gr.GR_GAUSSIAN, gr.GR_UNIFORM):
+        if self[TYPE_KEY] in (analog.GR_SIN_WAVE, analog.GR_CONST_WAVE, analog.GR_GAUSSIAN, analog.GR_UNIFORM):
             self._src.set_amplitude(amplitude)
         elif self[TYPE_KEY] == "2tone":
             self._src1.set_amplitude(amplitude/2.0)
@@ -390,16 +391,16 @@ def get_options():
                       help="Set baseband waveform frequency to FREQ [default=%default]")
     parser.add_option("-y", "--waveform2-freq", type="eng_float", default=None,
                       help="Set 2nd waveform frequency to FREQ [default=%default]")
-    parser.add_option("--sine", dest="type", action="store_const", const=gr.GR_SIN_WAVE,
+    parser.add_option("--sine", dest="type", action="store_const", const=analog.GR_SIN_WAVE,
                       help="Generate a carrier modulated by a complex sine wave",
-                      default=gr.GR_SIN_WAVE)
-    parser.add_option("--const", dest="type", action="store_const", const=gr.GR_CONST_WAVE,
+                      default=analog.GR_SIN_WAVE)
+    parser.add_option("--const", dest="type", action="store_const", const=analog.GR_CONST_WAVE,
                       help="Generate a constant carrier")
     parser.add_option("--offset", type="eng_float", default=0,
                       help="Set waveform phase offset to OFFSET [default=%default]")
-    parser.add_option("--gaussian", dest="type", action="store_const", const=gr.GR_GAUSSIAN,
+    parser.add_option("--gaussian", dest="type", action="store_const", const=analog.GR_GAUSSIAN,
                       help="Generate Gaussian random output")
-    parser.add_option("--uniform", dest="type", action="store_const", const=gr.GR_UNIFORM,
+    parser.add_option("--uniform", dest="type", action="store_const", const=analog.GR_UNIFORM,
                       help="Generate Uniform random output")
     parser.add_option("--2tone", dest="type", action="store_const", const="2tone",
                       help="Generate Two Tone signal for IMD testing")

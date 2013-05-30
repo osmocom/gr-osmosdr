@@ -21,6 +21,7 @@
 #
 
 from gnuradio import gr
+from gnuradio import analog
 from gnuradio.gr.pubsub import pubsub
 from osmosdr import osmocom_siggen_base as osmocom_siggen
 import sys, math
@@ -63,7 +64,7 @@ class app_gui(pubsub):
         self.vbox.AddStretchSpacer()
         #callback to show/hide forms
         def set_type(type):
-            sine_bb_hbox.ShowItems(type == gr.GR_SIN_WAVE)
+            sine_bb_hbox.ShowItems(type == analog.GR_SIN_WAVE)
             sweep_bb_hbox.ShowItems(type == 'sweep')
             tone_bb_hbox.ShowItems(type == '2tone')
             self.vbox.Layout()

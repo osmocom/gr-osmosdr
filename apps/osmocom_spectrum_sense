@@ -147,7 +147,7 @@ class my_top_block(gr.top_block):
                 print "Note: failed to enable realtime scheduling"
 
         # build graph
-        self.u = osmosdr.source_c(options.args)
+        self.u = osmosdr.source(options.args)
 
         # Set the antenna
         if(options.antenna):
