@@ -104,12 +104,12 @@ self.\$(id).set_bandwidth(\$bw$(n), $n)
     <nports>\$nchan</nports>
   </$sourk>
   <doc>
-The OSMOCOM block:
+The osmocom block:
 
 While primarily being developed for the OsmoSDR hardware, this block as well supports:
 
  * FunCube Dongle through libgnuradio-fcd
- * OSMOCOM OsmoSDR Devices through libosmosdr
+ * sysmocom OsmoSDR Devices through libosmosdr
  * Great Scott Gadgets HackRF through libhackrf
  * Ettus USRP Devices through Ettus UHD library
  * RTL2832U based DVB-T dongles through librtlsdr
@@ -318,7 +318,7 @@ if __name__ == '__main__':
       title = 'RTL-SDR'
       prefix = 'rtlsdr'
     elif tail.startswith('osmosdr'):
-      title = 'OSMOCOM'
+      title = 'osmocom'
       prefix = 'osmosdr'
     else: raise Exception, 'file %s has wrong syntax!'%tail
 
