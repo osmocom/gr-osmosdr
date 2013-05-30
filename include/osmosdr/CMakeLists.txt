@@ -21,11 +21,11 @@
 # Install public header files
 ########################################################################
 install(FILES
-    osmosdr_api.h
-    osmosdr_pimpl.h
-    osmosdr_ranges.h
-    osmosdr_device.h
-    osmosdr_source_c.h
-    osmosdr_sink_c.h
+    api.h
+    pimpl.h
+    ranges.h
+    device.h
+    source.h
+    sink.h
     DESTINATION include/osmosdr
 )

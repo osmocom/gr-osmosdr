@@ -17,24 +17,40 @@
  * the Free Software Foundation, Inc., 51 Franklin Street,
  * Boston, MA 02110-1301, USA.
  */
+#ifndef INCLUDED_OSMOSDR_SOURCE_H
+#define INCLUDED_OSMOSDR_SOURCE_H
 
-#ifndef OSMOSDR_SRC_IFACE_H
-#define OSMOSDR_SRC_IFACE_H
+#include <osmosdr/api.h>
+#include <osmosdr/ranges.h>
+#include <gnuradio/hier_block2.h>
 
-#include <osmosdr/osmosdr_ranges.h>
-#include <gnuradio/basic_block.h>
+namespace osmosdr {
 
-class osmosdr_src_iface;
-
-typedef boost::shared_ptr<osmosdr_src_iface> osmosdr_src_iface_sptr;
+class source;
 
 /*!
- * TODO: document
+ * \brief Provides a stream of complex samples.
+ * \ingroup block
  *
+ * This uses the preferred technique: subclassing gr::hier_block2.
  */
-class osmosdr_src_iface
+class OSMOSDR_API source : virtual public gr::hier_block2
 {
 public:
+  typedef boost::shared_ptr< source > sptr;
+
+  /*!
+   * \brief Return a shared_ptr to a new instance of source.
+   *
+   * To avoid accidental use of raw pointers, source's
+   * constructor is private.  osmosdr::source::make is the public
+   * interface for creating new instances.
+   *
+   * \param args the address to identify the hardware
+   * \return a new osmosdr source block object
+   */
+  static sptr make( const std::string & args = "" );
+
   /*!
    * Get the number of channels the underlying radio hardware offers.
    * \return the number of available channels
@@ -130,14 +146,14 @@ public:
    * \param chan the channel index 0 to N-1
    * \return the actual gain mode
    */
-  virtual bool set_gain_mode( bool automatic, size_t chan = 0 ) { return false; }
+  virtual bool set_gain_mode( bool automatic, size_t chan = 0 ) = 0;
 
   /*!
    * Get the gain mode selected for the underlying radio hardware.
    * \param chan the channel index 0 to N-1
    * \return the actual gain mode (true means automatic gain mode)
    */
-  virtual bool get_gain_mode( size_t chan = 0 ) { return false; }
+  virtual bool get_gain_mode( size_t chan = 0 ) = 0;
 
   /*!
    * Set the gain for the underlying radio hardware.
@@ -183,7 +199,7 @@ public:
    * \param chan the channel index 0 to N-1
    * \return the actual gain in dB
    */
-  virtual double set_if_gain( double gain, size_t chan = 0 ) { return 0; }
+  virtual double set_if_gain( double gain, size_t chan = 0 ) = 0;
 
   /*!
    * Set the BB gain for the underlying radio hardware.
@@ -193,7 +209,7 @@ public:
    * \param chan the channel index 0 to N-1
    * \return the actual gain in dB
    */
-  virtual double set_bb_gain( double gain, size_t chan = 0 ) { return 0; }
+  virtual double set_bb_gain( double gain, size_t chan = 0 ) = 0;
 
   /*!
    * Get the available antennas of the underlying radio hardware.
@@ -204,6 +220,7 @@ public:
 
   /*!
    * Select the active antenna of the underlying radio hardware.
+   * \param antenna name of the antenna to be selected
    * \param chan the channel index 0 to N-1
    * \return the actual antenna's name
    */
@@ -217,13 +234,19 @@ public:
    */
   virtual std::string get_antenna( size_t chan = 0 ) = 0;
 
+  enum IQBalanceMode {
+    IQBalanceOff = 0,
+    IQBalanceManual,
+    IQBalanceAutomatic
+  };
+
   /*!
    * Set the RX frontend IQ balance mode.
    *
    * \param mode iq balance correction mode: 0 = Off, 1 = Manual, 2 = Automatic
    * \param chan the channel index 0 to N-1
    */
-  virtual void set_iq_balance_mode( int mode, size_t chan = 0 ) { }
+  virtual void set_iq_balance_mode( int mode, size_t chan = 0 ) = 0;
 
   /*!
    * Set the RX frontend IQ balance correction.
@@ -232,7 +255,8 @@ public:
    * \param correction the complex correction value
    * \param chan the channel index 0 to N-1
    */
-  virtual void set_iq_balance( const std::complex<double> &correction, size_t chan = 0 ) { }
+  virtual void set_iq_balance( const std::complex<double> &correction,
+                               size_t chan = 0 ) = 0;
 
   /*!
    * Set the bandpass filter on the radio frontend.
@@ -240,22 +264,23 @@ public:
    * \param chan the channel index 0 to N-1
    * \return the actual filter bandwidth in Hz
    */
-  virtual double set_bandwidth( double bandwidth, size_t chan = 0 ) { return 0; }
+  virtual double set_bandwidth( double bandwidth, size_t chan = 0 ) = 0;
 
   /*!
    * Get the actual bandpass filter setting on the radio frontend.
    * \param chan the channel index 0 to N-1
    * \return the actual filter bandwidth in Hz
    */
-  virtual double get_bandwidth( size_t chan = 0 ) { return 0; }
+  virtual double get_bandwidth( size_t chan = 0 ) = 0;
 
   /*!
    * Get the possible bandpass filter settings on the radio frontend.
    * \param chan the channel index 0 to N-1
    * \return a range of bandwidths in Hz
    */
-  virtual osmosdr::freq_range_t get_bandwidth_range( size_t chan = 0 )
-    { return osmosdr::freq_range_t(); }
+  virtual osmosdr::freq_range_t get_bandwidth_range( size_t chan = 0 ) = 0;
 };
 
-#endif // OSMOSDR_SRC_IFACE_H
+} /* namespace osmosdr */
+
+#endif /* INCLUDED_OSMOSDR_SOURCE_H */

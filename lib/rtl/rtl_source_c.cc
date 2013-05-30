@@ -41,7 +41,7 @@
 
 #include <rtl-sdr.h>
 
-#include "osmosdr_arg_helpers.h"
+#include "arg_helpers.h"
 
 using namespace boost::assign;
 

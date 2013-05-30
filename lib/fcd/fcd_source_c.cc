@@ -27,15 +27,15 @@
 
 #include <gnuradio/io_signature.h>
 
-#include "fcd_source.h"
+#include "fcd_source_c.h"
 
-#include "osmosdr_arg_helpers.h"
+#include "arg_helpers.h"
 
 using namespace boost::assign;
 
-fcd_source_sptr make_fcd_source(const std::string &args)
+fcd_source_c_sptr make_fcd_source_c(const std::string &args)
 {
-  return gnuradio::get_initial_sptr(new fcd_source(args));
+  return gnuradio::get_initial_sptr(new fcd_source_c(args));
 }
 
 /*
@@ -73,8 +73,8 @@ static std::vector< std::string > _get_devices()
   return devices;
 }
 
-fcd_source::fcd_source(const std::string &args) :
-  gr::hier_block2("fcd_source",
+fcd_source_c::fcd_source_c(const std::string &args) :
+  gr::hier_block2("fcd_source_c",
                  gr::io_signature::make(0, 0, 0),
                  gr::io_signature::make(1, 1, sizeof (gr_complex)))
 {
@@ -98,11 +98,11 @@ fcd_source::fcd_source(const std::string &args) :
   connect( _src, 0, self(), 0 );
 }
 
-fcd_source::~fcd_source()
+fcd_source_c::~fcd_source_c()
 {
 }
 
-std::vector< std::string > fcd_source::get_devices()
+std::vector< std::string > fcd_source_c::get_devices()
 {
   int id = 0;
   std::vector< std::string > devices;
@@ -116,17 +116,17 @@ std::vector< std::string > fcd_source::get_devices()
   return devices;
 }
 
-std::string fcd_source::name()
+std::string fcd_source_c::name()
 {
   return "FUNcube Dongle";
 }
 
-size_t fcd_source::get_num_channels( void )
+size_t fcd_source_c::get_num_channels( void )
 {
   return 1;
 }
 
-osmosdr::meta_range_t fcd_source::get_sample_rates( void )
+osmosdr::meta_range_t fcd_source_c::get_sample_rates( void )
 {
   osmosdr::meta_range_t range;
 
@@ -135,24 +135,24 @@ osmosdr::meta_range_t fcd_source::get_sample_rates( void )
   return range;
 }
 
-double fcd_source::set_sample_rate( double rate )
+double fcd_source_c::set_sample_rate( double rate )
 {
   return get_sample_rate();
 }
 
-double fcd_source::get_sample_rate( void )
+double fcd_source_c::get_sample_rate( void )
 {
   return 96e3;
 }
 
-osmosdr::freq_range_t fcd_source::get_freq_range( size_t chan )
+osmosdr::freq_range_t fcd_source_c::get_freq_range( size_t chan )
 {
   osmosdr::freq_range_t range( 52e6, 2.2e9 );
 
   return range;
 }
 
-double fcd_source::set_center_freq( double freq, size_t chan )
+double fcd_source_c::set_center_freq( double freq, size_t chan )
 {
   _src->set_freq(float(freq));
 
@@ -161,12 +161,12 @@ double fcd_source::set_center_freq( double freq, size_t chan )
   return get_center_freq(chan);
 }
 
-double fcd_source::get_center_freq( size_t chan )
+double fcd_source_c::get_center_freq( size_t chan )
 {
   return _freq;
 }
 
-double fcd_source::set_freq_corr( double ppm, size_t chan )
+double fcd_source_c::set_freq_corr( double ppm, size_t chan )
 {
   _src->set_freq_corr( ppm );
 
@@ -175,12 +175,12 @@ double fcd_source::set_freq_corr( double ppm, size_t chan )
   return get_freq_corr( chan );
 }
 
-double fcd_source::get_freq_corr( size_t chan )
+double fcd_source_c::get_freq_corr( size_t chan )
 {
   return _correct;
 }
 
-std::vector<std::string> fcd_source::get_gain_names( size_t chan )
+std::vector<std::string> fcd_source_c::get_gain_names( size_t chan )
 {
   std::vector< std::string > names;
 
@@ -189,19 +189,19 @@ std::vector<std::string> fcd_source::get_gain_names( size_t chan )
   return names;
 }
 
-osmosdr::gain_range_t fcd_source::get_gain_range( size_t chan )
+osmosdr::gain_range_t fcd_source_c::get_gain_range( size_t chan )
 {
   osmosdr::gain_range_t range(-5, 30, 2.5);
 
   return range;
 }
 
-osmosdr::gain_range_t fcd_source::get_gain_range( const std::string & name, size_t chan )
+osmosdr::gain_range_t fcd_source_c::get_gain_range( const std::string & name, size_t chan )
 {
   return get_gain_range( chan );
 }
 
-double fcd_source::set_gain( double gain, size_t chan )
+double fcd_source_c::set_gain( double gain, size_t chan )
 {
   _src->set_lna_gain(gain);
 
@@ -210,22 +210,22 @@ double fcd_source::set_gain( double gain, size_t chan )
   return get_gain(chan);
 }
 
-double fcd_source::set_gain( double gain, const std::string & name, size_t chan )
+double fcd_source_c::set_gain( double gain, const std::string & name, size_t chan )
 {
   return set_gain(chan);
 }
 
-double fcd_source::get_gain( size_t chan )
+double fcd_source_c::get_gain( size_t chan )
 {
   return _gain;
 }
 
-double fcd_source::get_gain( const std::string & name, size_t chan )
+double fcd_source_c::get_gain( const std::string & name, size_t chan )
 {
   return get_gain(chan);
 }
 
-std::vector< std::string > fcd_source::get_antennas( size_t chan )
+std::vector< std::string > fcd_source_c::get_antennas( size_t chan )
 {
   std::vector< std::string > antennas;
 
@@ -234,12 +234,12 @@ std::vector< std::string > fcd_source::get_antennas( size_t chan )
   return antennas;
 }
 
-std::string fcd_source::set_antenna( const std::string & antenna, size_t chan )
+std::string fcd_source_c::set_antenna( const std::string & antenna, size_t chan )
 {
   return get_antenna(chan);
 }
 
-std::string fcd_source::get_antenna( size_t chan )
+std::string fcd_source_c::get_antenna( size_t chan )
 {
   return "RX";
 }

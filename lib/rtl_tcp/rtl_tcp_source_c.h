@@ -22,7 +22,7 @@
 
 #include <gnuradio/hier_block2.h>
 
-#include "osmosdr_src_iface.h"
+#include "source_iface.h"
 
 #include "rtl_tcp_source_f.h"
 
@@ -34,7 +34,7 @@ rtl_tcp_source_c_sptr make_rtl_tcp_source_c( const std::string & args = "" );
 
 class rtl_tcp_source_c :
     public gr::hier_block2,
-    public osmosdr_src_iface
+    public source_iface
 {
 private:
   friend rtl_tcp_source_c_sptr make_rtl_tcp_source_c(const std::string &args);

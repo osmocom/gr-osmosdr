@@ -28,7 +28,7 @@
 
 #include <libhackrf/hackrf.h>
 
-#include "osmosdr_snk_iface.h"
+#include "sink_iface.h"
 
 class hackrf_sink_c;
 
@@ -67,7 +67,7 @@ hackrf_sink_c_sptr make_hackrf_sink_c (const std::string & args = "");
 
 class hackrf_sink_c :
     public gr::sync_block,
-    public osmosdr_snk_iface
+    public sink_iface
 {
 private:
   // The friend declaration allows hackrf_make_sink_c to

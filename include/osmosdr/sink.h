@@ -17,36 +17,16 @@
  * the Free Software Foundation, Inc., 51 Franklin Street,
  * Boston, MA 02110-1301, USA.
  */
-#ifndef INCLUDED_OSMOSDR_SINK_C_H
-#define INCLUDED_OSMOSDR_SINK_C_H
+#ifndef INCLUDED_OSMOSDR_SINK_H
+#define INCLUDED_OSMOSDR_SINK_H
 
-#include <osmosdr/osmosdr_api.h>
-#include <osmosdr/osmosdr_ranges.h>
+#include <osmosdr/api.h>
+#include <osmosdr/ranges.h>
 #include <gnuradio/hier_block2.h>
 
-class osmosdr_sink_c;
+namespace osmosdr {
 
-/*
- * We use boost::shared_ptr's instead of raw pointers for all access
- * to gr::blocks (and many other data structures).  The shared_ptr gets
- * us transparent reference counting, which greatly simplifies storage
- * management issues.  This is especially helpful in our hybrid
- * C++ / Python system.
- *
- * See http://www.boost.org/libs/smart_ptr/smart_ptr.htm
- *
- * As a convention, the _sptr suffix indicates a boost::shared_ptr
- */
-typedef boost::shared_ptr<osmosdr_sink_c> osmosdr_sink_c_sptr;
-
-/*!
- * \brief Return a shared_ptr to a new instance of osmosdr_sink_c.
- *
- * To avoid accidental use of raw pointers, osmosdr_sink_c's
- * constructor is private.  osmosdr_make_sink_c is the public
- * interface for creating new instances.
- */
-OSMOSDR_API osmosdr_sink_c_sptr osmosdr_make_sink_c ( const std::string & args = "" );
+class sink;
 
 /*!
  * \brief Takes a stream of complex samples.
@@ -54,9 +34,23 @@ OSMOSDR_API osmosdr_sink_c_sptr osmosdr_make_sink_c ( const std::string & args =
  *
  * This uses the preferred technique: subclassing gr::hier_block2.
  */
-class OSMOSDR_API osmosdr_sink_c : virtual public gr::hier_block2
+class OSMOSDR_API sink : virtual public gr::hier_block2
 {
 public:
+  typedef boost::shared_ptr< sink > sptr;
+
+  /*!
+   * \brief Return a shared_ptr to a new instance of sink.
+   *
+   * To avoid accidental use of raw pointers, sink's
+   * constructor is private.  osmosdr::sink::make is the public
+   * interface for creating new instances.
+   *
+   * \param args the address to identify the hardware
+   * \return a new osmosdr sink block object
+   */
+  static sptr make( const std::string & args = "" );
+
   /*!
    * Get the number of channels the underlying radio hardware offers.
    * \return the number of available channels
@@ -287,4 +281,6 @@ public:
   virtual osmosdr::freq_range_t get_bandwidth_range( size_t chan = 0 ) = 0;
 };
 
-#endif /* INCLUDED_OSMOSDR_SINK_C_H */
+} /* namespace osmosdr */
+
+#endif /* INCLUDED_OSMOSDR_SINK_H */

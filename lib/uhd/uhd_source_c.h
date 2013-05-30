@@ -23,7 +23,7 @@
 #include <gnuradio/hier_block2.h>
 #include <gnuradio/uhd/usrp_source.h>
 
-#include "osmosdr_src_iface.h"
+#include "source_iface.h"
 
 class uhd_source_c;
 
@@ -33,7 +33,7 @@ uhd_source_c_sptr make_uhd_source_c(const std::string &args = "");
 
 class uhd_source_c :
     public gr::hier_block2,
-    public osmosdr_src_iface
+    public source_iface
 {
 private:
   friend uhd_source_c_sptr make_uhd_source_c(const std::string &args);

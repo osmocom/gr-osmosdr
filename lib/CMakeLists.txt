@@ -36,10 +36,10 @@ MACRO(GR_OSMOSDR_APPEND_LIBS)
 ENDMACRO(GR_OSMOSDR_APPEND_LIBS)
 
 GR_OSMOSDR_APPEND_SRCS(
-    osmosdr_source_c_impl.cc
-    osmosdr_sink_c_impl.cc
-    osmosdr_ranges.cc
-    osmosdr_device.cc
+    source_impl.cc
+    sink_impl.cc
+    ranges.cc
+    device.cc
 )
 
 GR_OSMOSDR_APPEND_LIBS(

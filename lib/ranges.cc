@@ -15,7 +15,7 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#include <osmosdr/osmosdr_ranges.h>
+#include <osmosdr/ranges.h>
 #include <stdexcept>
 #include <boost/math/special_functions/round.hpp>
 #include <boost/foreach.hpp>

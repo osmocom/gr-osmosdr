@@ -18,8 +18,8 @@
 #ifndef INCLUDED_OSMOSDR_RANGES_H
 #define INCLUDED_OSMOSDR_RANGES_H
 
-#include <osmosdr/osmosdr_api.h>
-#include <osmosdr/osmosdr_pimpl.h>
+#include <osmosdr/api.h>
+#include <osmosdr/pimpl.h>
 #include <string>
 #include <vector>
 

@@ -26,7 +26,7 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/condition_variable.hpp>
 
-#include "osmosdr_src_iface.h"
+#include "source_iface.h"
 
 class miri_source_c;
 typedef struct mirisdr_dev mirisdr_dev_t;
@@ -59,7 +59,7 @@ miri_source_c_sptr make_miri_source_c (const std::string & args = "");
  */
 class miri_source_c :
     public gr::sync_block,
-    public osmosdr_src_iface
+    public source_iface
 {
 private:
   // The friend declaration allows make_miri_source_c to

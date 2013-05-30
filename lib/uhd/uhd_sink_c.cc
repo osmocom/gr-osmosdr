@@ -24,7 +24,7 @@
 
 //#include <uhd/property_tree.hpp>
 
-#include "osmosdr_arg_helpers.h"
+#include "arg_helpers.h"
 
 #include "uhd_sink_c.h"
 

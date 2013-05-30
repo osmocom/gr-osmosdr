@@ -20,7 +20,7 @@
 
 #include <boost/shared_ptr.hpp>
 
-/*! \file osmosdr_pimpl.h
+/*! \file pimpl.h
  * "Pimpl idiom" (pointer to implementation idiom).
  * The OSMOSDR_PIMPL_* macros simplify code overhead for declaring and making pimpls.
  *

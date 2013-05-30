@@ -23,7 +23,7 @@
 #include <gnuradio/hier_block2.h>
 #include <gnuradio/uhd/usrp_sink.h>
 
-#include "osmosdr_snk_iface.h"
+#include "sink_iface.h"
 
 class uhd_sink_c;
 
@@ -33,7 +33,7 @@ uhd_sink_c_sptr make_uhd_sink_c(const std::string &args = "");
 
 class uhd_sink_c :
     public gr::hier_block2,
-    public osmosdr_snk_iface
+    public sink_iface
 {
 private:
   friend uhd_sink_c_sptr make_uhd_sink_c(const std::string &args);

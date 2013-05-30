@@ -22,11 +22,11 @@ MAIN_TMPL = """\
 <?xml version="1.0"?>
 <block>
   <name>$(title) $sourk.title()</name>
-  <key>$(prefix)_$(sourk)_c</key>
+  <key>$(prefix)_$(sourk)</key>
   <category>$($sourk.title())s</category>
   <throttle>1</throttle>
   <import>import osmosdr</import>
-  <make>osmosdr.$(sourk)_c( args="nchan=" + str(\$nchan) + " " + \$args )
+  <make>osmosdr.$(sourk)( args="nchan=" + str(\$nchan) + " " + \$args )
 self.\$(id).set_sample_rate(\$sample_rate)
 #for $n in range($max_nchan)
 \#if \$nchan() > $n
@@ -104,12 +104,12 @@ self.\$(id).set_bandwidth(\$bw$(n), $n)
     <nports>\$nchan</nports>
   </$sourk>
   <doc>
-The OSMOCOM block:
+The osmocom block:
 
 While primarily being developed for the OsmoSDR hardware, this block as well supports:
 
  * FunCube Dongle through libgnuradio-fcd
- * OSMOCOM OsmoSDR Devices through libosmosdr
+ * sysmocom OsmoSDR Devices through libosmosdr
  * Great Scott Gadgets HackRF through libhackrf
  * Ettus USRP Devices through Ettus UHD library
  * RTL2832U based DVB-T dongles through librtlsdr
@@ -192,9 +192,9 @@ Bandwidth:
 Set the bandpass filter on the radio frontend. To use the default (automatic) bandwidth filter setting, this should be zero.
 
 See the OsmoSDR project page for more detailed documentation:
-http://sdr.osmocom.org/trac/
-http://sdr.osmocom.org/trac/wiki/rtl-sdr
 http://sdr.osmocom.org/trac/wiki/GrOsmoSDR
+http://sdr.osmocom.org/trac/wiki/rtl-sdr
+http://sdr.osmocom.org/trac/
   </doc>
 </block>
 """
@@ -318,14 +318,14 @@ if __name__ == '__main__':
       title = 'RTL-SDR'
       prefix = 'rtlsdr'
     elif tail.startswith('osmosdr'):
-      title = 'OSMOCOM'
+      title = 'osmocom'
       prefix = 'osmosdr'
     else: raise Exception, 'file %s has wrong syntax!'%tail
 
-    if tail.endswith ('source_c.xml'):
+    if tail.endswith ('source.xml'):
       sourk = 'source'
       dir = 'out'
-    elif tail.endswith ('sink_c.xml'):
+    elif tail.endswith ('sink.xml'):
       sourk = 'sink'
       dir = 'in'
     else: raise Exception, 'is %s a source or sink?'%file

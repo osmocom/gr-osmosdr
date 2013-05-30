@@ -17,32 +17,32 @@
  * the Free Software Foundation, Inc., 51 Franklin Street,
  * Boston, MA 02110-1301, USA.
  */
-#ifndef FCD_SOURCE_H
-#define FCD_SOURCE_H
+#ifndef FCD_SOURCE_C_H
+#define FCD_SOURCE_C_H
 
 #include <gnuradio/hier_block2.h>
 
 #include <gnuradio/fcd/source_c.h>
 
-#include "osmosdr_src_iface.h"
+#include "source_iface.h"
 
-class fcd_source;
+class fcd_source_c;
 
-typedef boost::shared_ptr< fcd_source > fcd_source_sptr;
+typedef boost::shared_ptr< fcd_source_c > fcd_source_c_sptr;
 
-fcd_source_sptr make_fcd_source( const std::string & args = "" );
+fcd_source_c_sptr make_fcd_source_c( const std::string & args = "" );
 
-class fcd_source :
+class fcd_source_c :
     public gr::hier_block2,
-    public osmosdr_src_iface
+    public source_iface
 {
 private:
-  friend fcd_source_sptr make_fcd_source(const std::string &args);
+  friend fcd_source_c_sptr make_fcd_source_c(const std::string &args);
 
-  fcd_source(const std::string &args);
+  fcd_source_c(const std::string &args);
 
 public:
-  ~fcd_source();
+  ~fcd_source_c();
 
   static std::vector< std::string > get_devices();
 
@@ -78,4 +78,4 @@ private:
   int32_t _correct;
 };
 
-#endif // FCD_SOURCE_H
+#endif // FCD_SOURCE_C_H

@@ -18,7 +18,7 @@
  * Boston, MA 02110-1301, USA.
  */
 
-#include <osmosdr/osmosdr_device.h>
+#include <osmosdr/device.h>
 #include <stdexcept>
 #include <boost/foreach.hpp>
 #include <boost/format.hpp>
@@ -35,7 +35,7 @@
 #endif
 
 #ifdef ENABLE_FCD
-#include <fcd_source.h>
+#include <fcd_source_c.h>
 #endif
 
 #ifdef ENABLE_FILE
@@ -62,7 +62,7 @@
 #include <hackrf_source_c.h>
 #endif
 
-#include "osmosdr_arg_helpers.h"
+#include "arg_helpers.h"
 
 using namespace osmosdr;
 
@@ -118,7 +118,7 @@ devices_t device::find(const device_t &hint)
     devices.push_back( device_t(dev) );
 #endif
 #ifdef ENABLE_FCD
-  BOOST_FOREACH( std::string dev, fcd_source::get_devices() )
+  BOOST_FOREACH( std::string dev, fcd_source_c::get_devices() )
     devices.push_back( device_t(dev) );
 #endif
 #ifdef ENABLE_RTL

@@ -18,21 +18,17 @@
  * Boston, MA 02110-1301, USA.
  */
 
-#ifndef OSMOSDR_SNK_IFACE_H
-#define OSMOSDR_SNK_IFACE_H
+#ifndef OSMOSDR_SINK_IFACE_H
+#define OSMOSDR_SINK_IFACE_H
 
-#include <osmosdr/osmosdr_ranges.h>
+#include <osmosdr/ranges.h>
 #include <gnuradio/basic_block.h>
-
-class osmosdr_snk_iface;
-
-typedef boost::shared_ptr<osmosdr_snk_iface> osmosdr_snk_iface_sptr;
 
 /*!
  * TODO: document
  *
  */
-class osmosdr_snk_iface
+class sink_iface
 {
 public:
   /*!
@@ -258,4 +254,4 @@ public:
     { return osmosdr::freq_range_t(); }
 };
 
-#endif // OSMOSDR_SNK_IFACE_H
+#endif // OSMOSDR_SINK_IFACE_H

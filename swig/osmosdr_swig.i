@@ -11,9 +11,9 @@
 %include "osmosdr_swig_doc.i"
 
 %{
-#include "osmosdr/osmosdr_device.h"
-#include "osmosdr/osmosdr_source_c.h"
-#include "osmosdr/osmosdr_sink_c.h"
+#include "osmosdr/device.h"
+#include "osmosdr/source.h"
+#include "osmosdr/sink.h"
 %}
 
 // Workaround for a SWIG 2.0.4 bug with templates. Probably needs to be looked in to.
@@ -29,20 +29,27 @@
 
 //%template(size_vector_t) std::vector<size_t>;
 
-%include <osmosdr/osmosdr_pimpl.h>
+%include <osmosdr/pimpl.h>
 
 %ignore osmosdr::device_t::operator[]; //ignore warnings about %extend
 
 %template(string_string_dict_t) std::map<std::string, std::string>; //define before device
 %template(devices_t) std::vector<osmosdr::device_t>;
-%include <osmosdr/osmosdr_device.h>
+%include <osmosdr/device.h>
 
 %template(range_vector_t) std::vector<osmosdr::range_t>; //define before range
-%include <osmosdr/osmosdr_ranges.h>
+%include <osmosdr/ranges.h>
 
-GR_SWIG_BLOCK_MAGIC(osmosdr,source_c);
-%include "osmosdr/osmosdr_source_c.h"
+%define OSMOSDR_SWIG_BLOCK_MAGIC2(PKG, BASE_NAME)
+%template(BASE_NAME ## _sptr) boost::shared_ptr<PKG ## :: ## BASE_NAME>;
+%pythoncode %{
+BASE_NAME ## _sptr.__repr__ = lambda self: "<gr_block %s (%d)>" % (self.name(), self.unique_id())
+BASE_NAME = BASE_NAME.make;
+%}
+%enddef
 
-GR_SWIG_BLOCK_MAGIC(osmosdr,sink_c);
-%include "osmosdr/osmosdr_sink_c.h"
+%include "osmosdr/source.h"
+%include "osmosdr/sink.h"
 
+OSMOSDR_SWIG_BLOCK_MAGIC2(osmosdr,source);
+OSMOSDR_SWIG_BLOCK_MAGIC2(osmosdr,sink);

@@ -17,18 +17,20 @@
  * the Free Software Foundation, Inc., 51 Franklin Street,
  * Boston, MA 02110-1301, USA.
  */
-#ifndef INCLUDED_OSMOSDR_SINK_C_IMPL_H
-#define INCLUDED_OSMOSDR_SINK_C_IMPL_H
+#ifndef INCLUDED_OSMOSDR_SINK_IMPL_H
+#define INCLUDED_OSMOSDR_SINK_IMPL_H
 
-#include "osmosdr/osmosdr_sink_c.h"
+#include "osmosdr/sink.h"
 
-#include "osmosdr_snk_iface.h"
+#include "sink_iface.h"
 
 #include <map>
 
-class osmosdr_sink_c_impl : public osmosdr_sink_c
+class sink_impl : public osmosdr::sink
 {
 public:
+  sink_impl(const std::string & args);
+
   size_t get_num_channels( void );
 
   osmosdr::meta_range_t get_sample_rates( void );
@@ -66,13 +68,7 @@ public:
   osmosdr::freq_range_t get_bandwidth_range( size_t chan = 0 );
 
 private:
-  osmosdr_sink_c_impl (const std::string & args);  	// private constructor
-
-  // The friend declaration allows osmosdr_make_sink_c to
-  // access the private constructor.
-  friend osmosdr_sink_c_sptr osmosdr_make_sink_c (const std::string & args);
-
-  std::vector< osmosdr_snk_iface * > _devs;
+  std::vector< sink_iface * > _devs;
 
   double _sample_rate;
   std::map< size_t, double > _center_freq;
@@ -85,4 +81,4 @@ private:
   std::map< size_t, double > _bandwidth;
 };
 
-#endif /* INCLUDED_OSMOSDR_SINK_C_IMPL_H */
+#endif /* INCLUDED_OSMOSDR_SINK_IMPL_H */

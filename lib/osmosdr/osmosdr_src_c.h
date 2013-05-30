@@ -26,7 +26,7 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/condition_variable.hpp>
 
-#include "osmosdr_src_iface.h"
+#include "source_iface.h"
 
 class osmosdr_src_c;
 typedef struct osmosdr_dev osmosdr_dev_t;
@@ -57,11 +57,11 @@ osmosdr_src_c_sptr osmosdr_make_src_c (const std::string & args = "");
  * \brief Provides a stream of complex samples.
  * \ingroup block
  *
- * \sa osmosdr_sink_c for a version that subclasses gr::hier_block2.
+ * \sa sink for a version that subclasses gr::hier_block2.
  */
 class osmosdr_src_c :
     public gr::sync_block,
-    public osmosdr_src_iface
+    public source_iface
 {
 private:
   // The friend declaration allows osmosdr_make_src_c to

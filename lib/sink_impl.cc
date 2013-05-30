@@ -32,8 +32,6 @@
 #include <gnuradio/blocks/throttle.h>
 #include <gnuradio/blocks/null_sink.h>
 
-#include "osmosdr_sink_c_impl.h"
-
 #ifdef ENABLE_UHD
 #include "uhd_sink_c.h"
 #endif
@@ -41,27 +39,28 @@
 #include "hackrf_sink_c.h"
 #endif
 
-#include "osmosdr_arg_helpers.h"
+#include "arg_helpers.h"
+#include "sink_impl.h"
 
 /* This avoids throws in ctor of gr::hier_block2, as gnuradio is unable to deal
  with this behavior in a clean way. The GR maintainer Rondeau has been informed. */
 #define WORKAROUND_GR_HIER_BLOCK2_BUG
 
 /*
- * Create a new instance of osmosdr_sink_c_impl and return
+ * Create a new instance of sink_impl and return
  * a boost shared_ptr.  This is effectively the public constructor.
  */
-osmosdr_sink_c_sptr
-osmosdr_make_sink_c (const std::string &args)
+osmosdr::sink::sptr
+osmosdr::sink::make( const std::string &args )
 {
-  return gnuradio::get_initial_sptr(new osmosdr_sink_c_impl (args));
+  return gnuradio::get_initial_sptr( new sink_impl(args) );
 }
 
 /*
  * The private constructor
  */
-osmosdr_sink_c_impl::osmosdr_sink_c_impl (const std::string &args)
-  : gr::hier_block2 ("osmosdr_sink_c_impl",
+sink_impl::sink_impl( const std::string &args )
+  : gr::hier_block2 ("sink_impl",
         args_to_io_signature(args),
         gr::io_signature::make(0, 0, 0))
 {
@@ -127,7 +126,7 @@ osmosdr_sink_c_impl::osmosdr_sink_c_impl (const std::string &args)
 //    BOOST_FOREACH( dict_t::value_type &entry, dict )
 //      std::cerr << "'" << entry.first << "' = '" << entry.second << "'" << std::endl;
 
-    osmosdr_snk_iface *iface = NULL;
+    sink_iface *iface = NULL;
     gr::basic_block_sptr block;
 
 #ifdef ENABLE_UHD
@@ -185,11 +184,11 @@ osmosdr_sink_c_impl::osmosdr_sink_c_impl (const std::string &args)
 #endif
 }
 
-size_t osmosdr_sink_c_impl::get_num_channels()
+size_t sink_impl::get_num_channels()
 {
   size_t channels = 0;
 
-  BOOST_FOREACH( osmosdr_snk_iface *dev, _devs )
+  BOOST_FOREACH( sink_iface *dev, _devs )
     channels += dev->get_num_channels();
 
   return channels;
@@ -197,7 +196,7 @@ size_t osmosdr_sink_c_impl::get_num_channels()
 
 #define NO_DEVICES_MSG  "FATAL: No device(s) available to work with."
 
-osmosdr::meta_range_t osmosdr_sink_c_impl::get_sample_rates()
+osmosdr::meta_range_t sink_impl::get_sample_rates()
 {
   if ( ! _devs.empty() )
     return _devs[0]->get_sample_rates(); // assume same devices used in the group
@@ -208,7 +207,7 @@ osmosdr::meta_range_t osmosdr_sink_c_impl::get_sample_rates()
   return osmosdr::meta_range_t();
 }
 
-double osmosdr_sink_c_impl::set_sample_rate(double rate)
+double sink_impl::set_sample_rate(double rate)
 {
   double sample_rate = 0;
 
@@ -217,7 +216,7 @@ double osmosdr_sink_c_impl::set_sample_rate(double rate)
     if (_devs.empty())
       throw std::runtime_error(NO_DEVICES_MSG);
 #endif
-    BOOST_FOREACH( osmosdr_snk_iface *dev, _devs )
+    BOOST_FOREACH( sink_iface *dev, _devs )
       sample_rate = dev->set_sample_rate(rate);
 
     _sample_rate = sample_rate;
@@ -226,7 +225,7 @@ double osmosdr_sink_c_impl::set_sample_rate(double rate)
   return sample_rate;
 }
 
-double osmosdr_sink_c_impl::get_sample_rate()
+double sink_impl::get_sample_rate()
 {
   double sample_rate = 0;
 
@@ -239,10 +238,10 @@ double osmosdr_sink_c_impl::get_sample_rate()
   return sample_rate;
 }
 
-osmosdr::freq_range_t osmosdr_sink_c_impl::get_freq_range( size_t chan )
+osmosdr::freq_range_t sink_impl::get_freq_range( size_t chan )
 {
   size_t channel = 0;
-  BOOST_FOREACH( osmosdr_snk_iface *dev, _devs )
+  BOOST_FOREACH( sink_iface *dev, _devs )
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
       if ( chan == channel++ )
         return dev->get_freq_range( dev_chan );
@@ -250,10 +249,10 @@ osmosdr::freq_range_t osmosdr_sink_c_impl::get_freq_range( size_t chan )
   return osmosdr::freq_range_t();
 }
 
-double osmosdr_sink_c_impl::set_center_freq( double freq, size_t chan )
+double sink_impl::set_center_freq( double freq, size_t chan )
 {
   size_t channel = 0;
-  BOOST_FOREACH( osmosdr_snk_iface *dev, _devs )
+  BOOST_FOREACH( sink_iface *dev, _devs )
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
       if ( chan == channel++ )
         if ( _center_freq[ chan ] != freq ) {
@@ -264,10 +263,10 @@ double osmosdr_sink_c_impl::set_center_freq( double freq, size_t chan )
   return 0;
 }
 
-double osmosdr_sink_c_impl::get_center_freq( size_t chan )
+double sink_impl::get_center_freq( size_t chan )
 {
   size_t channel = 0;
-  BOOST_FOREACH( osmosdr_snk_iface *dev, _devs )
+  BOOST_FOREACH( sink_iface *dev, _devs )
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
       if ( chan == channel++ )
         return dev->get_center_freq( dev_chan );
@@ -275,10 +274,10 @@ double osmosdr_sink_c_impl::get_center_freq( size_t chan )
   return 0;
 }
 
-double osmosdr_sink_c_impl::set_freq_corr( double ppm, size_t chan )
+double sink_impl::set_freq_corr( double ppm, size_t chan )
 {
   size_t channel = 0;
-  BOOST_FOREACH( osmosdr_snk_iface *dev, _devs )
+  BOOST_FOREACH( sink_iface *dev, _devs )
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
       if ( chan == channel++ )
         if ( _freq_corr[ chan ] != ppm ) {
@@ -289,10 +288,10 @@ double osmosdr_sink_c_impl::set_freq_corr( double ppm, size_t chan )
   return 0;
 }
 
-double osmosdr_sink_c_impl::get_freq_corr( size_t chan )
+double sink_impl::get_freq_corr( size_t chan )
 {
   size_t channel = 0;
-  BOOST_FOREACH( osmosdr_snk_iface *dev, _devs )
+  BOOST_FOREACH( sink_iface *dev, _devs )
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
       if ( chan == channel++ )
         return dev->get_freq_corr( dev_chan );
@@ -300,10 +299,10 @@ double osmosdr_sink_c_impl::get_freq_corr( size_t chan )
   return 0;
 }
 
-std::vector<std::string> osmosdr_sink_c_impl::get_gain_names( size_t chan )
+std::vector<std::string> sink_impl::get_gain_names( size_t chan )
 {
   size_t channel = 0;
-  BOOST_FOREACH( osmosdr_snk_iface *dev, _devs )
+  BOOST_FOREACH( sink_iface *dev, _devs )
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
       if ( chan == channel++ )
         return dev->get_gain_names( dev_chan );
@@ -311,10 +310,10 @@ std::vector<std::string> osmosdr_sink_c_impl::get_gain_names( size_t chan )
   return std::vector< std::string >();
 }
 
-osmosdr::gain_range_t osmosdr_sink_c_impl::get_gain_range( size_t chan )
+osmosdr::gain_range_t sink_impl::get_gain_range( size_t chan )
 {
   size_t channel = 0;
-  BOOST_FOREACH( osmosdr_snk_iface *dev, _devs )
+  BOOST_FOREACH( sink_iface *dev, _devs )
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
       if ( chan == channel++ )
         return dev->get_gain_range( dev_chan );
@@ -322,10 +321,10 @@ osmosdr::gain_range_t osmosdr_sink_c_impl::get_gain_range( size_t chan )
   return osmosdr::gain_range_t();
 }
 
-osmosdr::gain_range_t osmosdr_sink_c_impl::get_gain_range( const std::string & name, size_t chan )
+osmosdr::gain_range_t sink_impl::get_gain_range( const std::string & name, size_t chan )
 {
   size_t channel = 0;
-  BOOST_FOREACH( osmosdr_snk_iface *dev, _devs )
+  BOOST_FOREACH( sink_iface *dev, _devs )
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
       if ( chan == channel++ )
         return dev->get_gain_range( name, dev_chan );
@@ -333,10 +332,10 @@ osmosdr::gain_range_t osmosdr_sink_c_impl::get_gain_range( const std::string & n
   return osmosdr::gain_range_t();
 }
 
-bool osmosdr_sink_c_impl::set_gain_mode( bool automatic, size_t chan )
+bool sink_impl::set_gain_mode( bool automatic, size_t chan )
 {
   size_t channel = 0;
-  BOOST_FOREACH( osmosdr_snk_iface *dev, _devs )
+  BOOST_FOREACH( sink_iface *dev, _devs )
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
       if ( chan == channel++ )
         if ( _gain_mode[ chan ] != automatic ) {
@@ -350,10 +349,10 @@ bool osmosdr_sink_c_impl::set_gain_mode( bool automatic, size_t chan )
   return false;
 }
 
-bool osmosdr_sink_c_impl::get_gain_mode( size_t chan )
+bool sink_impl::get_gain_mode( size_t chan )
 {
   size_t channel = 0;
-  BOOST_FOREACH( osmosdr_snk_iface *dev, _devs )
+  BOOST_FOREACH( sink_iface *dev, _devs )
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
       if ( chan == channel++ )
         return dev->get_gain_mode( dev_chan );
@@ -361,10 +360,10 @@ bool osmosdr_sink_c_impl::get_gain_mode( size_t chan )
   return false;
 }
 
-double osmosdr_sink_c_impl::set_gain( double gain, size_t chan )
+double sink_impl::set_gain( double gain, size_t chan )
 {
   size_t channel = 0;
-  BOOST_FOREACH( osmosdr_snk_iface *dev, _devs )
+  BOOST_FOREACH( sink_iface *dev, _devs )
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
       if ( chan == channel++ )
         if ( _gain[ chan ] != gain ) {
@@ -375,10 +374,10 @@ double osmosdr_sink_c_impl::set_gain( double gain, size_t chan )
   return 0;
 }
 
-double osmosdr_sink_c_impl::set_gain( double gain, const std::string & name, size_t chan)
+double sink_impl::set_gain( double gain, const std::string & name, size_t chan)
 {
   size_t channel = 0;
-  BOOST_FOREACH( osmosdr_snk_iface *dev, _devs )
+  BOOST_FOREACH( sink_iface *dev, _devs )
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
       if ( chan == channel++ )
         return dev->set_gain( gain, name, dev_chan );
@@ -386,10 +385,10 @@ double osmosdr_sink_c_impl::set_gain( double gain, const std::string & name, siz
   return 0;
 }
 
-double osmosdr_sink_c_impl::get_gain( size_t chan )
+double sink_impl::get_gain( size_t chan )
 {
   size_t channel = 0;
-  BOOST_FOREACH( osmosdr_snk_iface *dev, _devs )
+  BOOST_FOREACH( sink_iface *dev, _devs )
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
       if ( chan == channel++ )
         return dev->get_gain( dev_chan );
@@ -397,10 +396,10 @@ double osmosdr_sink_c_impl::get_gain( size_t chan )
   return 0;
 }
 
-double osmosdr_sink_c_impl::get_gain( const std::string & name, size_t chan )
+double sink_impl::get_gain( const std::string & name, size_t chan )
 {
   size_t channel = 0;
-  BOOST_FOREACH( osmosdr_snk_iface *dev, _devs )
+  BOOST_FOREACH( sink_iface *dev, _devs )
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
       if ( chan == channel++ )
         return dev->get_gain( name, dev_chan );
@@ -408,10 +407,10 @@ double osmosdr_sink_c_impl::get_gain( const std::string & name, size_t chan )
   return 0;
 }
 
-double osmosdr_sink_c_impl::set_if_gain( double gain, size_t chan )
+double sink_impl::set_if_gain( double gain, size_t chan )
 {
   size_t channel = 0;
-  BOOST_FOREACH( osmosdr_snk_iface *dev, _devs )
+  BOOST_FOREACH( sink_iface *dev, _devs )
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
       if ( chan == channel++ )
         if ( _if_gain[ chan ] != gain ) {
@@ -422,10 +421,10 @@ double osmosdr_sink_c_impl::set_if_gain( double gain, size_t chan )
   return 0;
 }
 
-double osmosdr_sink_c_impl::set_bb_gain( double gain, size_t chan )
+double sink_impl::set_bb_gain( double gain, size_t chan )
 {
   size_t channel = 0;
-  BOOST_FOREACH( osmosdr_snk_iface *dev, _devs )
+  BOOST_FOREACH( sink_iface *dev, _devs )
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
       if ( chan == channel++ )
         if ( _bb_gain[ chan ] != gain ) {
@@ -436,10 +435,10 @@ double osmosdr_sink_c_impl::set_bb_gain( double gain, size_t chan )
   return 0;
 }
 
-std::vector< std::string > osmosdr_sink_c_impl::get_antennas( size_t chan )
+std::vector< std::string > sink_impl::get_antennas( size_t chan )
 {
   size_t channel = 0;
-  BOOST_FOREACH( osmosdr_snk_iface *dev, _devs )
+  BOOST_FOREACH( sink_iface *dev, _devs )
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
       if ( chan == channel++ )
         return dev->get_antennas( dev_chan );
@@ -447,10 +446,10 @@ std::vector< std::string > osmosdr_sink_c_impl::get_antennas( size_t chan )
   return std::vector< std::string >();
 }
 
-std::string osmosdr_sink_c_impl::set_antenna( const std::string & antenna, size_t chan )
+std::string sink_impl::set_antenna( const std::string & antenna, size_t chan )
 {
   size_t channel = 0;
-  BOOST_FOREACH( osmosdr_snk_iface *dev, _devs )
+  BOOST_FOREACH( sink_iface *dev, _devs )
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
       if ( chan == channel++ )
         if ( _antenna[ chan ] != antenna ) {
@@ -461,10 +460,10 @@ std::string osmosdr_sink_c_impl::set_antenna( const std::string & antenna, size_
   return "";
 }
 
-std::string osmosdr_sink_c_impl::get_antenna( size_t chan )
+std::string sink_impl::get_antenna( size_t chan )
 {
   size_t channel = 0;
-  BOOST_FOREACH( osmosdr_snk_iface *dev, _devs )
+  BOOST_FOREACH( sink_iface *dev, _devs )
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
       if ( chan == channel++ )
         return dev->get_antenna( dev_chan );
@@ -472,20 +471,20 @@ std::string osmosdr_sink_c_impl::get_antenna( size_t chan )
   return "";
 }
 
-void osmosdr_sink_c_impl::set_iq_balance_mode( int mode, size_t chan )
+void sink_impl::set_iq_balance_mode( int mode, size_t chan )
 {
 
 }
 
-void osmosdr_sink_c_impl::set_iq_balance( const std::complex<double> &correction, size_t chan )
+void sink_impl::set_iq_balance( const std::complex<double> &correction, size_t chan )
 {
 
 }
 
-double osmosdr_sink_c_impl::set_bandwidth( double bandwidth, size_t chan )
+double sink_impl::set_bandwidth( double bandwidth, size_t chan )
 {
   size_t channel = 0;
-  BOOST_FOREACH( osmosdr_snk_iface *dev, _devs )
+  BOOST_FOREACH( sink_iface *dev, _devs )
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
       if ( chan == channel++ )
         if ( _bandwidth[ chan ] != bandwidth ) {
@@ -496,10 +495,10 @@ double osmosdr_sink_c_impl::set_bandwidth( double bandwidth, size_t chan )
   return 0;
 }
 
-double osmosdr_sink_c_impl::get_bandwidth( size_t chan )
+double sink_impl::get_bandwidth( size_t chan )
 {
   size_t channel = 0;
-  BOOST_FOREACH( osmosdr_snk_iface *dev, _devs )
+  BOOST_FOREACH( sink_iface *dev, _devs )
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
       if ( chan == channel++ )
         return dev->get_bandwidth( dev_chan );
@@ -507,10 +506,10 @@ double osmosdr_sink_c_impl::get_bandwidth( size_t chan )
   return 0;
 }
 
-osmosdr::freq_range_t osmosdr_sink_c_impl::get_bandwidth_range( size_t chan )
+osmosdr::freq_range_t sink_impl::get_bandwidth_range( size_t chan )
 {
   size_t channel = 0;
-  BOOST_FOREACH( osmosdr_snk_iface *dev, _devs )
+  BOOST_FOREACH( sink_iface *dev, _devs )
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
       if ( chan == channel++ )
         return dev->get_bandwidth_range( dev_chan );

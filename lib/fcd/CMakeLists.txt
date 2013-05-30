@@ -27,7 +27,7 @@ include_directories(
 )
 
 set(fcd_srcs
-    ${CMAKE_CURRENT_SOURCE_DIR}/fcd_source.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/fcd_source_c.cc
 )
 
 ########################################################################
