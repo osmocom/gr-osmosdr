@@ -249,8 +249,8 @@ source_impl::source_impl( const std::string &args )
 
       for (size_t i = 0; i < iface->get_num_channels(); i++) {
 #ifdef HAVE_IQBALANCE
-        iqbalance_optimize_c_sptr iq_opt = iqbalance_make_optimize_c( 0 );
-        iqbalance_fix_cc_sptr iq_fix = iqbalance_make_fix_cc();
+        gr::iqbalance::optimize_c::sptr iq_opt = gr::iqbalance::optimize_c::make( 0 );
+        gr::iqbalance::fix_cc::sptr     iq_fix = gr::iqbalance::fix_cc::make();
 
         connect(block, i, iq_fix, 0);
         connect(iq_fix, 0, self(), channel++);
@@ -340,7 +340,7 @@ double source_impl::set_sample_rate(double rate)
     BOOST_FOREACH( source_iface *dev, _devs ) {
       for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++) {
         if ( channel < _iq_opt.size() ) {
-          iqbalance_optimize_c *opt = _iq_opt[channel];
+          gr::iqbalance::optimize_c *opt = _iq_opt[channel];
 
           if ( opt->period() > 0 ) { /* optimize is enabled */
             opt->set_period( dev->get_sample_rate() / 5 );
@@ -613,8 +613,8 @@ void source_impl::set_iq_balance_mode( int mode, size_t chan )
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++) {
       if ( chan == channel++ ) {
         if ( chan < _iq_opt.size() && chan < _iq_fix.size() ) {
-          iqbalance_optimize_c *opt = _iq_opt[chan];
-          iqbalance_fix_cc *fix = _iq_fix[chan];
+          gr::iqbalance::optimize_c *opt = _iq_opt[chan];
+          gr::iqbalance::fix_cc *fix = _iq_fix[chan];
 
           if ( IQBalanceOff == mode  ) {
             opt->set_period( 0 );
@@ -649,8 +649,8 @@ void source_impl::set_iq_balance( const std::complex<double> &correction, size_t
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++) {
       if ( chan == channel++ ) {
         if ( chan < _iq_opt.size() && chan < _iq_fix.size() ) {
-          iqbalance_optimize_c *opt = _iq_opt[chan];
-          iqbalance_fix_cc *fix = _iq_fix[chan];
+          gr::iqbalance::optimize_c *opt = _iq_opt[chan];
+          gr::iqbalance::fix_cc *fix = _iq_fix[chan];
 
           if ( opt->period() == 0 ) { /* automatic optimization desabled */
             fix->set_mag( correction.real() );

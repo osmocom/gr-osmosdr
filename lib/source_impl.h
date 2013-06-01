@@ -23,8 +23,8 @@
 #include <osmosdr/source.h>
 
 #ifdef HAVE_IQBALANCE
-#include <iqbalance_optimize_c.h>
-#include <iqbalance_fix_cc.h>
+#include <gnuradio/iqbalance/optimize_c.h>
+#include <gnuradio/iqbalance/fix_cc.h>
 #endif
 
 #include <source_iface.h>
@@ -84,8 +84,8 @@ private:
   std::map< size_t, double > _bb_gain;
   std::map< size_t, std::string > _antenna;
 #ifdef HAVE_IQBALANCE
-  std::vector< iqbalance_fix_cc * > _iq_fix;
-  std::vector< iqbalance_optimize_c * > _iq_opt;
+  std::vector< gr::iqbalance::fix_cc * > _iq_fix;
+  std::vector< gr::iqbalance::optimize_c * > _iq_opt;
   std::map< size_t, std::pair<float, float> > _vals;
 #endif
   std::map< size_t, double > _bandwidth;
