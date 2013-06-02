@@ -154,7 +154,6 @@ hackrf_sink_c::hackrf_sink_c (const std::string &args)
     _vga_gain(0)
 {
   int ret;
-  uint16_t val;
 
   dict_t dict = params_to_dict(args);
 
@@ -207,11 +206,7 @@ hackrf_sink_c::hackrf_sink_c (const std::string &args)
 
   set_sample_rate( 5000000 );
 
-  set_gain( 0 ); /* disable AMP gain stage */
-
-  hackrf_max2837_read( _dev, 29, &val );
-  val |= 0x3; /* enable TX VGA control over SPI */
-  hackrf_max2837_write( _dev, 29, val );
+  set_gain( 0 ); /* disable AMP gain stage by default */
 
   set_if_gain( 16 ); /* preset to a reasonable default (non-GRC use case) */
 
@@ -477,7 +472,7 @@ osmosdr::meta_range_t hackrf_sink_c::get_sample_rates()
   return range;
 }
 
-double hackrf_sink_c::set_sample_rate(double rate)
+double hackrf_sink_c::set_sample_rate( double rate )
 {
   int ret;
 
@@ -592,22 +587,10 @@ double hackrf_sink_c::set_gain( double gain, size_t chan )
 
   if (_dev) {
     double clip_gain = rf_gains.clip( gain, true );
+    uint8_t value = clip_gain == 14.0f ? 1 : 0;
 
-    std::map<double, int> reg_vals;
-    reg_vals[ 0 ] = 0;
-    reg_vals[ 14 ] = 1;
-
-    if ( reg_vals.count( clip_gain ) ) {
-      int value = reg_vals[ clip_gain ];
-#if 0
-      std::cerr << "amp gain: " << gain
-                << " clip_gain: " << clip_gain
-                << " value: " << value
-                << std::endl;
-#endif
-      if ( hackrf_set_amp_enable( _dev, value ) == HACKRF_SUCCESS )
-        _amp_gain = clip_gain;
-    }
+    if ( hackrf_set_amp_enable( _dev, value ) == HACKRF_SUCCESS )
+      _amp_gain = clip_gain;
   }
 
   return _amp_gain;
@@ -648,69 +631,17 @@ double hackrf_sink_c::set_if_gain( double gain, size_t chan )
 {
   osmosdr::gain_range_t if_gains = get_gain_range( "IF", chan );
 
-  double clip_gain = if_gains.clip( gain, true );
-  double rel_atten = fabs( if_gains.stop() - clip_gain );
-
-  std::vector< osmosdr::gain_range_t > if_attens;
-
-  if_attens += osmosdr::gain_range_t(0, 1, 1); /* chapter 1.5: TX Gain Control */
-  if_attens += osmosdr::gain_range_t(0, 2, 2);
-  if_attens += osmosdr::gain_range_t(0, 4, 4);
-  if_attens += osmosdr::gain_range_t(0, 8, 8);
-  if_attens += osmosdr::gain_range_t(0, 16, 16);
-  if_attens += osmosdr::gain_range_t(0, 16, 16);
-
-  std::map< int, double > attens;
-
-  /* initialize with min attens */
-  for (unsigned int i = 0; i < if_attens.size(); i++) {
-    attens[ i + 1 ] = if_attens[ i ].start();
-  }
-
-  double atten = rel_atten;
-
-  for (int i = if_attens.size() - 1; i >= 0; i--) {
-    osmosdr::gain_range_t range = if_attens[ i ];
-
-    if ( atten - range.stop() >= 0 ) {
-      atten -= range.stop();
-      attens[ i + 1 ] = range.stop();
-    }
-  }
-#if 0
-  std::cerr << rel_atten << " => "; double sum = 0;
-  for (unsigned int i = 0; i < attens.size(); i++) {
-    sum += attens[ i + 1 ];
-    std::cerr << attens[ i + 1 ] << " ";
-  }
-  std::cerr << " = " << sum << std::endl;
-#endif
   if (_dev) {
-    int value = 0;
-    for (unsigned int stage = 1; stage <= attens.size(); stage++) {
-      if ( attens[ stage ] != 0 )
-        value |= 1 << (stage - 1);
-    }
-#if 0
-    std::cerr << "vga gain: " << gain
-              << " clip_gain: " << clip_gain
-              << " rel_atten: " << rel_atten
-              << " value: " << value
-              << std::endl;
-#endif
-    uint16_t val;
-    hackrf_max2837_read( _dev, 29, &val );
+    double clip_gain = if_gains.clip( gain, true );
 
-    val = (val & 0xf) | ((value & 0x3f) << 4);
-
-    if ( hackrf_max2837_write( _dev, 29, val ) == HACKRF_SUCCESS )
-      _vga_gain = clip_gain;
+    if ( hackrf_set_txvga_gain( _dev, uint32_t(clip_gain) ) == HACKRF_SUCCESS )
+    _vga_gain = clip_gain;
   }
 
   return _vga_gain;
 }
 
-double hackrf_sink_c::set_bb_gain(double gain, size_t chan)
+double hackrf_sink_c::set_bb_gain( double gain, size_t chan )
 {
   return 0;
 }
