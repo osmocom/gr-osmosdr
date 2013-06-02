@@ -173,6 +173,11 @@ hackrf_source_c::hackrf_source_c (const std::string &args)
   }
 
 //  _thread = gruel::thread(_hackrf_wait, this);
+
+  ret = hackrf_start_rx( _dev, _hackrf_rx_callback, (void *)this );
+  if (ret != HACKRF_SUCCESS) {
+    std::cerr << "Failed to start RX streaming (" << ret << ")" << std::endl;
+  }
 }
 
 /*
@@ -182,6 +187,10 @@ hackrf_source_c::~hackrf_source_c ()
 {
   if (_dev) {
 //    _thread.join();
+    int ret = hackrf_stop_rx( _dev );
+    if (ret != HACKRF_SUCCESS) {
+      std::cerr << "Failed to stop RX streaming (" << ret << ")" << std::endl;
+    }
     hackrf_close( _dev );
     _dev = NULL;
 
@@ -246,13 +255,13 @@ bool hackrf_source_c::start()
 {
   if ( ! _dev )
     return false;
-
+#if 0
   int ret = hackrf_start_rx( _dev, _hackrf_rx_callback, (void *)this );
   if (ret != HACKRF_SUCCESS) {
     std::cerr << "Failed to start RX streaming (" << ret << ")" << std::endl;
     return false;
   }
-
+#endif
   return true;
 }
 
@@ -260,13 +269,13 @@ bool hackrf_source_c::stop()
 {
   if ( ! _dev )
     return false;
-
+#if 0
   int ret = hackrf_stop_rx( _dev );
   if (ret != HACKRF_SUCCESS) {
     std::cerr << "Failed to stop RX streaming (" << ret << ")" << std::endl;
     return false;
   }
-
+#endif
   return true;
 }
 
