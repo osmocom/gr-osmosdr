@@ -215,6 +215,11 @@ hackrf_sink_c::hackrf_sink_c (const std::string &args)
   cb_init( &_cbuf, _buf_num, BUF_LEN );
 
 //  _thread = gr::thread::thread(_hackrf_wait, this);
+
+  ret = hackrf_start_tx( _dev, _hackrf_tx_callback, (void *)this );
+  if (ret != HACKRF_SUCCESS) {
+    std::cerr << "Failed to start TX streaming (" << ret << ")" << std::endl;
+  }
 }
 
 /*
@@ -224,6 +229,10 @@ hackrf_sink_c::~hackrf_sink_c ()
 {
   if (_dev) {
 //    _thread.join();
+    int ret = hackrf_stop_tx( _dev );
+    if (ret != HACKRF_SUCCESS) {
+      std::cerr << "Failed to stop TX streaming (" << ret << ")" << std::endl;
+    }
     hackrf_close( _dev );
     _dev = NULL;
 
@@ -287,13 +296,13 @@ bool hackrf_sink_c::start()
     return false;
 
   _buf_used = 0;
-
+#if 0
   int ret = hackrf_start_tx( _dev, _hackrf_tx_callback, (void *)this );
   if (ret != HACKRF_SUCCESS) {
     std::cerr << "Failed to start TX streaming (" << ret << ")" << std::endl;
     return false;
   }
-
+#endif
   return true;
 }
 
@@ -301,13 +310,13 @@ bool hackrf_sink_c::stop()
 {
   if ( ! _dev )
     return false;
-
+#if 0
   int ret = hackrf_stop_tx( _dev );
   if (ret != HACKRF_SUCCESS) {
     std::cerr << "Failed to stop TX streaming (" << ret << ")" << std::endl;
     return false;
   }
-
+#endif
   return true;
 }
 
