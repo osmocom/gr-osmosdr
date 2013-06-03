@@ -204,7 +204,7 @@ hackrf_sink_c::hackrf_sink_c (const std::string &args)
               << std::endl;
   }
 
-  set_sample_rate( 5000000 );
+  set_sample_rate( get_sample_rates().start() );
 
   set_gain( 0 ); /* disable AMP gain stage by default */
 
@@ -472,7 +472,7 @@ osmosdr::meta_range_t hackrf_sink_c::get_sample_rates()
 {
   osmosdr::meta_range_t range;
 
-  range += osmosdr::range_t( 5e6 ); /* out of spec but appears to work */
+  range += osmosdr::range_t( 8e6 );
   range += osmosdr::range_t( 10e6 );
   range += osmosdr::range_t( 12.5e6 );
   range += osmosdr::range_t( 16e6 );
