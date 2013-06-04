@@ -1,4 +1,5 @@
-While primarily being developed for the OsmoSDR hardware, this block as well supports:
+While primarily being developed for the OsmoSDR hardware, this block
+as well supports:
 
  * FunCube Dongle through libgnuradio-fcd
  * OSMOCOM OsmoSDR Devices through libosmosdr
@@ -9,17 +10,23 @@ While primarily being developed for the OsmoSDR hardware, this block as well sup
  * MSi2500 based DVB-T dongles through libmirisdr
  * gnuradio .cfile input through libgnuradio-blocks
 
-By using the OsmoSDR block you can take advantage of a common software api in your application(s) independent of the underlying radio hardware.
+By using the OsmoSDR block you can take advantage of a common software api in
+your application(s) independent of the underlying radio hardware.
 
-For installation and usage guidelines please read the documentation available at http://sdr.osmocom.org/trac/wiki/GrOsmoSDR
+For installation and usage guidelines please read the documentation available
+at http://sdr.osmocom.org/trac/wiki/GrOsmoSDR
 
 For the impatient :) a short excerpt:
 
-The gnuradio source requires a recent gnuradio (>= v3.6.4.1) to be installed.
+The Gnu Radio block requires a recent gnuradio (>= v3.7) to be installed.
 
-Before building the source you have to make sure that all the dependencies (see list of supported devices above) you are intend to work with are properly installed. The build system of gr-osmosdr will recognize them and enable specific source/sink components thereafter.
+Before building the block you have to make sure that all the dependencies
+(see list of supported devices above) you are intend to work with are
+properly installed. The build system of gr-osmosdr will recognize them and
+enable specific source/sink components thereafter.
 
-Please note: prior pulling a new version from git and compiling it, please do a "make uninstall" first to properly remove the previous version.
+Please note: prior pulling a new version from git and compiling it,
+please do a "make uninstall" first to properly remove the previous version.
 
 Building with cmake:
 
@@ -32,4 +39,5 @@ make
 sudo make install
 sudo ldconfig
 
-NOTE: The OSMOCOM source block will appear under 'Sources' category in GRC menu.
+NOTE: The OSMOCOM block will appear under 'Sources' and 'Sinks' categories
+in GRC menu.
