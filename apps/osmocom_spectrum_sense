@@ -149,6 +149,12 @@ class my_top_block(gr.top_block):
         # build graph
         self.u = osmosdr.source_c(options.args)
 
+        try:
+            self.u.get_sample_rates().start()
+        except RuntimeError:
+            print "Source has no sample rates (wrong device arguments?)."
+            sys.exit(1)
+
         # Set the antenna
         if(options.antenna):
             self.u.set_antenna(options.antenna, 0)

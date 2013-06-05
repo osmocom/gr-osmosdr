@@ -159,6 +159,12 @@ class top_block(gr.top_block, pubsub):
     def _setup_osmosdr(self, options):
         self._sink = osmosdr.sink_c(options.args)
 
+        try:
+            self._sink.get_sample_rates().start()
+        except RuntimeError:
+            print "Sink has no sample rates (wrong device arguments?)."
+            sys.exit(1)
+
         if options.samp_rate is None:
             options.samp_rate = self._sink.get_sample_rates().start()
 
