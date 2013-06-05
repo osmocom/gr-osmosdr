@@ -204,7 +204,8 @@ hackrf_sink_c::hackrf_sink_c (const std::string &args)
               << std::endl;
   }
 
-  set_sample_rate( get_sample_rates().start() );
+//  set_sample_rate( get_sample_rates().start() );
+  set_sample_rate( 10e6 );
 
   set_gain( 0 ); /* disable AMP gain stage by default */
 
