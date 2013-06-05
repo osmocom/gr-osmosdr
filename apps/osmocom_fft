@@ -97,6 +97,12 @@ class app_top_block(stdgui2.std_top_block, pubsub):
 
         self.src = osmosdr.source(options.args)
 
+        try:
+            self.src.get_sample_rates().start()
+        except RuntimeError:
+            print "Source has no sample rates (wrong device arguments?)."
+            sys.exit(1)
+
         # Set the antenna
         if(options.antenna):
             self.src.set_antenna(options.antenna)
