@@ -474,6 +474,10 @@ osmosdr::meta_range_t hackrf_sink_c::get_sample_rates()
 {
   osmosdr::meta_range_t range;
 
+  /* we only add integer rates here because of better phase noise performance.
+   * the user is allowed to request arbitrary (fractional) rates within these
+   * boundaries. */
+
   range += osmosdr::range_t( 8e6 );
   range += osmosdr::range_t( 10e6 );
   range += osmosdr::range_t( 12.5e6 );
@@ -488,12 +492,13 @@ double hackrf_sink_c::set_sample_rate( double rate )
   int ret;
 
   if (_dev) {
-    ret = hackrf_sample_rate_set( _dev, uint32_t(rate) );
+    //ret = hackrf_sample_rate_set( _dev, uint32_t(rate) );
+    ret = hackrf_set_fracrate( _dev, float(rate/1e6) );
     if ( HACKRF_SUCCESS == ret ) {
       _sample_rate = rate;
       set_bandwidth( rate );
     } else {
-      HACKRF_THROW_ON_ERROR( ret, HACKRF_FUNC_STR( "hackrf_sample_rate_set", rate ) )
+      HACKRF_THROW_ON_ERROR( ret, HACKRF_FUNC_STR( "hackrf_set_fracrate", rate ) )
     }
   }
 
