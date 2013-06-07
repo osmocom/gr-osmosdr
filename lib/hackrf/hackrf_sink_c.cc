@@ -55,6 +55,14 @@ using namespace boost::assign;
 
 #define BYTES_PER_SAMPLE  2 /* HackRF device consumes 8 bit unsigned IQ data */
 
+#define HACKRF_THROW_ON_ERROR(ret, msg) \
+  if ( ret != HACKRF_SUCCESS )  \
+  throw std::runtime_error( boost::str( boost::format(msg " (%d) %s") \
+      % ret % hackrf_error_name((enum hackrf_error)ret) ) );
+
+#define HACKRF_FUNC_STR(func, arg) \
+  boost::str(boost::format(func "(%d)") % arg) + " has failed"
+
 static inline bool cb_init(circular_buffer_t *cb, size_t capacity, size_t sz)
 {
   cb->buffer = malloc(capacity * sz);
@@ -176,24 +184,20 @@ hackrf_sink_c::hackrf_sink_c (const std::string &args)
 
   _dev = NULL;
   ret = hackrf_open( &_dev );
-  if (ret != HACKRF_SUCCESS)
-    throw std::runtime_error("Failed to open HackRF device.");
+  HACKRF_THROW_ON_ERROR(ret, "Failed to open HackRF device")
 
   uint8_t board_id;
   ret = hackrf_board_id_read( _dev, &board_id );
-  if (ret != HACKRF_SUCCESS)
-    throw std::runtime_error("Failed to get board id.");
+  HACKRF_THROW_ON_ERROR(ret, "Failed to get HackRF board id")
 
   char version[40];
   memset(version, 0, sizeof(version));
   ret = hackrf_version_string_read( _dev, version, sizeof(version));
-  if (ret != HACKRF_SUCCESS)
-    throw std::runtime_error("Failed to read version string.");
+  HACKRF_THROW_ON_ERROR(ret, "Failed to read version string")
 #if 0
   read_partid_serialno_t serial_number;
   ret = hackrf_board_partid_serialno_read( _dev, &serial_number );
-  if (ret != HACKRF_SUCCESS)
-    throw std::runtime_error("Failed to read serial number.");
+  HACKRF_THROW_ON_ERROR(ret, "Failed to read serial number")
 #endif
   std::cerr << "Using " << hackrf_board_id_name(hackrf_board_id(board_id)) << " "
             << "with firmware " << version << " "
@@ -218,9 +222,7 @@ hackrf_sink_c::hackrf_sink_c (const std::string &args)
 //  _thread = gr::thread::thread(_hackrf_wait, this);
 
   ret = hackrf_start_tx( _dev, _hackrf_tx_callback, (void *)this );
-  if (ret != HACKRF_SUCCESS) {
-    std::cerr << "Failed to start TX streaming (" << ret << ")" << std::endl;
-  }
+  HACKRF_THROW_ON_ERROR(ret, "Failed to start TX streaming")
 }
 
 /*
@@ -231,10 +233,9 @@ hackrf_sink_c::~hackrf_sink_c ()
   if (_dev) {
 //    _thread.join();
     int ret = hackrf_stop_tx( _dev );
-    if (ret != HACKRF_SUCCESS) {
-      std::cerr << "Failed to stop TX streaming (" << ret << ")" << std::endl;
-    }
-    hackrf_close( _dev );
+    HACKRF_THROW_ON_ERROR(ret, "Failed to stop TX streaming")
+    ret = hackrf_close( _dev );
+    HACKRF_THROW_ON_ERROR(ret, "Failed to close HackRF")
     _dev = NULL;
 
     {
@@ -299,7 +300,7 @@ bool hackrf_sink_c::start()
   _buf_used = 0;
 #if 0
   int ret = hackrf_start_tx( _dev, _hackrf_tx_callback, (void *)this );
-  if (ret != HACKRF_SUCCESS) {
+  if ( ret != HACKRF_SUCCESS ) {
     std::cerr << "Failed to start TX streaming (" << ret << ")" << std::endl;
     return false;
   }
@@ -313,7 +314,7 @@ bool hackrf_sink_c::stop()
     return false;
 #if 0
   int ret = hackrf_stop_tx( _dev );
-  if (ret != HACKRF_SUCCESS) {
+  if ( ret != HACKRF_SUCCESS ) {
     std::cerr << "Failed to stop TX streaming (" << ret << ")" << std::endl;
     return false;
   }
@@ -492,7 +493,7 @@ double hackrf_sink_c::set_sample_rate( double rate )
       _sample_rate = rate;
       set_bandwidth( rate );
     } else {
-      throw std::runtime_error( std::string( __FUNCTION__ ) + " has failed" );
+      HACKRF_THROW_ON_ERROR( ret, HACKRF_FUNC_STR( "hackrf_sample_rate_set", rate ) )
     }
   }
 
@@ -525,7 +526,7 @@ double hackrf_sink_c::set_center_freq( double freq, size_t chan )
     if ( HACKRF_SUCCESS == ret ) {
       _center_freq = freq;
     } else {
-      throw std::runtime_error( std::string( __FUNCTION__ ) + " has failed" );
+      HACKRF_THROW_ON_ERROR( ret, HACKRF_FUNC_STR( "hackrf_set_freq", corr_freq ) )
     }
   }
 
@@ -593,14 +594,19 @@ bool hackrf_sink_c::get_gain_mode( size_t chan )
 
 double hackrf_sink_c::set_gain( double gain, size_t chan )
 {
+  int ret;
   osmosdr::gain_range_t rf_gains = get_gain_range( "RF", chan );
 
   if (_dev) {
     double clip_gain = rf_gains.clip( gain, true );
     uint8_t value = clip_gain == 14.0f ? 1 : 0;
 
-    if ( hackrf_set_amp_enable( _dev, value ) == HACKRF_SUCCESS )
+    ret = hackrf_set_amp_enable( _dev, value );
+    if ( HACKRF_SUCCESS == ret ) {
       _amp_gain = clip_gain;
+    } else {
+      HACKRF_THROW_ON_ERROR( ret, HACKRF_FUNC_STR( "hackrf_set_amp_enable", value ) )
+    }
   }
 
   return _amp_gain;
@@ -639,13 +645,18 @@ double hackrf_sink_c::get_gain( const std::string & name, size_t chan )
 
 double hackrf_sink_c::set_if_gain( double gain, size_t chan )
 {
+  int ret;
   osmosdr::gain_range_t if_gains = get_gain_range( "IF", chan );
 
   if (_dev) {
     double clip_gain = if_gains.clip( gain, true );
 
-    if ( hackrf_set_txvga_gain( _dev, uint32_t(clip_gain) ) == HACKRF_SUCCESS )
-    _vga_gain = clip_gain;
+    ret = hackrf_set_txvga_gain( _dev, uint32_t(clip_gain) );
+    if ( HACKRF_SUCCESS == ret ) {
+      _vga_gain = clip_gain;
+    } else {
+      HACKRF_THROW_ON_ERROR( ret, HACKRF_FUNC_STR( "hackrf_set_txvga_gain", clip_gain ) )
+    }
   }
 
   return _vga_gain;
@@ -690,7 +701,7 @@ double hackrf_sink_c::set_bandwidth( double bandwidth, size_t chan )
     if ( HACKRF_SUCCESS == ret ) {
       _bandwidth = bw;
     } else {
-      throw std::runtime_error( std::string( __FUNCTION__ ) + " has failed" );
+      HACKRF_THROW_ON_ERROR( ret, HACKRF_FUNC_STR( "hackrf_baseband_filter_bandwidth_set", bw ) )
     }
   }
 
