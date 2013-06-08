@@ -262,3 +262,25 @@ std::string uhd_sink_c::get_antenna( size_t chan )
 {
   return _snk->get_antenna(chan);
 }
+
+double uhd_sink_c::set_bandwidth( double bandwidth, size_t chan )
+{
+  _snk->set_bandwidth(bandwidth, chan);
+
+  return _snk->get_bandwidth(chan);
+}
+
+double uhd_sink_c::get_bandwidth( size_t chan )
+{
+  return _snk->get_bandwidth(chan);
+}
+
+osmosdr::freq_range_t uhd_sink_c::get_bandwidth_range( size_t chan )
+{
+  osmosdr::freq_range_t bandwidths;
+
+  BOOST_FOREACH( uhd::range_t bw, _snk->get_bandwidth_range(chan) )
+      bandwidths += osmosdr::range_t( bw.start(), bw.stop(), bw.step() );
+
+  return bandwidths;
+}
