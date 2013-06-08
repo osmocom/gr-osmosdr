@@ -252,11 +252,12 @@ double osmosdr_sink_c_impl::set_center_freq( double freq, size_t chan )
   size_t channel = 0;
   BOOST_FOREACH( osmosdr_snk_iface *dev, _devs )
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
-      if ( chan == channel++ )
+      if ( chan == channel++ ) {
         if ( _center_freq[ chan ] != freq ) {
           _center_freq[ chan ] = freq;
           return dev->set_center_freq( freq, dev_chan );
-        }
+        } else { return _center_freq[ chan ]; }
+      }
 
   return 0;
 }
@@ -277,11 +278,12 @@ double osmosdr_sink_c_impl::set_freq_corr( double ppm, size_t chan )
   size_t channel = 0;
   BOOST_FOREACH( osmosdr_snk_iface *dev, _devs )
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
-      if ( chan == channel++ )
+      if ( chan == channel++ ) {
         if ( _freq_corr[ chan ] != ppm ) {
           _freq_corr[ chan ] = ppm;
           return dev->set_freq_corr( ppm, dev_chan );
-        }
+        } else { return _freq_corr[ chan ]; }
+      }
 
   return 0;
 }
@@ -335,14 +337,15 @@ bool osmosdr_sink_c_impl::set_gain_mode( bool automatic, size_t chan )
   size_t channel = 0;
   BOOST_FOREACH( osmosdr_snk_iface *dev, _devs )
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
-      if ( chan == channel++ )
+      if ( chan == channel++ ) {
         if ( _gain_mode[ chan ] != automatic ) {
           _gain_mode[ chan ] = automatic;
           bool mode = dev->set_gain_mode( automatic, dev_chan );
           if (!automatic) // reapply gain value when switched to manual mode
             dev->set_gain( _gain[ chan ], dev_chan );
           return mode;
-        }
+        } else { return _gain_mode[ chan ]; }
+      }
 
   return false;
 }
@@ -363,11 +366,12 @@ double osmosdr_sink_c_impl::set_gain( double gain, size_t chan )
   size_t channel = 0;
   BOOST_FOREACH( osmosdr_snk_iface *dev, _devs )
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
-      if ( chan == channel++ )
+      if ( chan == channel++ ) {
         if ( _gain[ chan ] != gain ) {
           _gain[ chan ] = gain;
           return dev->set_gain( gain, dev_chan );
-        }
+        } else { return _gain[ chan ]; }
+      }
 
   return 0;
 }
@@ -410,11 +414,12 @@ double osmosdr_sink_c_impl::set_if_gain( double gain, size_t chan )
   size_t channel = 0;
   BOOST_FOREACH( osmosdr_snk_iface *dev, _devs )
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
-      if ( chan == channel++ )
+      if ( chan == channel++ ) {
         if ( _if_gain[ chan ] != gain ) {
           _if_gain[ chan ] = gain;
           return dev->set_if_gain( gain, dev_chan );
-        }
+        } else { return _if_gain[ chan ]; }
+      }
 
   return 0;
 }
@@ -424,11 +429,12 @@ double osmosdr_sink_c_impl::set_bb_gain( double gain, size_t chan )
   size_t channel = 0;
   BOOST_FOREACH( osmosdr_snk_iface *dev, _devs )
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
-      if ( chan == channel++ )
+      if ( chan == channel++ ) {
         if ( _bb_gain[ chan ] != gain ) {
           _bb_gain[ chan ] = gain;
           return dev->set_bb_gain( gain, dev_chan );
-        }
+        } else { return _bb_gain[ chan ]; }
+      }
 
   return 0;
 }
@@ -449,11 +455,12 @@ std::string osmosdr_sink_c_impl::set_antenna( const std::string & antenna, size_
   size_t channel = 0;
   BOOST_FOREACH( osmosdr_snk_iface *dev, _devs )
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
-      if ( chan == channel++ )
+      if ( chan == channel++ ) {
         if ( _antenna[ chan ] != antenna ) {
           _antenna[ chan ] = antenna;
           return dev->set_antenna( antenna, dev_chan );
-        }
+        } else { return _antenna[ chan ]; }
+      }
 
   return "";
 }
@@ -484,11 +491,12 @@ double osmosdr_sink_c_impl::set_bandwidth( double bandwidth, size_t chan )
   size_t channel = 0;
   BOOST_FOREACH( osmosdr_snk_iface *dev, _devs )
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
-      if ( chan == channel++ )
+      if ( chan == channel++ ) {
         if ( _bandwidth[ chan ] != bandwidth ) {
           _bandwidth[ chan ] = bandwidth;
           return dev->set_bandwidth( bandwidth, dev_chan );
-        }
+        } else { return _bandwidth[ chan ]; }
+      }
 
   return 0;
 }
