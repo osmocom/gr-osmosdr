@@ -232,9 +232,12 @@ class top_block(gr.top_block, pubsub):
             print "Set " + name + " gain to:", gain
 
     def set_bandwidth(self, bw):
-        bw = self._sink.set_bandwidth(bw)
-        if self._verbose:
-            print "Set bandwidth to:", bw
+        clipped_bw = self[BWIDTH_RANGE_KEY].clip(bw)
+        if self._sink.get_bandwidth() != clipped_bw:
+            bw = self._sink.set_bandwidth(clipped_bw)
+
+            if self._verbose:
+                print "Set bandwidth to:", bw
 
     def set_freq(self, freq):
         if freq is None:
