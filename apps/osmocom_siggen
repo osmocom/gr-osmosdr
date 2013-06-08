@@ -276,8 +276,7 @@ class app_gui(pubsub):
 
             bw_range = self.tb[osmocom_siggen.BWIDTH_RANGE_KEY]
             #print bw_range.to_pp_string()
-            #if bw_range.start() < bw_range.stop():
-            if 0:
+            if bw_range.start() < bw_range.stop():
                 bwidth_vbox = forms.static_box_sizer(parent=self.panel,
                                                      label="Bandwidth",
                                                      orient=wx.VERTICAL,

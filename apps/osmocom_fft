@@ -124,8 +124,6 @@ class app_top_block(stdgui2.std_top_block, pubsub):
 
         self.src.set_gain(options.gain)
 
-        #print self.src.get_sample_rates().to_pp_string()
-
         self.publish(SAMP_RANGE_KEY, self.src.get_sample_rates)
         self.publish(FREQ_RANGE_KEY, self.src.get_freq_range)
 
@@ -156,17 +154,22 @@ class app_top_block(stdgui2.std_top_block, pubsub):
         self.subscribe(FREQ_CORR_KEY, self.set_freq_corr)
 
         #force update on pubsub keys
-        for key in (SAMP_RATE_KEY, BWIDTH_KEY, CENTER_FREQ_KEY, FREQ_CORR_KEY):
-            print key, "=", self[key]
+        #for key in (SAMP_RATE_KEY, BWIDTH_KEY, CENTER_FREQ_KEY, FREQ_CORR_KEY):
+            #print key, "=", self[key]
             #self[key] = self[key]
 
         if options.waterfall:
-            self.scope = \
-              waterfallsink2.waterfallsrc_c (panel, fft_size=options.fft_size,
-                                               sample_rate=input_rate)
+            self.scope = waterfallsink2.waterfall_sink_c (panel,
+                                                          fft_size=options.fft_size,
+                                                          sample_rate=input_rate,
+                                                          ref_scale=options.ref_scale,
+                                                          ref_level=20.0,
+                                                          y_divs = 12)
+
+            self.scope.set_callback(self.wxsink_callback)
             self.frame.SetMinSize((800, 420))
         elif options.oscilloscope:
-            self.scope = scopesink2.scopesrc_c(panel, sample_rate=input_rate)
+            self.scope = scopesink2.scope_sink_c(panel, sample_rate=input_rate)
             self.frame.SetMinSize((800, 600))
         else:
             self.scope = fftsink2.fft_sink_c (panel,
@@ -178,20 +181,20 @@ class app_top_block(stdgui2.std_top_block, pubsub):
                                               average=options.averaging,
                                               avg_alpha=options.avg_alpha,
                                               fft_rate=options.fft_rate)
-            def fftsink_callback(x, y):
-                self.set_freq(x)
 
-            self.scope.set_callback(fftsink_callback)
+            self.scope.set_callback(self.wxsink_callback)
             self.frame.SetMinSize((800, 420))
 
         self.connect(self.src, self.scope)
 
         self._build_gui(vbox)
-        self._setup_events()
 
         # set initial values
         if not(self.set_freq(options.center_freq)):
             self._set_status_msg("Failed to set initial frequency")
+
+    def wxsink_callback(self, x, y):
+        self.set_freq_from_callback(x)
 
     def _set_status_msg(self, msg):
         self.frame.GetStatusBar().SetStatusText(msg, 0)
@@ -323,8 +326,7 @@ class app_top_block(stdgui2.std_top_block, pubsub):
 
             bw_range = self[BWIDTH_RANGE_KEY]
             #print bw_range.to_pp_string()
-            #if bw_range.start() < bw_range.stop():
-            if 0:
+            if bw_range.start() < bw_range.stop():
                 bwidth_vbox = forms.static_box_sizer(parent=self.panel,
                                                      label="Bandwidth",
                                                      orient=wx.VERTICAL,
@@ -427,9 +429,16 @@ class app_top_block(stdgui2.std_top_block, pubsub):
             print "Set " + name + " gain to:", gain
 
     def set_bandwidth(self, bw):
-        bw = self.src.set_bandwidth(bw)
-        if self._verbose:
-            print "Set bandwidth to:", bw
+        clipped_bw = self[BWIDTH_RANGE_KEY].clip(bw)
+        if self.src.get_bandwidth() != clipped_bw:
+            bw = self.src.set_bandwidth(clipped_bw)
+
+            if self._verbose:
+                print "Set bandwidth to:", bw
+
+    def set_freq_from_callback(self, freq):
+        freq = self.src.set_center_freq(freq)
+        self[CENTER_FREQ_KEY] = freq;
 
     def set_freq(self, freq):
         if freq is None:
@@ -463,32 +472,6 @@ class app_top_block(stdgui2.std_top_block, pubsub):
         ppm = self.src.set_freq_corr(ppm)
         if self._verbose:
             print "Set frequency correction to:", ppm
-
-    def _setup_events(self):
-        if not self.options.waterfall and not self.options.oscilloscope:
-            self.scope.win.Bind(wx.EVT_LEFT_DCLICK, self.evt_left_dclick)
-
-    def evt_left_dclick(self, event):
-        (ux, uy) = self.scope.win.GetXY(event)
-        if event.CmdDown():
-            # Re-center on maximum power
-            points = self.scope.win._points
-            if self.scope.win.peak_hold:
-                if self.scope.win.peak_vals is not None:
-                    ind = numpy.argmax(self.scope.win.peak_vals)
-                else:
-                    ind = int(points.shape()[0]/2)
-            else:
-                ind = numpy.argmax(points[:,1])
-
-            (freq, pwr) = points[ind]
-            target_freq = freq/self.scope.win._scale_factor
-            print ind, freq, pwr
-            self.set_freq(target_freq)
-        else:
-            # Re-center on clicked frequency
-            target_freq = ux/self.scope.win._scale_factor
-            self.set_freq(target_freq)
 
 def main ():
     app = stdgui2.stdapp(app_top_block, "OSMOCOM Spectrum Browser", nstatus=1)
