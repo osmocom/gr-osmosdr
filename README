@@ -2,7 +2,7 @@ While primarily being developed for the OsmoSDR hardware, this block
 as well supports:
 
  * FunCube Dongle through libgnuradio-fcd
- * OSMOCOM OsmoSDR Devices through libosmosdr
+ * sysmocom OsmoSDR Devices through libosmosdr
  * Great Scott Gadgets HackRF through libhackrf
  * Ettus USRP Devices through Ettus UHD library
  * RTL2832U based DVB-T dongles through librtlsdr
@@ -39,5 +39,5 @@ make
 sudo make install
 sudo ldconfig
 
-NOTE: The OSMOCOM block will appear under 'Sources' and 'Sinks' categories
+NOTE: The osmocom blocks will appear under 'Sources' and 'Sinks' categories
 in GRC menu.

@@ -347,7 +347,7 @@ def main():
                       gui=app_gui,                      # User interface class
                       options=options,                  # Command line options
                       args=args,                        # Command line args
-                      title="OSMOCOM Signal Generator", # Top window title
+                      title="osmocom Signal Generator", # Top window title
                       nstatus=1,                        # Number of status lines
                       start=True,                       # Whether to start flowgraph
                       realtime=True)                    # Whether to set realtime priority
