@@ -5,7 +5,7 @@ includedir=${prefix}/@GR_INCLUDE_DIR@
 
 Name: @CPACK_PACKAGE_NAME@
 Description: @CPACK_PACKAGE_DESCRIPTION_SUMMARY@
-URL: http://sdr.osmocom.org/trac/
+URL: http://sdr.osmocom.org/trac/wiki/GrOsmoSDR
 Version: @CPACK_PACKAGE_VERSION@
 Requires: gnuradio-runtime gnuradio-blocks
 Requires.private: @GR_OSMOSDR_PC_REQUIRES@
