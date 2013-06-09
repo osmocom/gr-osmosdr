@@ -495,7 +495,7 @@ double hackrf_sink_c::set_sample_rate( double rate )
     ret = hackrf_set_sample_rate( _dev, rate );
     if ( HACKRF_SUCCESS == ret ) {
       _sample_rate = rate;
-      set_bandwidth( rate );
+      set_bandwidth( 0.0 ); /* bandwidth of 0 means automatic filter selection */
     } else {
       HACKRF_THROW_ON_ERROR( ret, HACKRF_FUNC_STR( "hackrf_set_sample_rate", rate ) )
     }
@@ -696,7 +696,7 @@ double hackrf_sink_c::set_bandwidth( double bandwidth, size_t chan )
 //  osmosdr::freq_range_t bandwidths = get_bandwidth_range( chan );
 
   if ( bandwidth == 0.0 ) /* bandwidth of 0 means automatic filter selection */
-    bandwidth = _sample_rate;
+    bandwidth = _sample_rate * 0.75; /* select narrower filters to prevent aliasing */
 
   if ( _dev ) {
     /* compute best default value depending on sample rate (auto filter) */
