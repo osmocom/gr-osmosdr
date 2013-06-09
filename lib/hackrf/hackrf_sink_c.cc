@@ -492,13 +492,12 @@ double hackrf_sink_c::set_sample_rate( double rate )
   int ret;
 
   if (_dev) {
-    //ret = hackrf_sample_rate_set( _dev, uint32_t(rate) );
-    ret = hackrf_set_fracrate( _dev, float(rate/1e6) );
+    ret = hackrf_set_sample_rate( _dev, rate );
     if ( HACKRF_SUCCESS == ret ) {
       _sample_rate = rate;
       set_bandwidth( rate );
     } else {
-      HACKRF_THROW_ON_ERROR( ret, HACKRF_FUNC_STR( "hackrf_set_fracrate", rate ) )
+      HACKRF_THROW_ON_ERROR( ret, HACKRF_FUNC_STR( "hackrf_set_sample_rate", rate ) )
     }
   }
 
@@ -702,11 +701,11 @@ double hackrf_sink_c::set_bandwidth( double bandwidth, size_t chan )
   if ( _dev ) {
     /* compute best default value depending on sample rate (auto filter) */
     uint32_t bw = hackrf_compute_baseband_filter_bw( uint32_t(bandwidth) );
-    ret = hackrf_baseband_filter_bandwidth_set( _dev, bw );
+    ret = hackrf_set_baseband_filter_bandwidth( _dev, bw );
     if ( HACKRF_SUCCESS == ret ) {
       _bandwidth = bw;
     } else {
-      HACKRF_THROW_ON_ERROR( ret, HACKRF_FUNC_STR( "hackrf_baseband_filter_bandwidth_set", bw ) )
+      HACKRF_THROW_ON_ERROR( ret, HACKRF_FUNC_STR( "hackrf_set_baseband_filter_bandwidth", bw ) )
     }
   }
 
