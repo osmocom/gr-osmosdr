@@ -256,7 +256,7 @@ class app_top_block(stdgui2.std_top_block, pubsub):
             parent=self.panel, sizer=corr_hbox,
             label='Freq. Correction (ppm)',
             proportion=1,
-            converter=forms.int_converter(),
+            converter=forms.float_converter(),
             ps=self,
             key=FREQ_CORR_KEY,
         )
@@ -269,8 +269,8 @@ class app_top_block(stdgui2.std_top_block, pubsub):
             key=FREQ_CORR_KEY,
             minimum=-100,
             maximum=+100,
-            num_steps=201,
-            step_size=1,
+            num_steps=2010,
+            step_size=0.1,
         )
         corr_hbox.AddSpacer(3)
 
