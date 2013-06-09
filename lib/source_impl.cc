@@ -612,10 +612,28 @@ std::string source_impl::get_antenna( size_t chan )
   return "";
 }
 
+void source_impl::set_dc_offset_mode( int mode, size_t chan )
+{
+  size_t channel = 0;
+  BOOST_FOREACH( source_iface *dev, _devs )
+    for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
+      if ( chan == channel++ )
+        return dev->set_dc_offset_mode( mode, dev_chan );
+}
+
+void source_impl::set_dc_offset( const std::complex<double> &offset, size_t chan )
+{
+  size_t channel = 0;
+  BOOST_FOREACH( source_iface *dev, _devs )
+    for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
+      if ( chan == channel++ )
+        return dev->set_dc_offset( offset, dev_chan );
+}
+
 void source_impl::set_iq_balance_mode( int mode, size_t chan )
 {
-#ifdef HAVE_IQBALANCE
   size_t channel = 0;
+#ifdef HAVE_IQBALANCE
   BOOST_FOREACH( source_iface *dev, _devs ) {
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++) {
       if ( chan == channel++ ) {
@@ -645,13 +663,18 @@ void source_impl::set_iq_balance_mode( int mode, size_t chan )
       }
     }
   }
+#else
+  BOOST_FOREACH( source_iface *dev, _devs )
+    for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
+      if ( chan == channel++ )
+        return dev->set_iq_balance_mode( mode, dev_chan );
 #endif
 }
 
-void source_impl::set_iq_balance( const std::complex<double> &correction, size_t chan )
+void source_impl::set_iq_balance( const std::complex<double> &balance, size_t chan )
 {
-#ifdef HAVE_IQBALANCE
   size_t channel = 0;
+#ifdef HAVE_IQBALANCE
   BOOST_FOREACH( source_iface *dev, _devs ) {
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++) {
       if ( chan == channel++ ) {
@@ -660,13 +683,18 @@ void source_impl::set_iq_balance( const std::complex<double> &correction, size_t
           gr::iqbalance::fix_cc *fix = _iq_fix[chan];
 
           if ( opt->period() == 0 ) { /* automatic optimization desabled */
-            fix->set_mag( correction.real() );
-            fix->set_phase( correction.imag() );
+            fix->set_mag( balance.real() );
+            fix->set_phase( balance.imag() );
           }
         }
       }
     }
   }
+#else
+  BOOST_FOREACH( source_iface *dev, _devs )
+    for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
+      if ( chan == channel++ )
+        return dev->set_iq_balance( balance, dev_chan );
 #endif
 }
 

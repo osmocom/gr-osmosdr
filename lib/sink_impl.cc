@@ -478,14 +478,22 @@ std::string sink_impl::get_antenna( size_t chan )
   return "";
 }
 
-void sink_impl::set_iq_balance_mode( int mode, size_t chan )
+void sink_impl::set_dc_offset( const std::complex<double> &offset, size_t chan )
 {
-
+  size_t channel = 0;
+  BOOST_FOREACH( sink_iface *dev, _devs )
+    for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
+      if ( chan == channel++ )
+        return dev->set_dc_offset( offset, dev_chan );
 }
 
-void sink_impl::set_iq_balance( const std::complex<double> &correction, size_t chan )
+void sink_impl::set_iq_balance( const std::complex<double> &balance, size_t chan )
 {
-
+  size_t channel = 0;
+  BOOST_FOREACH( sink_iface *dev, _devs )
+    for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
+      if ( chan == channel++ )
+        return dev->set_iq_balance( balance, dev_chan );
 }
 
 double sink_impl::set_bandwidth( double bandwidth, size_t chan )

@@ -214,6 +214,30 @@ public:
   virtual std::string get_antenna( size_t chan = 0 ) = 0;
 
   /*!
+   * Set the RX frontend DC correction mode.
+   * The automatic correction subtracts out the long-run average.
+   *
+   * When disabled, the averaging option operation is reset.
+   * Once in Manual mode, the average value will be held constant until
+   * the user re-enables the automatic correction or overrides the
+   * value by manually setting the offset.
+   *
+   * \param mode dc offset correction mode: 0 = Off, 1 = Manual, 2 = Automatic
+   * \param chan the channel index 0 to N-1
+   */
+  virtual void set_dc_offset_mode( int mode, size_t chan = 0 ) { }
+
+  /*!
+   * Set a constant DC offset value.
+   * The value is complex to control both I and Q.
+   * Only set this when automatic correction is disabled.
+   *
+   * \param offset the dc offset (1.0 is full-scale)
+   * \param chan the channel index 0 to N-1
+   */
+  virtual void set_dc_offset( const std::complex<double> &offset, size_t chan = 0 ) { }
+
+  /*!
    * Set the RX frontend IQ balance mode.
    *
    * \param mode iq balance correction mode: 0 = Off, 1 = Manual, 2 = Automatic
@@ -225,10 +249,10 @@ public:
    * Set the RX frontend IQ balance correction.
    * Use this to adjust the magnitude and phase of I and Q.
    *
-   * \param correction the complex correction value
+   * \param balance the complex correction value
    * \param chan the channel index 0 to N-1
    */
-  virtual void set_iq_balance( const std::complex<double> &correction, size_t chan = 0 ) { }
+  virtual void set_iq_balance( const std::complex<double> &balance, size_t chan = 0 ) { }
 
   /*!
    * Set the bandpass filter on the radio frontend.

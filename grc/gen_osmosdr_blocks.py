@@ -32,8 +32,11 @@ self.\$(id).set_sample_rate(\$sample_rate)
 \#if \$nchan() > $n
 self.\$(id).set_center_freq(\$freq$(n), $n)
 self.\$(id).set_freq_corr(\$corr$(n), $n)
+#if $sourk == 'source':
+self.\$(id).set_dc_offset_mode(\$dc_offset_mode$(n), $n)
 self.\$(id).set_iq_balance_mode(\$iq_balance_mode$(n), $n)
 self.\$(id).set_gain_mode(\$gain_mode$(n), $n)
+#end if
 self.\$(id).set_gain(\$gain$(n), $n)
 self.\$(id).set_if_gain(\$if_gain$(n), $n)
 self.\$(id).set_bb_gain(\$bb_gain$(n), $n)
@@ -46,8 +49,11 @@ self.\$(id).set_bandwidth(\$bw$(n), $n)
   #for $n in range($max_nchan)
   <callback>set_center_freq(\$freq$(n), $n)</callback>
   <callback>set_freq_corr(\$corr$(n), $n)</callback>
+  #if $sourk == 'source':
+  <callback>set_dc_offset_mode(\$dc_offset_mode$(n), $n)</callback>
   <callback>set_iq_balance_mode(\$iq_balance_mode$(n), $n)</callback>
   <callback>set_gain_mode(\$gain_mode$(n), $n)</callback>
+  #end if
   <callback>set_gain(\$gain$(n), $n)</callback>
   <callback>set_if_gain(\$if_gain$(n), $n)</callback>
   <callback>set_bb_gain(\$bb_gain$(n), $n)</callback>
@@ -104,20 +110,24 @@ self.\$(id).set_bandwidth(\$bw$(n), $n)
     <nports>\$nchan</nports>
   </$sourk>
   <doc>
-The osmocom block:
+The osmocom $sourk block:
 
 While primarily being developed for the OsmoSDR hardware, this block as well supports:
 
+#if $sourk == 'source':
  * FunCube Dongle through libgnuradio-fcd
  * sysmocom OsmoSDR Devices through libosmosdr
+#end if
  * Great Scott Gadgets HackRF through libhackrf
  * Ettus USRP Devices through Ettus UHD library
+#if $sourk == 'source':
  * RTL2832U based DVB-T dongles through librtlsdr
  * RTL-TCP spectrum server (see librtlsdr project)
  * MSi2500 based DVB-T dongles through libmirisdr
  * gnuradio .cfile input through libgnuradio-blocks
+#end if
 
-By using the OsmoSDR block you can take advantage of a common software api in your application(s) independent of the underlying radio hardware.
+By using the osmocom $sourk block you can take advantage of a common software api in your application(s) independent of the underlying radio hardware.
 
 Output Type:
 This parameter controls the data type of the stream in gnuradio. Only complex float32 samples are supported at the moment.
@@ -131,7 +141,7 @@ Examples:
 Optional arguments are placed into [] brackets, remove the brackets before using them! Specific variable values are separated with a |, choose one of them. Variable values containing spaces shall be enclosed in '' as demonstrated in examples section below.
 Lines ending with ... mean it's possible to bind devices together by specifying multiple device arguments separated with a space.
 
-Source Mode:
+#if $sourk == 'source':
   fcd=0
   hackrf=0[,buffers=32]
   miri=0[,buffers=32] ...
@@ -143,10 +153,11 @@ Source Mode:
   uhd[,serial=...][,lo_offset=0][,mcr=52e6][,nchan=2][,subdev='\\\\'B:0 A:0\\\\''] ...
   osmosdr=0[,buffers=32][,buflen=N*512] ...
   file='/path/to/your file',rate=1e6[,freq=100e6][,repeat=true][,throttle=true] ...
-
-Sink Mode:
+#end if
+#if $sourk == 'sink':
   hackrf=0[,buffers=32]
   uhd[,serial=...][,lo_offset=0][,mcr=52e6][,nchan=2][,subdev='\\\\'B:0 A:0\\\\''] ...
+#end if
 
 Num Channels:
 Selects the total number of channels in this multi-device configuration. Required when specifying multiple device arguments.
@@ -159,6 +170,15 @@ The center frequency is the frequency the RF chain is tuned to.
 
 Freq. Corr.:
 The frequency correction factor in parts per million (ppm). Set to 0 if unknown.
+
+#if $sourk == 'source':
+DC Offset Mode:
+Controls the behavior of hardware DC offset corrrection.
+  Off: Disable correction algorithm (pass through).
+  Manual: Keep last estimated correction when switched from Automatic to Manual.
+  Automatic: Periodicallly find the best solution to compensate for DC offset.
+
+This functionality is available for USRP devices only.
 
 IQ Balance Mode:
 Controls the behavior of software IQ imbalance corrrection.
@@ -173,16 +193,17 @@ Chooses between the manual (default) and automatic gain mode where appropriate.
 To allow manual control of RF/IF/BB gain stages, manual gain mode must be configured.
 Currently, only RTL-SDR devices support automatic gain mode.
 
+#end if
 RF Gain:
-Overall RF gain of the receiving device.
+Overall RF gain of the device.
 
 IF Gain:
-Overall intermediate frequency gain of the receiving device.
-This setting has only effect for RTL-SDR and OsmoSDR devices with E4000 tuners. Observations lead to a reasonable gain range from 15 to 30dB.
+Overall intermediate frequency gain of the device.
+This setting is available for RTL-SDR and OsmoSDR devices with E4000 tuners and HackRF Jawbreaker in receive and transmit mode. Observations lead to a reasonable gain range from 15 to 30dB.
 
 BB Gain:
-Overall baseband gain of the receiving device.
-This setting has only effect for HackRF Jawbreaker. Observations lead to a reasonable gain range from 15 to 30dB.
+Overall baseband gain of the device.
+This setting is available for HackRF Jawbreaker in receive mode. Observations lead to a reasonable gain range from 15 to 30dB.
 
 Antenna:
 For devices with only one antenna, this may be left blank.
@@ -213,6 +234,26 @@ PARAMS_TMPL = """
     <value>0</value>
     <type>real</type>
     <hide>\#if \$nchan() > $n then 'none' else 'all'#</hide>
+  </param>
+#if $sourk == 'source':
+  <param>
+    <name>Ch$(n): DC Offset Mode</name>
+    <key>dc_offset_mode$(n)</key>
+    <value>0</value>
+    <type>int</type>
+    <hide>\#if \$nchan() > $n then 'none' else 'all'#</hide>
+    <option>
+      <name>Off</name>
+      <key>0</key>
+    </option>
+    <option>
+      <name>Manual</name>
+      <key>1</key>
+    </option>
+    <option>
+      <name>Automatic</name>
+      <key>2</key>
+    </option>
   </param>
   <param>
     <name>Ch$(n): IQ Balance Mode</name>
@@ -248,6 +289,7 @@ PARAMS_TMPL = """
       <key>1</key>
     </option>
   </param>
+#end if
   <param>
     <name>Ch$(n): RF Gain (dB)</name>
     <key>gain$(n)</key>
@@ -330,7 +372,7 @@ if __name__ == '__main__':
       dir = 'in'
     else: raise Exception, 'is %s a source or sink?'%file
 
-    params = ''.join([parse_tmpl(PARAMS_TMPL, n=n) for n in range(max_num_channels)])
+    params = ''.join([parse_tmpl(PARAMS_TMPL, n=n, sourk=sourk) for n in range(max_num_channels)])
     open(file, 'w').write(parse_tmpl(MAIN_TMPL,
       max_nchan=max_num_channels,
       params=params,
