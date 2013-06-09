@@ -67,22 +67,28 @@ class gsm_source_c(gr.hier_block2):
             gr.io_signature(0, 0, 0), # Input signature
             gr.io_signature(1, 1, gr.sizeof_gr_complex)) # Output signature
 
-        self._bits = blocks.vector_source_b(self.gen_gsm_seq(), True)
-
-        self._symb_rate = 270833
+        self._symb_rate = 13e6 / 48;
         self._samples_per_symbol = 2
 
-        bits_per_symbol = 1
-        self._pack = blocks.unpacked_to_packed_bb(bits_per_symbol, gr.GR_MSB_FIRST)
+        self._data  = blocks.vector_source_b(self.gen_gsm_seq(), True, 2)
+        self._split = blocks.vector_to_streams(gr.sizeof_char*1, 2)
 
-        self._mod = digital.gmsk_mod( self._samples_per_symbol, bt=0.35 )
+        self._pack = blocks.unpacked_to_packed_bb(1, gr.GR_MSB_FIRST)
+        self._mod  = digital.gmsk_mod(self._samples_per_symbol, bt=0.35)
 
+        self._pwr_f = blocks.char_to_float(1, 1)
+        self._pwr_c = blocks.float_to_complex(1)
+        self._pwr_w = blocks.repeat(gr.sizeof_gr_complex*1, self._samples_per_symbol)
+
+        self._mul = blocks.multiply_vcc(1)
         self._interpolate = filter.fractional_resampler_cc( 0,
             (self._symb_rate * self._samples_per_symbol) / sample_rate )
-
         self._scale = blocks.multiply_const_cc(amplitude)
 
-        self.connect(self._bits, self._pack, self._mod, self._interpolate, self._scale, self)
+        self.connect(self._data, self._split)
+        self.connect((self._split, 0), self._pack, self._mod, (self._mul, 0))
+        self.connect((self._split, 1), self._pwr_f, self._pwr_c, self._pwr_w, (self._mul, 1))
+        self.connect(self._mul, self._interpolate, self._scale, self)
 
     def set_amplitude(self, amplitude):
         self._scale.set_k(amplitude)
@@ -97,9 +103,11 @@ class gsm_source_c(gr.hier_block2):
             [0,0,1,0,0,1,0,1,1,1,0,0,0,0,1,0,0,0,1,0,0,1,0,1,1,1],
             list(numpy.random.randint(0, 2, 58)),
             [0,0,0],
-            [1] * (l-148)
         ]
-        return map(int, sum(chunks,[]))
+        burst = sum(chunks,[])
+        burst = sum(map(list, zip(burst, (1,) * len(burst))), [])
+        burst += [1,0] * (l-148)
+        return map(int, burst)
 
     def gen_gsm_frame(self):
         return \
