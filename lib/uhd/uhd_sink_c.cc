@@ -263,6 +263,16 @@ std::string uhd_sink_c::get_antenna( size_t chan )
   return _snk->get_antenna(chan);
 }
 
+void uhd_sink_c::set_dc_offset( const std::complex<double> &offset, size_t chan )
+{
+  _snk->set_dc_offset( offset, chan );
+}
+
+void uhd_sink_c::set_iq_balance( const std::complex<double> &balance, size_t chan )
+{
+  _snk->set_iq_balance( balance, chan );
+}
+
 double uhd_sink_c::set_bandwidth( double bandwidth, size_t chan )
 {
   _snk->set_bandwidth(bandwidth, chan);

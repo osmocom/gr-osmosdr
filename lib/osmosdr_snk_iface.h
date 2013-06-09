@@ -218,21 +218,22 @@ public:
   virtual std::string get_antenna( size_t chan = 0 ) = 0;
 
   /*!
-   * Set the TX frontend IQ balance mode.
+   * Set the TX frontend DC offset value.
+   * The value is complex to control both I and Q.
    *
-   * \param mode iq balance correction mode: 0 = Off, 1 = Manual, 2 = Automatic
+   * \param offset the dc offset (1.0 is full-scale)
    * \param chan the channel index 0 to N-1
    */
-  virtual void set_iq_balance_mode( int mode, size_t chan = 0 ) { }
+  virtual void set_dc_offset( const std::complex<double> &offset, size_t chan = 0 ) { }
 
   /*!
    * Set the TX frontend IQ balance correction.
    * Use this to adjust the magnitude and phase of I and Q.
    *
-   * \param correction the complex correction value
+   * \param balance the complex correction value
    * \param chan the channel index 0 to N-1
    */
-  virtual void set_iq_balance( const std::complex<double> &correction, size_t chan = 0 ) { }
+  virtual void set_iq_balance( const std::complex<double> &balance, size_t chan = 0 ) { }
 
   /*!
    * Set the bandpass filter on the radio frontend.
