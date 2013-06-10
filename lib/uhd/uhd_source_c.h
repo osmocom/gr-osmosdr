@@ -82,6 +82,8 @@ public:
   osmosdr::freq_range_t get_bandwidth_range( size_t chan = 0 );
 
 private:
+  double _center_freq;
+  double _freq_corr;
   double _lo_offset;
   boost::shared_ptr<uhd_usrp_source> _src;
 };

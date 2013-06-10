@@ -39,6 +39,8 @@ uhd_sink_c::uhd_sink_c(const std::string &args) :
     gr_hier_block2("uhd_sink_c",
                    args_to_io_signature(args),
                    gr_make_io_signature (0, 0, 0)),
+    _center_freq(0.0f),
+    _freq_corr(0.0f),
     _lo_offset(0.0f)
 {
   size_t nchan = 1;
@@ -172,12 +174,15 @@ osmosdr::freq_range_t uhd_sink_c::get_freq_range( size_t chan )
 
 double uhd_sink_c::set_center_freq( double freq, size_t chan )
 {
-  //_snk->set_center_freq(freq, chan);
+  #define APPLY_PPM_CORR(val, ppm) ((val) * (1.0 + (ppm) * 0.000001))
+
+  double corr_freq = APPLY_PPM_CORR( freq, _freq_corr );
 
   // advanced tuning with tune_request_t
-  uhd::tune_request_t tune_req(freq, _lo_offset);
-
+  uhd::tune_request_t tune_req(corr_freq, _lo_offset);
   _snk->set_center_freq(tune_req, chan);
+
+  _center_freq = freq;
 
   return get_center_freq(chan);
 }
@@ -189,12 +194,16 @@ double uhd_sink_c::get_center_freq( size_t chan )
 
 double uhd_sink_c::set_freq_corr( double ppm, size_t chan )
 {
+  _freq_corr = ppm;
+
+  set_center_freq( _center_freq );
+
   return get_freq_corr(chan);
 }
 
 double uhd_sink_c::get_freq_corr( size_t chan )
 {
-  return 0; // frequency correction is not supported with UHD
+  return _freq_corr;
 }
 
 std::vector<std::string> uhd_sink_c::get_gain_names( size_t chan )
