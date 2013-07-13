@@ -21,10 +21,15 @@
 # This file included, use CMake directory variables
 ########################################################################
 
-include_directories(
-    ${CMAKE_CURRENT_SOURCE_DIR}
-    ${GNURADIO_FCD_INCLUDE_DIRS}
-)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+
+if(ENABLE_FCD)
+include_directories(${GNURADIO_FCD_INCLUDE_DIRS})
+endif(ENABLE_FCD)
+
+if(ENABLE_FCDPP)
+include_directories(${GNURADIO_FCDPP_INCLUDE_DIRS})
+endif(ENABLE_FCDPP)
 
 set(fcd_srcs
     ${CMAKE_CURRENT_SOURCE_DIR}/fcd_source_c.cc
@@ -34,5 +39,11 @@ set(fcd_srcs
 # Append gnuradio-osmosdr library sources
 ########################################################################
 list(APPEND gr_osmosdr_srcs ${fcd_srcs})
-list(APPEND gr_osmosdr_libs ${GNURADIO_FCD_LIBRARIES})
 
+if(ENABLE_FCD)
+list(APPEND gr_osmosdr_libs ${GNURADIO_FCD_LIBRARIES})
+endif(ENABLE_FCD)
+
+if(ENABLE_FCDPP)
+list(APPEND gr_osmosdr_libs ${GNURADIO_FCDPP_LIBRARIES})
+endif(ENABLE_FCDPP)

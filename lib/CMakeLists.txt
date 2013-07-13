@@ -70,10 +70,17 @@ endif(ENABLE_OSMOSDR)
 ########################################################################
 # Setup FCD component
 ########################################################################
-GR_REGISTER_COMPONENT("FunCube Dongle" ENABLE_FCD GNURADIO_FCD_FOUND)
+GR_REGISTER_COMPONENT("FUNcube Dongle" ENABLE_FCD GNURADIO_FCD_FOUND)
+GR_REGISTER_COMPONENT("FUNcube Dongle Pro+" ENABLE_FCDPP GNURADIO_FCDPP_FOUND)
 if(ENABLE_FCD)
-GR_INCLUDE_SUBDIRECTORY(fcd)
+add_definitions(-DHAVE_FCD=1)
 endif(ENABLE_FCD)
+if(ENABLE_FCDPP)
+add_definitions(-DHAVE_FCDPP=1)
+endif(ENABLE_FCDPP)
+if(ENABLE_FCD OR ENABLE_FCDPP)
+GR_INCLUDE_SUBDIRECTORY(fcd)
+endif(ENABLE_FCD OR ENABLE_FCDPP)
 
 ########################################################################
 # Setup File component

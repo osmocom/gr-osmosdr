@@ -1,6 +1,6 @@
 /* -*- c++ -*- */
 /*
- * Copyright 2012 Dimitri Stolnikov <horiz0n@gmx.net>
+ * Copyright 2013 Dimitri Stolnikov <horiz0n@gmx.net>
  *
  * GNU Radio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,13 @@
 
 #include <gnuradio/hier_block2.h>
 
+#ifdef HAVE_FCD
 #include <gnuradio/fcd/source_c.h>
+#endif
+
+#ifdef HAVE_FCDPP
+#include <fcdproplus/fcdproplus.h>
+#endif
 
 #include "source_iface.h"
 
@@ -43,6 +49,12 @@ private:
 
 public:
   ~fcd_source_c();
+
+  enum dongle_type {
+    FUNCUBE_UNKNOWN,
+    FUNCUBE_V1,
+    FUNCUBE_V2
+  };
 
   static std::vector< std::string > get_devices();
 
@@ -73,9 +85,15 @@ public:
   std::string get_antenna( size_t chan = 0 );
 
 private:
-  gr::fcd::source_c::sptr _src;
-  double _gain, _freq;
-  int32_t _correct;
+  dongle_type _type;
+#ifdef HAVE_FCD
+  gr::fcd::source_c::sptr _src_v1;
+#endif
+#ifdef HAVE_FCDPP
+  gr::fcdproplus::fcdproplus::sptr _src_v2;
+#endif
+  double _lna_gain, _mix_gain, _bb_gain, _freq;
+  int _correct;
 };
 
 #endif // FCD_SOURCE_C_H
