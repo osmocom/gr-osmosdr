@@ -115,7 +115,8 @@ The osmocom $sourk block:
 While primarily being developed for the OsmoSDR hardware, this block as well supports:
 
 #if $sourk == 'source':
- * FunCube Dongle through libgnuradio-fcd
+ * FUNcube Dongle through libgnuradio-fcd
+ * FUNcube Dongle Pro+ through gr-fcdproplus
  * sysmocom OsmoSDR Devices through libosmosdr
 #end if
  * Great Scott Gadgets HackRF through libhackrf
@@ -142,7 +143,7 @@ Optional arguments are placed into [] brackets, remove the brackets before using
 Lines ending with ... mean it's possible to bind devices together by specifying multiple device arguments separated with a space.
 
 #if $sourk == 'source':
-  fcd=0
+  fcd=0[,device=hw:2][,type=2]
   hackrf=0[,buffers=32]
   miri=0[,buffers=32] ...
   rtl=serial_number ...

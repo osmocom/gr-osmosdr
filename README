@@ -1,6 +1,7 @@
 While primarily being developed for the OsmoSDR hardware, this block as well supports:
 
- * FunCube Dongle through libgnuradio-fcd
+ * FUNcube Dongle through libgnuradio-fcd
+ * FUNcube Dongle Pro+ through gr-fcdproplus
  * sysmocom OsmoSDR Devices through libosmosdr
  * Great Scott Gadgets HackRF through libhackrf
  * Ettus USRP Devices through Ettus UHD library
