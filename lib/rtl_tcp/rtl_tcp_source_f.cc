@@ -130,7 +130,7 @@ rtl_tcp_source_f::rtl_tcp_source_f(size_t itemsize,
   d_temp_buff = new unsigned char[d_payload_size];   // allow it to hold up to payload_size bytes
   d_LUT= new float[0xff+1];
   for(int i=0; i <=(0xff);++i){
-    d_LUT[i] = (((float)(i&0xff))-127.5f)*(1.0f/128.0f);
+    d_LUT[i] = (((float)(i&0xff))-127.4f)*(1.0f/128.0f);
   }
   // create socket
   d_socket = socket(ip_src->ai_family, ip_src->ai_socktype,
