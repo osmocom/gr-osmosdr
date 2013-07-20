@@ -65,6 +65,10 @@
 #include <hackrf_source_c.h>
 #endif
 
+#ifdef ENABLE_BLADERF
+#include <bladerf_source_c.h>
+#endif
+
 #include <osmosdr_arg_helpers.h>
 
 /* This avoids throws in ctor of gr_hier_block2, as gnuradio is unable to deal
@@ -120,10 +124,13 @@ osmosdr_source_c_impl::osmosdr_source_c_impl (const std::string &args)
 #ifdef ENABLE_HACKRF
   dev_types.push_back("hackrf");
 #endif
-
+#ifdef ENABLE_BLADERF
+  dev_types.push_back("bladerf");
+#endif
   std::cerr << "gr-osmosdr "
-            << GR_OSMOSDR_VERSION " (" GR_OSMOSDR_LIBVER ") "
+            << GR_OSMOSDR_VERSION << " (" << GR_OSMOSDR_LIBVER << ") "
             << "gnuradio " << gr_version() << std::endl;
+
   std::cerr << "built-in source types: ";
   BOOST_FOREACH(std::string dev_type, dev_types)
     std::cerr << dev_type << " ";
@@ -162,10 +169,15 @@ osmosdr_source_c_impl::osmosdr_source_c_impl (const std::string &args)
   BOOST_FOREACH( std::string dev, miri_source_c::get_devices() )
     dev_list.push_back( dev );
 #endif
+#ifdef ENABLE_BLADERF
+  BOOST_FOREACH( std::string dev, bladerf_source_c::get_devices() )
+    dev_list.push_back( dev );
+#endif
 #ifdef ENABLE_HACKRF
   BOOST_FOREACH( std::string dev, hackrf_source_c::get_devices() )
     dev_list.push_back( dev );
 #endif
+
 //  std::cerr << std::endl;
 //  BOOST_FOREACH( std::string dev, dev_list )
 //    std::cerr << "'" << dev << "'" << std::endl;
@@ -240,6 +252,13 @@ osmosdr_source_c_impl::osmosdr_source_c_impl (const std::string &args)
 #ifdef ENABLE_HACKRF
     if ( dict.count("hackrf") ) {
       hackrf_source_c_sptr src = make_hackrf_source_c( arg );
+      block = src; iface = src.get();
+    }
+#endif
+
+#ifdef ENABLE_BLADERF
+    if ( dict.count("bladerf") ) {
+      bladerf_source_c_sptr src = make_bladerf_source_c( arg );
       block = src; iface = src.get();
     }
 #endif

@@ -3,6 +3,7 @@ While primarily being developed for the OsmoSDR hardware, this block as well sup
  * FUNcube Dongle through libgnuradio-fcd
  * FUNcube Dongle Pro+ through gr-fcdproplus
  * sysmocom OsmoSDR Devices through libosmosdr
+ * Nuand LLC bladeRF through libbladeRF library
  * Great Scott Gadgets HackRF through libhackrf
  * Ettus USRP Devices through Ettus UHD library
  * RTL2832U based DVB-T dongles through librtlsdr

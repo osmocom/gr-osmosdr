@@ -154,6 +154,7 @@ find_package(LibOsmoSDR)
 find_package(LibRTLSDR)
 find_package(LibMiriSDR)
 find_package(LibHackRF)
+find_package(LibbladeRF)
 find_package(Doxygen)
 
 if(NOT GRUEL_FOUND)
