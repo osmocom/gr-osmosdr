@@ -131,6 +131,14 @@ GR_INCLUDE_SUBDIRECTORY(hackrf)
 endif(ENABLE_HACKRF)
 
 ########################################################################
+# Setup bladeRF component
+########################################################################
+GR_REGISTER_COMPONENT("nuand bladeRF" ENABLE_BLADERF LIBBLADERF_FOUND)
+if(ENABLE_BLADERF)
+GR_INCLUDE_SUBDIRECTORY(bladerf)
+endif(ENABLE_BLADERF)
+
+########################################################################
 # Setup configuration file
 ########################################################################
 ADD_DEFINITIONS(-DHAVE_CONFIG_H=1)
