@@ -199,7 +199,7 @@ add_custom_target(uninstall
 ########################################################################
 # Enable python component
 ########################################################################
-find_package(PythonLibs)
+find_package(PythonLibs 2)
 find_package(SWIG)
 
 if(SWIG_FOUND)
