@@ -55,8 +55,6 @@ public:
   ~bladerf_common();
 
 protected:
-  void setup_device();
-
   osmosdr::freq_range_t freq_range();
   osmosdr::meta_range_t sample_rates();
   osmosdr::freq_range_t filter_bandwidths();

@@ -87,19 +87,6 @@ bladerf_common::~bladerf_common()
   delete this->sample_fifo;
 }
 
-void bladerf_common::setup_device()
-{
-  gpio_write( this->dev, 0x57 ); /* enable LMS RX & TX, select lower band */
-  lms_spi_write( this->dev, 0x5a, 0xa0 ); /* polarity of the IQSel signal */
-  /* values are taken from LMS6002D FAQ 5.27 */
-  lms_spi_write( this->dev, 0x05, 0x3e ); /* enable the tx and rx modules */
-  lms_spi_write( this->dev, 0x47, 0x40 ); /* Improving Tx spurious emission performance */
-  lms_spi_write( this->dev, 0x59, 0x29 ); /* Improving ADC's performance */
-  lms_spi_write( this->dev, 0x64, 0x36 ); /* Common Mode Voltage For ADC's */
-  lms_spi_write( this->dev, 0x79, 0x37 ); /* Higher LNA Gain */
-  return;
-}
-
 osmosdr::freq_range_t bladerf_common::freq_range()
 {
   /* assuming the same for RX & TX */
