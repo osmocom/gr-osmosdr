@@ -72,6 +72,7 @@ bladerf_source_c::bladerf_source_c (const std::string &args)
                     gr::io_signature::make (MIN_IN, MAX_IN, sizeof (gr_complex)),
                     gr::io_signature::make (MIN_OUT, MAX_OUT, sizeof (gr_complex)))
 {
+  int ret;
   unsigned int device_number = 0;
   std::string device_name;
 
@@ -105,7 +106,7 @@ bladerf_source_c::bladerf_source_c (const std::string &args)
     std::string fpga = dict["fpga"];
 
     std::cerr << "Loading FPGA bitstream " << fpga << "..." << std::endl;
-    int ret = bladerf_load_fpga( this->dev, fpga.c_str() );
+    ret = bladerf_load_fpga( this->dev, fpga.c_str() );
     if ( ret != 0 )
       std::cerr << "bladerf_load_fpga has returned with " << ret << std::endl;
     else
@@ -119,7 +120,7 @@ bladerf_source_c::bladerf_source_c (const std::string &args)
     std::cerr << "Flashing firmware image " << fw << "..., "
               << "DO NOT INTERRUPT!"
               << std::endl;
-    int ret = bladerf_flash_firmware( this->dev, fw.c_str() );
+    ret = bladerf_flash_firmware( this->dev, fw.c_str() );
     if ( ret != 0 )
       std::cerr << "bladerf_flash_firmware has failed with " << ret << std::endl;
     else
@@ -159,7 +160,10 @@ bladerf_source_c::bladerf_source_c (const std::string &args)
   /* Set the range of VGA2 VGA2GAIN[4:0], not recommended to be used above 30dB */
   this->vga2_range = osmosdr::gain_range_t( 0, 60, 3 );
 
-  this->setup_device();
+  ret = bladerf_enable_module(this->dev, RX, true);
+  if ( ret != 0 )
+    std::cerr << "bladerf_enable_module has returned with " << ret << std::endl;
+
   this->thread = gr::thread::thread(read_task_dispatch, this);
 }
 
@@ -168,8 +172,14 @@ bladerf_source_c::bladerf_source_c (const std::string &args)
  */
 bladerf_source_c::~bladerf_source_c ()
 {
+  int ret;
+
   this->set_running(false);
   this->thread.join();
+
+  ret = bladerf_enable_module(this->dev, RX, false);
+  if ( ret != 0 )
+    std::cerr << "bladerf_enable_module has returned with " << ret << std::endl;
 
   /* Close the device */
   bladerf_close( this->dev );
