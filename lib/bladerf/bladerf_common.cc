@@ -95,8 +95,14 @@ osmosdr::freq_range_t bladerf_common::freq_range()
 
 osmosdr::meta_range_t bladerf_common::sample_rates()
 {
+  osmosdr::meta_range_t sample_rates;
+
   /* assuming the same for RX & TX */
-  return osmosdr::meta_range_t( 160e3, 40e6, 1e6 );
+  sample_rates += osmosdr::range_t( 160e3, 200e3, 40e3 );
+  sample_rates += osmosdr::range_t( 300e3, 900e3, 100e3 );
+  sample_rates += osmosdr::range_t( 1e6, 40e6, 1e6 );
+
+  return sample_rates;
 }
 
 osmosdr::freq_range_t bladerf_common::filter_bandwidths()
@@ -104,13 +110,13 @@ osmosdr::freq_range_t bladerf_common::filter_bandwidths()
   /* the same for RX & TX according to the datasheet */
   osmosdr::freq_range_t bandwidths;
 
-  std::vector<double> half_bandwidths;
+  std::vector<double> half_bandwidths; /* in MHz */
   half_bandwidths += \
       0.75, 0.875, 1.25, 1.375, 1.5, 1.92, 2.5,
       2.75, 3, 3.5, 4.375, 5, 6, 7, 10, 14;
 
-  BOOST_FOREACH( double half_bws, half_bandwidths )
-    bandwidths += osmosdr::range_t( half_bws * 2.e6 );
+  BOOST_FOREACH( double half_bw, half_bandwidths )
+    bandwidths += osmosdr::range_t( half_bw * 2.e6 );
 
   return bandwidths;
 }
