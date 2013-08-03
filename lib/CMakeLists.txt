@@ -247,7 +247,7 @@ endif(ENABLE_RTL_TCP)
 ########################################################################
 # Setup UHD component
 ########################################################################
-GR_REGISTER_COMPONENT("Ettus USRP Devices" ENABLE_UHD UHD_FOUND GNURADIO_UHD_FOUND)
+GR_REGISTER_COMPONENT("Ettus USRP Devices" ENABLE_UHD UHD_FOUND)
 if(ENABLE_UHD)
 GR_INCLUDE_SUBDIRECTORY(uhd)
 endif(ENABLE_UHD)

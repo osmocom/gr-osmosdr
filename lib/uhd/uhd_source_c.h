@@ -21,7 +21,8 @@
 #define UHD_SOURCE_C_H
 
 #include <gnuradio/hier_block2.h>
-#include <gnuradio/uhd/usrp_source.h>
+
+#include "usrp_source.h"
 
 #include "source_iface.h"
 
