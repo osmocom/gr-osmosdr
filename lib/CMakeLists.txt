@@ -55,6 +55,8 @@ GR_OSMOSDR_APPEND_LIBS(
 GR_REGISTER_COMPONENT("Built-in GNU Radio runtime" ENABLE_RUNTIME RUNTIME_MODE)
 if(ENABLE_RUNTIME)
 
+set(GNURADIO_BLOCKS_FOUND TRUE)
+
 ADD_DEFINITIONS(-Dgnuradio_runtime_EXPORTS -Dgnuradio_blocks_EXPORTS)
 
 message(STATUS "")
@@ -63,6 +65,7 @@ INCLUDE(${CMAKE_CURRENT_SOURCE_DIR}/ConfigChecks.cmake)
 include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR}/runtime)
 
 GR_OSMOSDR_APPEND_SRCS(
+    runtime/blocks/file_source_impl.cc
     runtime/blocks/throttle_impl.cc
     runtime/blocks/null_sink_impl.cc
     runtime/blocks/null_source_impl.cc
