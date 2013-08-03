@@ -97,6 +97,7 @@ MESSAGE(STATUS "Configuring Boost C++ Libraries...")
 SET(BOOST_REQUIRED_COMPONENTS
     thread
     system
+    filesystem
 )
 
 if(UNIX AND NOT BOOST_ROOT AND EXISTS "/usr/lib64")
@@ -140,6 +141,26 @@ set(GR_LIBEXEC_DIR      libexec)
 set(GR_PKG_LIBEXEC_DIR  ${GR_LIBEXEC_DIR}/${CMAKE_PROJECT_NAME})
 set(GRC_BLOCKS_DIR      ${GR_PKG_DATA_DIR}/grc/blocks)
 
+# Special exception if prefix is /usr so we don't make a /usr/etc.
+string(COMPARE EQUAL ${CMAKE_INSTALL_PREFIX} "/usr" isusr)
+if(isusr)
+  set(SYSCONFDIR          "/${GR_CONF_DIR}" CACHE PATH "System configuration directory")
+else(isusr)
+  set(SYSCONFDIR          "${CMAKE_INSTALL_PREFIX}/${GR_CONF_DIR}" CACHE PATH "System configuration directory" FORCE)
+endif(isusr)
+
+set(GR_PREFSDIR         ${SYSCONFDIR}/${CMAKE_PROJECT_NAME}/conf.d)
+
+########################################################################
+# Variables replaced when configuring the package config files
+########################################################################
+file(TO_NATIVE_PATH "${CMAKE_INSTALL_PREFIX}"           prefix)
+file(TO_NATIVE_PATH "\${prefix}"                        exec_prefix)
+file(TO_NATIVE_PATH "\${exec_prefix}/${GR_LIBRARY_DIR}" libdir)
+file(TO_NATIVE_PATH "\${prefix}/${GR_INCLUDE_DIR}"      includedir)
+file(TO_NATIVE_PATH "${SYSCONFDIR}"                     SYSCONFDIR)
+file(TO_NATIVE_PATH "${GR_PREFSDIR}"                    GR_PREFSDIR)
+
 ########################################################################
 # Find build dependencies
 ########################################################################
@@ -157,9 +178,41 @@ find_package(LibHackRF)
 find_package(LibbladeRF)
 find_package(Doxygen)
 
+set(PYTHON_RUNTIME_CHECK TRUE)
+
 if(NOT GNURADIO_RUNTIME_FOUND)
-    message(FATAL_ERROR "GnuRadio Runtime required to build " ${CMAKE_PROJECT_NAME})
-endif()
+    message(STATUS "Enabling built-in GNU Radio runtime...")
+    set(RUNTIME_MODE TRUE CACHE INTERNAL "Built-in GNU Radio runtime")
+
+    add_subdirectory(include/osmosdr/runtime)
+
+    set(GNURADIO_RUNTIME_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/include/osmosdr/runtime)
+    set(GNURADIO_RUNTIME_LIBRARY_DIRS "")
+    set(GNURADIO_RUNTIME_LIBRARIES "")
+
+    set(GNURADIO_PMT_INCLUDE_DIRS "")
+    set(GNURADIO_PMT_LIBRARY_DIRS "")
+    set(GNURADIO_PMT_LIBRARIES "")
+
+    set(GNURADIO_BLOCKS_INCLUDE_DIRS "")
+    set(GNURADIO_BLOCKS_LIBRARY_DIRS "")
+    set(GNURADIO_BLOCKS_LIBRARIES "")
+
+    LIST(APPEND GR_OSMOSDR_PC_CFLAGS "-I\${includedir}/osmosdr/runtime")
+
+    # disable python bindings as long as we don't have any swig files for the runtime
+    set(PYTHON_RUNTIME_CHECK FALSE)
+endif(NOT GNURADIO_RUNTIME_FOUND)
+
+if(GNURADIO_RUNTIME_FOUND)
+    LIST(APPEND GR_OSMOSDR_PC_REQUIRES "gnuradio-runtime")
+endif(GNURADIO_RUNTIME_FOUND)
+if(GNURADIO_PMT_FOUND)
+    LIST(APPEND GR_OSMOSDR_PC_REQUIRES "gnuradio-pmt")
+endif(GNURADIO_PMT_FOUND)
+if(GNURADIO_BLOCKS_FOUND)
+    LIST(APPEND GR_OSMOSDR_PC_REQUIRES "gnuradio-blocks")
+endif(GNURADIO_BLOCKS_FOUND)
 
 ########################################################################
 # Setup the include and linker paths
@@ -211,10 +264,11 @@ if(SWIG_FOUND)
 endif(SWIG_FOUND)
 
 include(GrComponent)
-GR_REGISTER_COMPONENT("Python support" ENABLE_PYTHON
+GR_REGISTER_COMPONENT("Python bindings" ENABLE_PYTHON
     PYTHONLIBS_FOUND
     SWIG_FOUND
     SWIG_VERSION_CHECK
+    PYTHON_RUNTIME_CHECK
 )
 
 ########################################################################
