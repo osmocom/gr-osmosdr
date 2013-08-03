@@ -26,8 +26,6 @@
 #include <boost/algorithm/string.hpp>
 
 #include <gnuradio/io_signature.h>
-#include <gnuradio/blocks/deinterleave.h>
-#include <gnuradio/blocks/float_to_complex.h>
 
 #include "rtl_tcp_source_c.h"
 
@@ -126,18 +124,7 @@ rtl_tcp_source_c::rtl_tcp_source_c(const std::string &args) :
 
   _src->set_offset_tuning(offset_tune);
 
-  /* rtl tcp source provides a stream of interleaved IQ floats */
-  gr::blocks::deinterleave::sptr deinterleave = \
-      gr::blocks::deinterleave::make( sizeof(float) );
-
-  /* block to convert deinterleaved floats to a complex stream */
-  gr::blocks::float_to_complex::sptr f2c = \
-      gr::blocks::float_to_complex::make( 1 );
-
-  connect(_src, 0, deinterleave, 0);
-  connect(deinterleave, 0, f2c, 0); /* I */
-  connect(deinterleave, 1, f2c, 1); /* Q */
-  connect(f2c, 0, self(), 0);
+  connect(_src, 0, self(), 0);
 }
 
 rtl_tcp_source_c::~rtl_tcp_source_c()

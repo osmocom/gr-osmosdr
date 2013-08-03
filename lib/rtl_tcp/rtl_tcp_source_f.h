@@ -74,8 +74,7 @@ private:
   bool          d_wait;          // wait if data if not immediately available
   int           d_socket;        // handle to socket
   unsigned char *d_temp_buff;    // hold buffer between calls
-  size_t        d_temp_offset;   // point to temp buffer location offset
-  float         *d_LUT;
+  gr_complex    *d_LUT;
 
   unsigned int d_tuner_type;
   unsigned int d_tuner_gain_count;

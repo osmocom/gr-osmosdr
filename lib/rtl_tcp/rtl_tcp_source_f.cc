@@ -90,13 +90,12 @@ rtl_tcp_source_f::rtl_tcp_source_f(size_t itemsize,
                                    bool wait)
   : gr::sync_block ("rtl_tcp_source_f",
                    gr::io_signature::make(0, 0, 0),
-                   gr::io_signature::make(1, 1, sizeof(float))),
+                   gr::io_signature::make(1, 1, sizeof(gr_complex))),
     d_itemsize(itemsize),
     d_payload_size(payload_size),
     d_eof(eof),
     d_wait(wait),
-    d_socket(-1),
-    d_temp_offset(0)
+    d_socket(-1)
 {
   int ret = 0;
 #if defined(USING_WINSOCK) // for Windows (with MinGW)
@@ -128,10 +127,19 @@ rtl_tcp_source_f::rtl_tcp_source_f(size_t itemsize,
 
   // FIXME leaks if report_error throws below
   d_temp_buff = new unsigned char[d_payload_size];   // allow it to hold up to payload_size bytes
-  d_LUT= new float[0xff+1];
-  for(int i=0; i <=(0xff);++i){
-    d_LUT[i] = (((float)(i&0xff))-127.4f)*(1.0f/128.0f);
-  }
+
+  d_LUT = new gr_complex[0xffff+1];
+  // create a lookup table for gr_complex values
+  for (unsigned int i = 0; i <= 0xffff; i++) {
+#ifdef BOOST_LITTLE_ENDIAN
+    d_LUT[i] = gr_complex( (float(i >> 8) - 127.4f) * (1.0f/128.0f),
+                                (float(i & 0xff) - 127.4f) * (1.0f/128.0f) );
+#else // BOOST_BIG_ENDIAN
+    d_LUT[i] = gr_complex( (float(i & 0xff) - 127.4f) * (1.0f/128.0f),
+                                (float(i >> 8) - 127.4f) * (1.0f/128.0f) );
+#endif
+   }
+
   // create socket
   d_socket = socket(ip_src->ai_family, ip_src->ai_socktype,
                     ip_src->ai_protocol);
@@ -214,6 +222,7 @@ rtl_tcp_source_f_sptr make_rtl_tcp_source_f (size_t itemsize,
 rtl_tcp_source_f::~rtl_tcp_source_f ()
 {
   delete [] d_temp_buff;
+  delete [] d_LUT;
 
   if (d_socket != -1){
     shutdown(d_socket, SHUT_RDWR);
@@ -235,11 +244,19 @@ int rtl_tcp_source_f::work (int noutput_items,
                             gr_vector_const_void_star &input_items,
                             gr_vector_void_star &output_items)
 {
-  float *out = (float *) output_items[0];
-  ssize_t r=0, nbytes=0, bytes_received=0;
-  ssize_t total_bytes = (ssize_t)(d_itemsize*noutput_items);
+  gr_complex *out = (gr_complex *) output_items[0];
+  size_t remaining = 0;
 
-  int bytesleft = noutput_items;
+  int bytesleft;
+
+  if( noutput_items * 2 < d_payload_size) {
+    bytesleft = noutput_items * 2;
+    remaining = noutput_items;
+  } else {
+    remaining = d_payload_size >> 1;
+    bytesleft = d_payload_size;
+  }
+
   int index = 0;
   int receivedbytes = 0;
   while(bytesleft > 0) {
@@ -252,12 +269,12 @@ int rtl_tcp_source_f::work (int noutput_items,
     bytesleft -= receivedbytes;
     index += receivedbytes;
   }
-  r = noutput_items;
+  remaining = noutput_items;
 
-  for(int i=0; i<r; ++i)
-    out[i]=d_LUT[*(d_temp_buff+d_temp_offset+i)];
+  for(size_t i = 0; i < remaining; ++i)
+    out[i] = d_LUT[*(((unsigned short*)d_temp_buff)+i)];
 
-  return r;
+  return remaining;
 }
 
 #ifdef _WIN32
