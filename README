@@ -4,13 +4,13 @@ as well supports:
  * FUNcube Dongle through libgnuradio-fcd
  * FUNcube Dongle Pro+ through gr-fcdproplus
  * sysmocom OsmoSDR Devices through libosmosdr
- * Nuand LLC bladeRF through libbladeRF library
- * Great Scott Gadgets HackRF through libhackrf
- * Ettus USRP Devices through Ettus UHD library
  * RTL2832U based DVB-T dongles through librtlsdr
  * RTL-TCP spectrum server (see librtlsdr project)
  * MSi2500 based DVB-T dongles through libmirisdr
  * gnuradio .cfile input through libgnuradio-blocks
+ * Ettus USRP Devices through Ettus UHD library
+ * Great Scott Gadgets HackRF through libhackrf
+ * Nuand LLC bladeRF through libbladeRF library
 
 By using the OsmoSDR block you can take advantage of a common software api in
 your application(s) independent of the underlying radio hardware.
@@ -18,11 +18,11 @@ your application(s) independent of the underlying radio hardware.
 For installation and usage guidelines please read the documentation available
 at http://sdr.osmocom.org/trac/wiki/GrOsmoSDR
 
-For the impatient :) a short excerpt:
+A short excerpt from the wiki:
 
 The Gnu Radio block requires a recent gnuradio (>= v3.7) to be installed.
 
-Before building the block you have to make sure that all the dependencies
+Before building the block you have to make sure that all dependencies
 (see list of supported devices above) you are intend to work with are
 properly installed. The build system of gr-osmosdr will recognize them and
 enable specific source/sink components thereafter.

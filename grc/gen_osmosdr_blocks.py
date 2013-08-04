@@ -118,16 +118,14 @@ While primarily being developed for the OsmoSDR hardware, this block as well sup
  * FUNcube Dongle through libgnuradio-fcd
  * FUNcube Dongle Pro+ through gr-fcdproplus
  * sysmocom OsmoSDR Devices through libosmosdr
-#end if
- * Nuand LLC bladeRF through libbladeRF library
- * Great Scott Gadgets HackRF through libhackrf
- * Ettus USRP Devices through Ettus UHD library
-#if $sourk == 'source':
  * RTL2832U based DVB-T dongles through librtlsdr
  * RTL-TCP spectrum server (see librtlsdr project)
  * MSi2500 based DVB-T dongles through libmirisdr
  * gnuradio .cfile input through libgnuradio-blocks
 #end if
+ * Ettus USRP Devices through Ettus UHD library
+ * Great Scott Gadgets HackRF through libhackrf
+ * Nuand LLC bladeRF through libbladeRF library
 
 By using the osmocom $sourk block you can take advantage of a common software api in your application(s) independent of the underlying radio hardware.
 
@@ -145,22 +143,18 @@ Lines ending with ... mean it's possible to bind devices together by specifying 
 
 #if $sourk == 'source':
   fcd=0[,device=hw:2][,type=2]
-  hackrf=0[,buffers=32]
   miri=0[,buffers=32] ...
   rtl=serial_number ...
   rtl=0[,rtl_xtal=28.8e6][,tuner_xtal=28.8e6] ...
   rtl=1[,buffers=32][,buflen=N*512] ...
   rtl=2[,direct_samp=0|1|2][,offset_tune=0|1] ...
   rtl_tcp=127.0.0.1:1234[,psize=16384][,direct_samp=0|1|2][,offset_tune=0|1] ...
-  uhd[,serial=...][,lo_offset=0][,mcr=52e6][,nchan=2][,subdev='\\\\'B:0 A:0\\\\''] ...
-  bladerf=0[,fpga='/path/to/the/bitstream.rbf'][,fw='/path/to/the/firmware.img']
   osmosdr=0[,buffers=32][,buflen=N*512] ...
   file='/path/to/your file',rate=1e6[,freq=100e6][,repeat=true][,throttle=true] ...
 #end if
-#if $sourk == 'sink':
-  hackrf=0[,buffers=32]
+  bladerf=0[,fpga='/path/to/the/bitstream.rbf'][,fw='/path/to/the/firmware.img']
   uhd[,serial=...][,lo_offset=0][,mcr=52e6][,nchan=2][,subdev='\\\\'B:0 A:0\\\\''] ...
-#end if
+  hackrf=0[,buffers=32]
 
 Num Channels:
 Selects the total number of channels in this multi-device configuration. Required when specifying multiple device arguments.
