@@ -24,11 +24,10 @@
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${UHD_INCLUDE_DIRS}
+    ${GNURADIO_UHD_INCLUDE_DIRS}
 )
 
 set(uhd_srcs
-    ${CMAKE_CURRENT_SOURCE_DIR}/usrp_sink_impl.cc
-    ${CMAKE_CURRENT_SOURCE_DIR}/usrp_source_impl.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/uhd_sink_c.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/uhd_source_c.cc
 )
@@ -37,4 +36,4 @@ set(uhd_srcs
 # Append gnuradio-osmosdr library sources
 ########################################################################
 list(APPEND gr_osmosdr_srcs ${uhd_srcs})
-list(APPEND gr_osmosdr_libs ${UHD_LIBRARIES})
+list(APPEND gr_osmosdr_libs ${UHD_LIBRARIES} ${GNURADIO_UHD_LIBRARIES})

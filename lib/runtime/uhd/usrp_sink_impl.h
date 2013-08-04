@@ -20,12 +20,12 @@
  * Boston, MA 02110-1301, USA.
  */
 
-#include "usrp_source.h"
+#include <gnuradio/uhd/usrp_sink.h>
 #include <uhd/convert.hpp>
 #if 0
-static const pmt::pmt_t TIME_KEY = pmt::string_to_symbol("rx_time");
-static const pmt::pmt_t RATE_KEY = pmt::string_to_symbol("rx_rate");
-static const pmt::pmt_t FREQ_KEY = pmt::string_to_symbol("rx_freq");
+static const pmt::pmt_t SOB_KEY = pmt::string_to_symbol("tx_sob");
+static const pmt::pmt_t EOB_KEY = pmt::string_to_symbol("tx_eob");
+static const pmt::pmt_t TIME_KEY = pmt::string_to_symbol("tx_time");
 #endif
 namespace gr {
   namespace uhd {
@@ -47,20 +47,18 @@ namespace gr {
     }
 
     /***********************************************************************
-     * UHD Multi USRP Source Impl
+     * UHD Multi USRP Sink Impl
      **********************************************************************/
-    class usrp_source_impl : public usrp_source
+    class usrp_sink_impl : public usrp_sink
     {
     public:
-      usrp_source_impl(const ::uhd::device_addr_t &device_addr,
-                       const ::uhd::stream_args_t &stream_args);
-      ~usrp_source_impl();
+       usrp_sink_impl(const ::uhd::device_addr_t &device_addr,
+                      const ::uhd::stream_args_t &stream_args);
+      ~usrp_sink_impl();
 
       void setup_rpc();
 
-      // Get Commands
       ::uhd::dict<std::string, std::string> get_usrp_info(size_t chan);
-      std::string get_subdev_spec(size_t mboard);
       double get_samp_rate(void);
       ::uhd::meta_range_t get_samp_rates(void);
       double get_center_freq(size_t chan);
@@ -86,8 +84,8 @@ namespace gr {
       ::uhd::usrp::dboard_iface::sptr get_dboard_iface(size_t chan);
       ::uhd::usrp::multi_usrp::sptr get_device(void);
 
-      // Set Commands
       void set_subdev_spec(const std::string &spec, size_t mboard);
+      std::string get_subdev_spec(size_t mboard);
       void set_samp_rate(double rate);
       ::uhd::tune_result_t set_center_freq(const ::uhd::tune_request_t tune_request,
                                          size_t chan);
@@ -97,7 +95,6 @@ namespace gr {
       void set_bandwidth(double bandwidth, size_t chan);
       double get_bandwidth(size_t chan);
       ::uhd::freq_range_t get_bandwidth_range(size_t chan);
-      void set_auto_dc_offset(const bool enable, size_t chan);
       void set_dc_offset(const std::complex<double> &offset, size_t chan);
       void set_iq_balance(const std::complex<double> &correction, size_t chan);
       void set_clock_config(const ::uhd::clock_config_t &clock_config, size_t mboard);
@@ -108,41 +105,37 @@ namespace gr {
       void set_time_next_pps(const ::uhd::time_spec_t &time_spec);
       void set_time_unknown_pps(const ::uhd::time_spec_t &time_spec);
       void set_command_time(const ::uhd::time_spec_t &time_spec, size_t mboard);
+      void clear_command_time(size_t mboard);
       void set_user_register(const uint8_t addr, const uint32_t data, size_t mboard);
       void set_start_time(const ::uhd::time_spec_t &time);
 
-      void issue_stream_cmd(const ::uhd::stream_cmd_t &cmd);
-      void clear_command_time(size_t mboard);
-      void flush(void);
       bool start(void);
       bool stop(void);
-      std::vector<std::complex<float> > finite_acquisition(const size_t nsamps);
-      std::vector<std::vector<std::complex<float> > > finite_acquisition_v(const size_t nsamps);
+
       int work(int noutput_items,
                gr_vector_const_void_star &input_items,
                gr_vector_void_star &output_items);
- 
+
+      inline void tag_work(int &ninput_items);
+
     private:
       ::uhd::usrp::multi_usrp::sptr _dev;
       const ::uhd::stream_args_t _stream_args;
       boost::shared_ptr< ::uhd::io_type_t > _type;
-
 #ifdef GR_UHD_USE_STREAM_API
-      ::uhd::rx_streamer::sptr _rx_stream;
-      size_t _samps_per_packet;
+      ::uhd::tx_streamer::sptr _tx_stream;
 #endif
       size_t _nchan;
-      bool _stream_now, _tag_now;
-      ::uhd::rx_metadata_t _metadata;
-#if 0
-      pmt::pmt_t _id;
-#endif
+      bool _stream_now;
+      ::uhd::tx_metadata_t _metadata;
+      double _sample_rate;
+
       ::uhd::time_spec_t _start_time;
       bool _start_time_set;
-
-      //tag shadows
-      double _samp_rate;
-      double _center_freq;
+#if 0
+      //stream tags related stuff
+      std::vector<tag_t> _tags;
+#endif
     };
 
   } /* namespace uhd */

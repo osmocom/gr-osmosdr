@@ -56,8 +56,11 @@ GR_REGISTER_COMPONENT("Built-in GNU Radio runtime" ENABLE_RUNTIME RUNTIME_MODE)
 if(ENABLE_RUNTIME)
 
 set(GNURADIO_BLOCKS_FOUND TRUE)
+set(GNURADIO_UHD_FOUND TRUE)
 
-ADD_DEFINITIONS(-Dgnuradio_runtime_EXPORTS -Dgnuradio_blocks_EXPORTS)
+ADD_DEFINITIONS(-Dgnuradio_runtime_EXPORTS)
+ADD_DEFINITIONS(-Dgnuradio_blocks_EXPORTS)
+ADD_DEFINITIONS(-Dgnuradio_uhd_EXPORTS)
 
 message(STATUS "")
 INCLUDE(${CMAKE_CURRENT_SOURCE_DIR}/ConfigChecks.cmake)
@@ -71,13 +74,16 @@ GR_OSMOSDR_APPEND_SRCS(
     runtime/blocks/null_source_impl.cc
 
     runtime/math/fast_atan2f.cc
-    runtime/math//fxpt.cc
+    runtime/math/fxpt.cc
     runtime/math/random.cc
     runtime/math/sincos.cc
 
     runtime/thread/thread.cc
     runtime/thread/thread_body_wrapper.cc
     runtime/thread/thread_group.cc
+
+    runtime/uhd/usrp_sink_impl.cc
+    runtime/uhd/usrp_source_impl.cc
 
     runtime/basic_block.cc
     runtime/block.cc
@@ -123,18 +129,30 @@ GR_OSMOSDR_APPEND_SRCS(
 ########################################################################
 # Handle the generated constants
 ########################################################################
-execute_process(COMMAND ${PYTHON_EXECUTABLE} -c
-    "import time;print time.strftime('%a, %d %b %Y %H:%M:%S', time.gmtime())"
-    OUTPUT_VARIABLE BUILD_DATE OUTPUT_STRIP_TRAILING_WHITESPACE
-)
+MACRO (TODAY RESULT)
+    IF (WIN32)
+        EXECUTE_PROCESS(COMMAND "date" "/T" OUTPUT_VARIABLE ${RESULT})
+        string(REGEX REPLACE "(..)/(..)/(....).*" "\\1.\\2.\\3"
+${RESULT} ${${RESULT}})
+    ELSEIF(UNIX)
+        EXECUTE_PROCESS(COMMAND "date" "+%d/%m/%Y" OUTPUT_VARIABLE ${RESULT})
+        string(REGEX REPLACE "(..)/(..)/(....).*" "\\1.\\2.\\3"
+${RESULT} ${${RESULT}})
+    ELSE (WIN32)
+        MESSAGE(SEND_ERROR "date not implemented")
+        SET(${RESULT} 00.00.0000)
+    ENDIF (WIN32)
+ENDMACRO (TODAY)
+
+TODAY(BUILD_DATE)
 
 set(GR_VERSION "built-in")
 
 message(STATUS "Loading prefix ${prefix} into constants...")
 message(STATUS "Loading SYSCONFDIR ${SYSCONFDIR} into constants...")
 message(STATUS "Loading GR_PREFSDIR ${GR_PREFSDIR} into constants...")
-message(STATUS "Loading build date ${BUILD_DATE} into constants...")
-message(STATUS "Loading version ${GR_VERSION} into constants...")
+message(STATUS "Loading build date \"${BUILD_DATE}\" into constants...")
+message(STATUS "Loading version \"${GR_VERSION}\" into constants...")
 
 #double escape for windows backslash path separators
 string(REPLACE "\\" "\\\\" prefix ${prefix})
@@ -252,7 +270,7 @@ endif(ENABLE_RTL_TCP)
 ########################################################################
 # Setup UHD component
 ########################################################################
-GR_REGISTER_COMPONENT("Ettus USRP Devices" ENABLE_UHD UHD_FOUND)
+GR_REGISTER_COMPONENT("Ettus USRP Devices" ENABLE_UHD UHD_FOUND GNURADIO_UHD_FOUND)
 if(ENABLE_UHD)
 GR_INCLUDE_SUBDIRECTORY(uhd)
 endif(ENABLE_UHD)

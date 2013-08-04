@@ -168,6 +168,7 @@ set(GR_REQUIRED_COMPONENTS RUNTIME PMT BLOCKS)
 find_package(Gnuradio "3.7.0")
 find_package(GnuradioIQBalance)
 find_package(UHD)
+find_package(GnuradioUHD)
 find_package(GnuradioFCD)
 find_package(GnuradioFCDPP)
 find_package(LibOsmoSDR)
@@ -196,6 +197,9 @@ if(NOT GNURADIO_RUNTIME_FOUND)
     set(GNURADIO_BLOCKS_INCLUDE_DIRS "")
     set(GNURADIO_BLOCKS_LIBRARY_DIRS "")
     set(GNURADIO_BLOCKS_LIBRARIES "")
+
+    set(GNURADIO_UHD_INCLUDE_DIRS "")
+    set(GNURADIO_UHD_LIBRARIES "")
 
     LIST(APPEND GR_OSMOSDR_PC_CFLAGS "-I\${includedir}/osmosdr/runtime")
 

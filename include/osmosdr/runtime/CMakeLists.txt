@@ -32,10 +32,15 @@ install(FILES
     gnuradio/thread/thread.h
     gnuradio/thread/thread_body_wrapper.h
     gnuradio/thread/thread_group.h
-
     DESTINATION include/osmosdr/runtime/gnuradio/thread
 )
 
+install(FILES
+    gnuradio/uhd/api.h
+    gnuradio/uhd/usrp_sink.h
+    gnuradio/uhd/usrp_source.h
+    DESTINATION include/osmosdr/runtime/gnuradio/uhd
+)
 install(FILES
     gnuradio/api.h
     gnuradio/attributes.h

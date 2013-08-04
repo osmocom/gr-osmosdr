@@ -21,8 +21,7 @@
 #define UHD_SINK_C_H
 
 #include <gnuradio/hier_block2.h>
-
-#include "usrp_sink.h"
+#include <gnuradio/uhd/usrp_sink.h>
 
 #include "sink_iface.h"
 
