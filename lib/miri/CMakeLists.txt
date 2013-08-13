@@ -23,7 +23,7 @@
 
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${LIBMIRISDR_INCLUDE_DIR}
+    ${LIBMIRISDR_INCLUDE_DIRS}
 )
 
 set(mirisdr_srcs

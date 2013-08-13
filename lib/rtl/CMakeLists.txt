@@ -23,7 +23,7 @@
 
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${LIBRTLSDR_INCLUDE_DIR}
+    ${LIBRTLSDR_INCLUDE_DIRS}
 )
 
 set(rtl_srcs

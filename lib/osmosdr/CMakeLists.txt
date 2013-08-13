@@ -23,7 +23,7 @@
 
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${LIBOSMOSDR_INCLUDE_DIR}
+    ${LIBOSMOSDR_INCLUDE_DIRS}
 )
 
 set(osmosdr_srcs
