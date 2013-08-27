@@ -92,11 +92,11 @@ bladerf_source_c::bladerf_source_c (const std::string &args)
     }
   }
 
-  device_name = boost::str(boost::format( "/dev/bladerf%d" ) % device_number);
+  device_name = boost::str(boost::format( "libusb:instance=%d" ) % device_number);
 
   /* Open a handle to the device */
-  this->dev = bladerf_open( device_name.c_str() );
-  if( NULL == this->dev ) {
+  ret = bladerf_open( &this->dev, NULL );
+  if ( ret != 0 ) {
     throw std::runtime_error( std::string(__FUNCTION__) + " " +
                               "failed to open bladeRF device " + device_name );
   }
@@ -131,9 +131,9 @@ bladerf_source_c::bladerf_source_c (const std::string &args)
 
   std::cerr << "Using nuand LLC bladeRF #" << device_number;
 
-  u_int64_t serial;
-  if ( bladerf_get_serial( this->dev, &serial ) == 0 )
-    std::cerr << " SN " << std::setfill('0') << std::setw(16) << serial;
+  char serial[33];
+  if ( bladerf_get_serial( this->dev, serial ) == 0 )
+    std::cerr << " SN " << serial;
 
   unsigned int major, minor;
   if ( bladerf_get_fw_version( this->dev, &major, &minor) == 0 )
@@ -160,7 +160,7 @@ bladerf_source_c::bladerf_source_c (const std::string &args)
   /* Set the range of VGA2 VGA2GAIN[4:0], not recommended to be used above 30dB */
   this->vga2_range = osmosdr::gain_range_t( 0, 60, 3 );
 
-  ret = bladerf_enable_module(this->dev, RX, true);
+  ret = bladerf_enable_module(this->dev, BLADERF_MODULE_RX, true);
   if ( ret != 0 )
     std::cerr << "bladerf_enable_module has returned with " << ret << std::endl;
 
@@ -177,7 +177,7 @@ bladerf_source_c::~bladerf_source_c ()
   this->set_running(false);
   this->thread.join();
 
-  ret = bladerf_enable_module(this->dev, RX, false);
+  ret = bladerf_enable_module(this->dev, BLADERF_MODULE_RX, false);
   if ( ret != 0 )
     std::cerr << "bladerf_enable_module has returned with " << ret << std::endl;
 
@@ -199,8 +199,8 @@ void bladerf_source_c::read_task()
   while ( this->is_running() )
   {
 
-    n_samples = bladerf_read_c16(this->dev, this->raw_sample_buf,
-                                 BLADERF_SAMPLE_BLOCK_SIZE);
+    n_samples = bladerf_rx(this->dev, BLADERF_FORMAT_SC16_Q12, this->raw_sample_buf,
+                                 BLADERF_SAMPLE_BLOCK_SIZE, NULL);
 
     if (n_samples < 0) {
       std::cerr << "Failed to read samples: "
@@ -314,7 +314,7 @@ double bladerf_source_c::set_sample_rate( double rate )
   /* Check to see if the sample rate is an integer */
   if( (uint32_t)round(rate) == (uint32_t)rate )
   {
-    ret = bladerf_set_sample_rate( this->dev, RX, (uint32_t)rate, &actual );
+    ret = bladerf_set_sample_rate( this->dev, BLADERF_MODULE_RX, (uint32_t)rate, &actual );
     if( ret ) {
       throw std::runtime_error( std::string(__FUNCTION__) + " " +
                                 "has failed to set integer rate, error " +
@@ -322,7 +322,7 @@ double bladerf_source_c::set_sample_rate( double rate )
     }
   } else {
     /* TODO: Fractional sample rate */
-    ret = bladerf_set_sample_rate( this->dev, RX, (uint32_t)rate, &actual );
+    ret = bladerf_set_sample_rate( this->dev, BLADERF_MODULE_RX, (uint32_t)rate, &actual );
     if( ret ) {
       throw std::runtime_error( std::string(__FUNCTION__) + " " +
                                 "has failed to set fractional rate, error " +
@@ -338,7 +338,7 @@ double bladerf_source_c::get_sample_rate()
   int ret;
   unsigned int rate = 0;
 
-  ret = bladerf_get_sample_rate( this->dev, RX, &rate );
+  ret = bladerf_get_sample_rate( this->dev, BLADERF_MODULE_RX, &rate );
   if( ret ) {
     throw std::runtime_error( std::string(__FUNCTION__) + " " +
                               "has failed to get sample rate, error " +
@@ -362,7 +362,7 @@ double bladerf_source_c::set_center_freq( double freq, size_t chan )
       freq > get_freq_range( chan ).stop() ) {
     std::cerr << "Failed to set out of bound frequency: " << freq << std::endl;
   } else {
-    ret = bladerf_set_frequency( this->dev, RX, (uint32_t)freq );
+    ret = bladerf_set_frequency( this->dev, BLADERF_MODULE_RX, (uint32_t)freq );
     if( ret ) {
       throw std::runtime_error( std::string(__FUNCTION__) + " " +
                                 "failed to set center frequency " +
@@ -380,7 +380,7 @@ double bladerf_source_c::get_center_freq( size_t chan )
   uint32_t freq;
   int ret;
 
-  ret = bladerf_get_frequency( this->dev, RX, &freq );
+  ret = bladerf_get_frequency( this->dev, BLADERF_MODULE_RX, &freq );
   if( ret ) {
     throw std::runtime_error( std::string(__FUNCTION__) + " " +
                               "failed to get center frequency, error " +
@@ -461,15 +461,15 @@ double bladerf_source_c::set_gain( double gain, const std::string & name, size_t
   if( name == "LNA" ) {
     bladerf_lna_gain g;
     if( gain == 0.0 ) {
-      g = LNA_BYPASS;
+      g = BLADERF_LNA_GAIN_BYPASS;
     } else if( gain == 3.0 ) {
-      g = LNA_MID;
+      g = BLADERF_LNA_GAIN_MID;
     } else if( gain == 6.0 ) {
-      g = LNA_MAX;
+      g = BLADERF_LNA_GAIN_MAX;
     } else {
       std::cerr << "Invalid LNA gain requested: " << gain << ", "
                 << "setting to LNA_MAX (6dB)" << std::endl;
-      g = LNA_MAX;
+      g = BLADERF_LNA_GAIN_MAX;
     }
     ret = bladerf_set_lna_gain( this->dev, g );
   } else if( name == "VGA1" ) {
@@ -506,7 +506,7 @@ double bladerf_source_c::get_gain( const std::string & name, size_t chan )
   if( name == "LNA" ) {
     bladerf_lna_gain lna_g;
     ret = bladerf_get_lna_gain( this->dev, &lna_g );
-    g = lna_g == LNA_BYPASS ? 0 : lna_g == LNA_MID ? 3 : 6;
+    g = lna_g == BLADERF_LNA_GAIN_BYPASS ? 0 : lna_g == BLADERF_LNA_GAIN_MID ? 3 : 6;
   } else if( name == "VGA1" ) {
     ret = bladerf_get_rxvga1( this->dev, &g );
   } else if( name == "VGA2" ) {
@@ -563,7 +563,7 @@ double bladerf_source_c::set_bandwidth( double bandwidth, size_t chan )
   int ret;
   uint32_t actual;
 
-  ret = bladerf_set_bandwidth( this->dev, RX, (uint32_t)bandwidth, &actual );
+  ret = bladerf_set_bandwidth( this->dev, BLADERF_MODULE_RX, (uint32_t)bandwidth, &actual );
   if( ret ) {
     throw std::runtime_error( std::string(__FUNCTION__) + " " +
                               "could not set bandwidth, error " +
@@ -578,7 +578,7 @@ double bladerf_source_c::get_bandwidth( size_t chan )
   uint32_t bandwidth;
   int ret;
 
-  ret = bladerf_get_bandwidth( this->dev, RX, &bandwidth );
+  ret = bladerf_get_bandwidth( this->dev, BLADERF_MODULE_RX, &bandwidth );
   if( ret ) {
     throw std::runtime_error( std::string(__FUNCTION__) + " " +
                               "could not get bandwidth, error " +
