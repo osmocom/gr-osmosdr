@@ -93,11 +93,11 @@ bladerf_sink_c::bladerf_sink_c (const std::string &args)
     }
   }
 
-  device_name = boost::str(boost::format( "/dev/bladerf%d" ) % device_number);
+  device_name = boost::str(boost::format( "libusb:instance=%d" ) % device_number);
 
   /* Open a handle to the device */
-  this->dev = bladerf_open( device_name.c_str() );
-  if( NULL == this->dev ) {
+  ret = bladerf_open( &this->dev, device_name.c_str() );
+  if ( ret != 0 ) {
     throw std::runtime_error( std::string(__FUNCTION__) + " " +
                               "failed to open bladeRF device " + device_name );
   }
@@ -132,9 +132,9 @@ bladerf_sink_c::bladerf_sink_c (const std::string &args)
 
   std::cerr << "Using nuand LLC bladeRF #" << device_number;
 
-  u_int64_t serial;
-  if ( bladerf_get_serial( this->dev, &serial ) == 0 )
-    std::cerr << " SN " << std::setfill('0') << std::setw(16) << serial;
+  char serial[33];
+  if ( bladerf_get_serial( this->dev, serial ) == 0 )
+    std::cerr << " SN " << serial;
 
   unsigned int major, minor;
   if ( bladerf_get_fw_version( this->dev, &major, &minor) == 0 )
@@ -158,7 +158,7 @@ bladerf_sink_c::bladerf_sink_c (const std::string &args)
   /* Set the range of VGA2, VGA2GAIN[4:0] */
   this->vga2_range = osmosdr::gain_range_t( 0, 25, 1 );
 
-  ret = bladerf_enable_module(this->dev, TX, true);
+  ret = bladerf_enable_module(this->dev, BLADERF_MODULE_TX, true);
   if ( ret != 0 )
     std::cerr << "bladerf_enable_module has returned with " << ret << std::endl;
 
@@ -175,7 +175,7 @@ bladerf_sink_c::~bladerf_sink_c ()
   this->set_running(false);
   this->thread.join();
 
-  ret = bladerf_enable_module(this->dev, TX, false);
+  ret = bladerf_enable_module(this->dev, BLADERF_MODULE_TX, false);
   if ( ret != 0 )
     std::cerr << "bladerf_enable_module has returned with " << ret << std::endl;
 
@@ -223,8 +223,8 @@ void bladerf_sink_c::write_task()
     this->samples_available.notify_one();
 
     /* Samples are available to write out */
-    n_samples = bladerf_send_c16(this->dev, this->raw_sample_buf,
-                                 BLADERF_SAMPLE_BLOCK_SIZE);
+    n_samples = bladerf_tx(this->dev, BLADERF_FORMAT_SC16_Q12, this->raw_sample_buf,
+                                 BLADERF_SAMPLE_BLOCK_SIZE, NULL);
 
     /* Check n_samples return value */
     if( n_samples < 0 ) {
@@ -321,7 +321,7 @@ double bladerf_sink_c::set_sample_rate(double rate)
   /* Check to see if the sample rate is an integer */
   if( (uint32_t)round(rate) == (uint32_t)rate )
   {
-    ret = bladerf_set_sample_rate( this->dev, TX, (uint32_t)rate, &actual );
+    ret = bladerf_set_sample_rate( this->dev, BLADERF_MODULE_TX, (uint32_t)rate, &actual );
     if( ret ) {
       throw std::runtime_error( std::string(__FUNCTION__) + " " +
                                 "has failed to set integer rate, error " +
@@ -329,7 +329,7 @@ double bladerf_sink_c::set_sample_rate(double rate)
     }
   } else {
     /* TODO: Fractional sample rate */
-    ret = bladerf_set_sample_rate( this->dev, TX, (uint32_t)rate, &actual );
+    ret = bladerf_set_sample_rate( this->dev, BLADERF_MODULE_TX, (uint32_t)rate, &actual );
     if( ret ) {
       throw std::runtime_error( std::string(__FUNCTION__) + " " +
                                 "has failed to set fractional rate, error " +
@@ -345,7 +345,7 @@ double bladerf_sink_c::get_sample_rate()
   int ret;
   unsigned int rate = 0;
 
-  ret = bladerf_get_sample_rate( this->dev, TX, &rate );
+  ret = bladerf_get_sample_rate( this->dev, BLADERF_MODULE_TX, &rate );
   if( ret ) {
     throw std::runtime_error( std::string(__FUNCTION__) + " " +
                               "has failed to get sample rate, error " +
@@ -369,7 +369,7 @@ double bladerf_sink_c::set_center_freq( double freq, size_t chan )
       freq > get_freq_range( chan ).stop() ) {
     std::cerr << "Failed to set out of bound frequency: " << freq << std::endl;
   } else {
-    ret = bladerf_set_frequency( this->dev, TX, (uint32_t)freq );
+    ret = bladerf_set_frequency( this->dev, BLADERF_MODULE_TX, (uint32_t)freq );
     if( ret ) {
       throw std::runtime_error( std::string(__FUNCTION__) + " " +
                                 "failed to set center frequency " +
@@ -387,7 +387,7 @@ double bladerf_sink_c::get_center_freq( size_t chan )
   uint32_t freq;
   int ret;
 
-  ret = bladerf_get_frequency( this->dev, TX, &freq );
+  ret = bladerf_get_frequency( this->dev, BLADERF_MODULE_TX, &freq );
   if( ret ) {
     throw std::runtime_error( std::string(__FUNCTION__) + " " +
                               "failed to get center frequency, error " +
@@ -546,7 +546,7 @@ double bladerf_sink_c::set_bandwidth( double bandwidth, size_t chan )
   int ret;
   uint32_t actual;
 
-  ret = bladerf_set_bandwidth( this->dev, TX, (uint32_t)bandwidth, &actual );
+  ret = bladerf_set_bandwidth( this->dev, BLADERF_MODULE_TX, (uint32_t)bandwidth, &actual );
   if( ret ) {
     throw std::runtime_error( std::string(__FUNCTION__) + " " +
                               "could not set bandwidth, error " +
@@ -561,7 +561,7 @@ double bladerf_sink_c::get_bandwidth( size_t chan )
   uint32_t bandwidth;
   int ret;
 
-  ret = bladerf_get_bandwidth( this->dev, TX, &bandwidth );
+  ret = bladerf_get_bandwidth( this->dev, BLADERF_MODULE_TX, &bandwidth );
   if( ret ) {
     throw std::runtime_error( std::string(__FUNCTION__) + " " +
                               "could not get bandwidth, error " +
