@@ -123,7 +123,7 @@ osmosdr::freq_range_t bladerf_common::filter_bandwidths()
 
 std::vector< std::string > bladerf_common::devices()
 {
-  struct ::bladerf_devinfo *devices;
+  struct bladerf_devinfo *devices;
   ssize_t n_devices;
   std::vector< std::string > ret;
 
@@ -133,16 +133,20 @@ std::vector< std::string > bladerf_common::devices()
     for (ssize_t i = 0; i < n_devices; i++)  {
 
       std::stringstream s;
-      std::string dev(devices[i].path);
+      std::string serial(devices[i].serial);
 
-      s << "bladerf=" << dev.substr(dev.find_first_of("01234567890")) << ","
-        << "label='nuand bladeRF SN " << std::setfill('0') << std::setw(16)
-        << devices[i].serial << "'";
+      s << "bladerf=" << devices[i].instance << ","
+        << "label='nuand bladeRF";
+
+      if ( serial.length() )
+        s << " SN " << serial;
+
+      s << "'";
 
       ret.push_back(s.str());
     }
 
-    bladerf_free_device_list(devices, n_devices);
+    bladerf_free_device_list(devices);
   }
 
   return ret;
