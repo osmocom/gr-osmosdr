@@ -161,6 +161,26 @@ bladerf_source_c::bladerf_source_c (const std::string &args)
   /* Set the range of VGA2 VGA2GAIN[4:0], not recommended to be used above 30dB */
   this->vga2_range = osmosdr::gain_range_t( 0, 60, 3 );
 
+  if (dict.count("sampling"))
+  {
+    std::string sampling = dict["sampling"];
+
+    std::cerr << "Setting bladerf sampling to " << sampling << std::endl;
+    if( sampling == "internal") {
+      ret = bladerf_set_sampling( this->dev, BLADERF_SAMPLING_INTERNAL );
+      if ( ret != 0 )
+        std::cerr << "Problem while setting sampling mode " << ret << std::endl;
+
+    } else if( sampling == "external" ) {
+      ret = bladerf_set_sampling( this->dev, BLADERF_SAMPLING_EXTERNAL );
+      if ( ret != 0 )
+        std::cerr << "Problem while setting sampling mode " << ret << std::endl;
+    } else {
+        std::cerr << "Invalid sampling mode " << sampling << std::endl;
+    }
+  }
+
+
   ret = bladerf_enable_module(this->dev, BLADERF_MODULE_RX, true);
   if ( ret != 0 )
     std::cerr << "bladerf_enable_module has returned with " << ret << std::endl;
