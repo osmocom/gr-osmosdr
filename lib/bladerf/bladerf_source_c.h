@@ -25,8 +25,6 @@
 #include <gnuradio/block.h>
 #include <gnuradio/sync_block.h>
 
-#include <libbladeRF.h>
-
 #include "osmosdr/ranges.h"
 #include "source_iface.h"
 #include "bladerf_common.h"
@@ -108,14 +106,20 @@ public:
   double get_bandwidth( size_t chan = 0 );
   osmosdr::freq_range_t get_bandwidth_range( size_t chan = 0 );
 
-private:
-  static void read_task_dispatch(bladerf_source_c *obj);
+private: /* functions */
+  static void *stream_callback( struct bladerf *_dev,
+                                struct bladerf_stream *stream,
+                                struct bladerf_metadata *metadata,
+                                void *samples,
+                                size_t num_samples,
+                                void *user_data );
+
+  void *stream_task(void *samples, size_t num_samples);
+
   void read_task();
 
-  gr::thread::thread thread;
-  osmosdr::gain_range_t lna_range;
-  osmosdr::gain_range_t vga1_range;
-  osmosdr::gain_range_t vga2_range;
+private: /* members */
+  osmosdr::gain_range_t _lna_range;
 };
 
 #endif /* INCLUDED_BLADERF_SOURCE_C_H */

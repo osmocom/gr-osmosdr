@@ -43,17 +43,11 @@
 
 using namespace boost::assign;
 
-bladerf_common::bladerf_common() : running(true)
+bladerf_common::bladerf_common() :
+  _is_running(false)
 {
   const char *env_fifo_size;
   size_t fifo_size;
-
-  /* 1 Sample = i,q (2 int16_t's) */
-  this->raw_sample_buf = new int16_t[2 * BLADERF_SAMPLE_BLOCK_SIZE];
-  if (!raw_sample_buf) {
-    throw std::runtime_error( std::string(__FUNCTION__) +
-                              " has failed to allocate a raw sample buffer!" );
-  }
 
   env_fifo_size = getenv(BLADERF_FIFO_SIZE_ENV);
   fifo_size = BLADERF_SAMPLE_FIFO_SIZE;
@@ -75,16 +69,15 @@ bladerf_common::bladerf_common() : running(true)
     }
   }
 
-  this->sample_fifo = new boost::circular_buffer<gr_complex>(fifo_size);
-  if (!this->sample_fifo)
+  _fifo = new boost::circular_buffer<gr_complex>(fifo_size);
+  if (!_fifo)
     throw std::runtime_error( std::string(__FUNCTION__) +
                               " has failed to allocate a sample FIFO!" );
 }
 
 bladerf_common::~bladerf_common()
 {
-  delete[] this->raw_sample_buf;
-  delete this->sample_fifo;
+  delete _fifo;
 }
 
 osmosdr::freq_range_t bladerf_common::freq_range()
@@ -116,7 +109,7 @@ osmosdr::freq_range_t bladerf_common::filter_bandwidths()
       2.75, 3, 3.5, 4.375, 5, 6, 7, 10, 14;
 
   BOOST_FOREACH( double half_bw, half_bandwidths )
-    bandwidths += osmosdr::range_t( half_bw * 2.e6 );
+    bandwidths += osmosdr::range_t( half_bw * 2e6 );
 
   return bandwidths;
 }
@@ -129,9 +122,10 @@ std::vector< std::string > bladerf_common::devices()
 
   n_devices = bladerf_get_device_list(&devices);
 
-  if (n_devices > 0) {
-    for (ssize_t i = 0; i < n_devices; i++)  {
-
+  if (n_devices > 0)
+  {
+    for (ssize_t i = 0; i < n_devices; i++)
+    {
       std::stringstream s;
       std::string serial(devices[i].serial);
 
@@ -154,12 +148,14 @@ std::vector< std::string > bladerf_common::devices()
 
 bool bladerf_common::is_running()
 {
-  boost::shared_lock<boost::shared_mutex> lock(this->state_lock);
-  return this->running;
+  boost::shared_lock<boost::shared_mutex> lock(_state_lock);
+
+  return _is_running;
 }
 
-void bladerf_common::set_running(bool is_running)
+void bladerf_common::set_running( bool is_running )
 {
-  boost::unique_lock<boost::shared_mutex> lock(this->state_lock);
-  this->running = is_running;
+  boost::unique_lock<boost::shared_mutex> lock(_state_lock);
+
+  _is_running = is_running;
 }

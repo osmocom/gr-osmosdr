@@ -29,6 +29,7 @@
 #include <boost/thread/shared_mutex.hpp>
 #include <boost/thread/condition_variable.hpp>
 
+#include <gnuradio/thread/thread.h>
 #include <gnuradio/gr_complex.h>
 
 #include <libbladeRF.h>
@@ -52,7 +53,7 @@ class bladerf_common
 {
 public:
   bladerf_common();
-  ~bladerf_common();
+  virtual ~bladerf_common();
 
 protected:
   osmosdr::freq_range_t freq_range();
@@ -64,15 +65,24 @@ protected:
   bool is_running();
   void set_running(bool is_running);
 
-  bladerf *dev;
+  bladerf *_dev;
 
-  int16_t *raw_sample_buf;
-  boost::circular_buffer<gr_complex> *sample_fifo;
-  boost::mutex sample_fifo_lock;
-  boost::condition_variable samples_available;
+  void **_buffers;
+  struct bladerf_stream *_stream;
+  size_t _num_buffers;
+  size_t _buf_index;
+
+  gr::thread::thread _thread;
+
+  boost::circular_buffer<gr_complex> *_fifo;
+  boost::mutex _fifo_lock;
+  boost::condition_variable _samp_avail;
+
+  osmosdr::gain_range_t _vga1_range;
+  osmosdr::gain_range_t _vga2_range;
 private:
-  bool running;
-  boost::shared_mutex state_lock;
+  bool _is_running;
+  boost::shared_mutex _state_lock;
 };
 
 #endif
