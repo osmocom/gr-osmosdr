@@ -25,10 +25,9 @@
 #include <gr_block.h>
 #include <gr_sync_block.h>
 
-#include <libbladeRF.h>
-
 #include "osmosdr/osmosdr_ranges.h"
 #include "osmosdr_snk_iface.h"
+
 #include "bladerf_common.h"
 
 class bladerf_sink_c;
@@ -108,13 +107,20 @@ public:
   double get_bandwidth( size_t chan = 0 );
   osmosdr::freq_range_t get_bandwidth_range( size_t chan = 0 );
 
-private:
-  static void write_task_dispatch(bladerf_sink_c *obj);
+private: /* functions */
+  static void *stream_callback( struct bladerf *_dev,
+                                struct bladerf_stream *stream,
+                                struct bladerf_metadata *metadata,
+                                void *samples,
+                                size_t num_samples,
+                                void *user_data );
+
+  void *stream_task(void *samples, size_t num_samples);
+
   void write_task();
 
-  gruel::thread thread;
-  osmosdr::gain_range_t vga1_range;
-  osmosdr::gain_range_t vga2_range;
+private: /* members */
+
 };
 
 #endif /* INCLUDED_BLADERF_SINK_C_H */

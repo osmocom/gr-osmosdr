@@ -96,10 +96,23 @@ bladerf_source_c::bladerf_source_c (const std::string &args)
   device_name = boost::str(boost::format( "libusb:instance=%d" ) % device_number);
 
   /* Open a handle to the device */
-  ret = bladerf_open( &this->dev, NULL );
+  ret = bladerf_open( &_dev, device_name.c_str() );
   if ( ret != 0 ) {
     throw std::runtime_error( std::string(__FUNCTION__) + " " +
                               "failed to open bladeRF device " + device_name );
+  }
+
+  if (dict.count("fw"))
+  {
+    std::string fw = dict["fw"];
+
+    std::cerr << "Flashing firmware image " << fw << "..., DO NOT INTERRUPT!"
+              << std::endl;
+    ret = bladerf_flash_firmware( _dev, fw.c_str() );
+    if ( ret != 0 )
+      std::cerr << "bladerf_flash_firmware has failed with " << ret << std::endl;
+    else
+      std::cerr << "The firmware has been successfully flashed." << std::endl;
   }
 
   if (dict.count("fpga"))
@@ -107,59 +120,36 @@ bladerf_source_c::bladerf_source_c (const std::string &args)
     std::string fpga = dict["fpga"];
 
     std::cerr << "Loading FPGA bitstream " << fpga << "..." << std::endl;
-    ret = bladerf_load_fpga( this->dev, fpga.c_str() );
-    if ( ret != 0 )
-      std::cerr << "bladerf_load_fpga has returned with " << ret << std::endl;
+    ret = bladerf_load_fpga( _dev, fpga.c_str() );
+    if ( ret != 0 && ret != 1 )
+      std::cerr << "bladerf_load_fpga has failed with " << ret << std::endl;
     else
       std::cerr << "The FPGA bitstream has been successfully loaded." << std::endl;
   }
 
-  if (dict.count("fw"))
-  {
-    std::string fw = dict["fw"];
-
-    std::cerr << "Flashing firmware image " << fw << "..., "
-              << "DO NOT INTERRUPT!"
-              << std::endl;
-    ret = bladerf_flash_firmware( this->dev, fw.c_str() );
-    if ( ret != 0 )
-      std::cerr << "bladerf_flash_firmware has failed with " << ret << std::endl;
-    else
-      std::cerr << "The firmare has been successfully flashed, "
-                << "please power cycle the bladeRF before using it."
-                << std::endl;
-  }
-
   std::cerr << "Using nuand LLC bladeRF #" << device_number;
 
-  char serial[33];
-  if ( bladerf_get_serial( this->dev, serial ) == 0 )
+  char serial[BLADERF_SERIAL_LENGTH];
+  if ( bladerf_get_serial( _dev, serial ) == 0 )
     std::cerr << " SN " << serial;
 
   unsigned int major, minor;
-  if ( bladerf_get_fw_version( this->dev, &major, &minor) == 0 )
+  if ( bladerf_get_fw_version( _dev, &major, &minor) == 0 )
     std::cerr << " FW v" << major << "." << minor;
 
-  if ( bladerf_get_fpga_version( this->dev, &major, &minor) == 0 )
+  if ( bladerf_get_fpga_version( _dev, &major, &minor) == 0 )
     std::cerr << " FPGA v" << major << "." << minor;
 
   std::cerr << std::endl;
 
-  if ( bladerf_is_fpga_configured( this->dev ) != 1 )
+  if ( bladerf_is_fpga_configured( _dev ) != 1 )
   {
-    std::cerr << "ERROR: The FPGA is not configured! "
-              << "Use the device argument fpga=/path/to/the/bitstream.rbf to load it."
-              << std::endl;
+    std::ostringstream oss;
+    oss << "The FPGA is not configured! "
+        << "Provide device argument fpga=/path/to/the/bitstream.rbf to load it.";
+
+    throw std::runtime_error( oss.str() );
   }
-
-  /* Set the range of LNA, G_LNA_RXFE[1:0] */
-  this->lna_range = osmosdr::gain_range_t( 0, 6, 3 );
-
-  /* Set the range of VGA1, RFB_TIA_RXFE[6:0], nonlinear mapping done inside the lib */
-  this->vga1_range = osmosdr::gain_range_t( 5, 30, 1 );
-
-  /* Set the range of VGA2 VGA2GAIN[4:0], not recommended to be used above 30dB */
-  this->vga2_range = osmosdr::gain_range_t( 0, 60, 3 );
 
   if (dict.count("sampling"))
   {
@@ -167,12 +157,11 @@ bladerf_source_c::bladerf_source_c (const std::string &args)
 
     std::cerr << "Setting bladerf sampling to " << sampling << std::endl;
     if( sampling == "internal") {
-      ret = bladerf_set_sampling( this->dev, BLADERF_SAMPLING_INTERNAL );
+      ret = bladerf_set_sampling( _dev, BLADERF_SAMPLING_INTERNAL );
       if ( ret != 0 )
         std::cerr << "Problem while setting sampling mode " << ret << std::endl;
-
     } else if( sampling == "external" ) {
-      ret = bladerf_set_sampling( this->dev, BLADERF_SAMPLING_EXTERNAL );
+      ret = bladerf_set_sampling( _dev, BLADERF_SAMPLING_EXTERNAL );
       if ( ret != 0 )
         std::cerr << "Problem while setting sampling mode " << ret << std::endl;
     } else {
@@ -180,12 +169,31 @@ bladerf_source_c::bladerf_source_c (const std::string &args)
     }
   }
 
+  /* Set the range of LNA, G_LNA_RXFE[1:0] */
+  _lna_range = osmosdr::gain_range_t( 0, 6, 3 );
 
-  ret = bladerf_enable_module(this->dev, BLADERF_MODULE_RX, true);
+  /* Set the range of VGA1, RFB_TIA_RXFE[6:0], nonlinear mapping done inside the lib */
+  _vga1_range = osmosdr::gain_range_t( 5, 30, 1 );
+
+  /* Set the range of VGA2 VGA2GAIN[4:0], not recommended to be used above 30dB */
+  _vga2_range = osmosdr::gain_range_t( 0, 60, 3 );
+
+  _buf_index = 0;
+  _num_buffers = 8; /* TODO: make it an argument */
+  const size_t samp_per_buf = 1024 * 10; /* TODO: make it an argument */
+
+  /* Initialize the stream */
+  ret = bladerf_init_stream( &_stream, _dev, stream_callback,
+                             &_buffers, _num_buffers, BLADERF_FORMAT_SC16_Q12,
+                             samp_per_buf, _num_buffers, this );
   if ( ret != 0 )
-    std::cerr << "bladerf_enable_module has returned with " << ret << std::endl;
+    std::cerr << "bladerf_init_stream has failed with " << ret << std::endl;
 
-  this->thread = gruel::thread(read_task_dispatch, this);
+  ret = bladerf_enable_module( _dev, BLADERF_MODULE_RX, true );
+  if ( ret != 0 )
+    std::cerr << "bladerf_enable_module has failed with " << ret << std::endl;
+
+  _thread = gruel::thread( boost::bind(&bladerf_source_c::read_task, this) );
 }
 
 /*
@@ -195,113 +203,121 @@ bladerf_source_c::~bladerf_source_c ()
 {
   int ret;
 
-  this->set_running(false);
-  this->thread.join();
+  set_running(false);
+  _thread.join();
 
-  ret = bladerf_enable_module(this->dev, BLADERF_MODULE_RX, false);
+  ret = bladerf_enable_module( _dev, BLADERF_MODULE_RX, false );
   if ( ret != 0 )
-    std::cerr << "bladerf_enable_module has returned with " << ret << std::endl;
+    std::cerr << "bladerf_enable_module has failed with " << ret << std::endl;
+
+  /* Release stream resources */
+  bladerf_deinit_stream(_stream);
 
   /* Close the device */
-  bladerf_close( this->dev );
+  bladerf_close( _dev );
 }
 
-void bladerf_source_c::read_task_dispatch(bladerf_source_c *obj)
+void *bladerf_source_c::stream_callback( struct bladerf *dev,
+                                         struct bladerf_stream *stream,
+                                         struct bladerf_metadata *metadata,
+                                         void *samples,
+                                         size_t num_samples,
+                                         void *user_data )
 {
-  obj->read_task();
+  bladerf_source_c *obj = (bladerf_source_c *) user_data;
+
+  if ( ! obj->is_running() )
+    return NULL;
+
+  return obj->stream_task( samples, num_samples );
+}
+
+/* Convert & push samples to the sample fifo */
+void *bladerf_source_c::stream_task( void *samples, size_t num_samples )
+{
+  size_t i, n_avail, to_copy;
+  int16_t *sample = (int16_t *)samples;
+  void *ret;
+
+  ret = _buffers[_buf_index];
+  _buf_index = (_buf_index + 1) % _num_buffers;
+
+  _fifo_lock.lock();
+
+  n_avail = _fifo->capacity() - _fifo->size();
+  to_copy = (n_avail < num_samples ? n_avail : num_samples);
+
+  for(i = 0; i < to_copy; i++ ) {
+    /* Mask valid bits only */
+    *(sample) &= 0xfff;
+    *(sample+1) &= 0xfff;
+
+    /* Sign extend the 12-bit IQ values, if needed */
+    if( (*sample) & 0x800 ) *(sample) |= 0xf000;
+    if( *(sample+1) & 0x800 ) *(sample+1) |= 0xf000;
+
+    /* Push sample to the fifo */
+    _fifo->push_back( gr_complex( *sample * (1.0f/2048.0f),
+                                  *(sample+1) * (1.0f/2048.0f) ) );
+
+    /* offset to the next I+Q sample */
+    sample += 2;
+  }
+
+  _fifo_lock.unlock();
+
+  /* We have made some new samples available to the consumer in work() */
+  if (to_copy) {
+    //std::cerr << "+" << std::flush;
+    _samp_avail.notify_one();
+  }
+
+  /* Indicate overrun, if neccesary */
+  if (to_copy < num_samples)
+    std::cerr << "O" << std::flush;
+
+  return ret;
 }
 
 void bladerf_source_c::read_task()
 {
-  int16_t si, sq, *next_val;
-  ssize_t n_samples;
-  size_t n_avail, to_copy;
+  int status;
 
-  while ( this->is_running() )
-  {
+  set_running( true );
 
-    n_samples = bladerf_rx(this->dev, BLADERF_FORMAT_SC16_Q12, this->raw_sample_buf,
-                                 BLADERF_SAMPLE_BLOCK_SIZE, NULL);
+  /* Start stream and stay there until we kill the stream */
+  status = bladerf_stream(_stream, BLADERF_MODULE_RX);
 
-    if (n_samples < 0) {
-      std::cerr << "Failed to read samples: "
-                << bladerf_strerror(n_samples) << std::endl;
-      this->set_running(false);
-    } else {
-      if (n_samples != BLADERF_SAMPLE_BLOCK_SIZE) {
-        if (n_samples > BLADERF_SAMPLE_BLOCK_SIZE) {
-          std::cerr << "Warning: received bloated sample block of "
-                    << n_samples << " bytes!"<< std::endl;
-        } else {
-          std::cerr << "Warning: received truncated sample block of "
-                    << n_samples << " bytes!"<< std::endl;
-        }
-      } else {
+  if (status < 0)
+      std::cerr << "Source stream error: " << bladerf_strerror(status) << std::endl;
 
-        //std::cerr << "+" << std::flush;
-
-        next_val = this->raw_sample_buf;
-
-        this->sample_fifo_lock.lock();
-        n_avail = this->sample_fifo->capacity() - this->sample_fifo->size();
-        to_copy = (n_avail < (size_t)n_samples ? n_avail : (size_t)n_samples);
-
-        for (size_t i = 0; i < to_copy; ++i) {
-          si = *next_val++ & 0xfff;
-          sq = *next_val++ & 0xfff;
-
-          /* Sign extend the 12-bit IQ values, if needed */
-          if( si & 0x800 ) si |= 0xf000;
-          if( sq & 0x800 ) sq |= 0xf000;
-
-          gr_complex sample((float)si * (1.0f/2048.0f),
-                            (float)sq * (1.0f/2048.0f));
-
-          this->sample_fifo->push_back(sample);
-        }
-
-        this->sample_fifo_lock.unlock();
-
-        /* We have made some new samples available to the consumer in work() */
-        if (to_copy) {
-          this->samples_available.notify_one();
-        }
-
-        /* Indicate overrun, if neccesary */
-        if (to_copy < (size_t)n_samples) {
-          std::cerr << "O" << std::flush;
-        }
-      }
-    }
-
-  }
+  set_running( false );
 }
 
-/* Main work function, pull samples from the driver */
+/* Main work function, pull samples from the sample fifo */
 int bladerf_source_c::work( int noutput_items,
                             gr_vector_const_void_star &input_items,
                             gr_vector_void_star &output_items )
 {
-  int n_samples_avail;
-
-  if ( ! this->is_running() )
+  if ( ! is_running() )
     return WORK_DONE;
 
-  if( noutput_items >= 0 ) {
+  if( noutput_items > 0 ) {
     gr_complex *out = (gr_complex *)output_items[0];
-    boost::unique_lock<boost::mutex> lock(this->sample_fifo_lock);
+
+    boost::unique_lock<boost::mutex> lock(_fifo_lock);
 
     /* Wait until we have the requested number of samples */
-    n_samples_avail = this->sample_fifo->size();
+    int n_samples_avail = _fifo->size();
 
     while (n_samples_avail < noutput_items) {
-      this->samples_available.wait(lock);
-      n_samples_avail = this->sample_fifo->size();
+      _samp_avail.wait(lock);
+      n_samples_avail = _fifo->size();
     }
 
     for(int i = 0; i < noutput_items; ++i) {
-      out[i] = this->sample_fifo->at(0);
-      this->sample_fifo->pop_front();
+      out[i] = _fifo->at(0);
+      _fifo->pop_front();
     }
 
     //std::cerr << "-" << std::flush;
@@ -323,7 +339,7 @@ size_t bladerf_source_c::get_num_channels()
 
 osmosdr::meta_range_t bladerf_source_c::get_sample_rates()
 {
-  return this->sample_rates();
+  return sample_rates();
 }
 
 double bladerf_source_c::set_sample_rate( double rate )
@@ -335,7 +351,7 @@ double bladerf_source_c::set_sample_rate( double rate )
   /* Check to see if the sample rate is an integer */
   if( (uint32_t)round(rate) == (uint32_t)rate )
   {
-    ret = bladerf_set_sample_rate( this->dev, BLADERF_MODULE_RX, (uint32_t)rate, &actual );
+    ret = bladerf_set_sample_rate( _dev, BLADERF_MODULE_RX, (uint32_t)rate, &actual );
     if( ret ) {
       throw std::runtime_error( std::string(__FUNCTION__) + " " +
                                 "has failed to set integer rate, error " +
@@ -343,7 +359,7 @@ double bladerf_source_c::set_sample_rate( double rate )
     }
   } else {
     /* TODO: Fractional sample rate */
-    ret = bladerf_set_sample_rate( this->dev, BLADERF_MODULE_RX, (uint32_t)rate, &actual );
+    ret = bladerf_set_sample_rate( _dev, BLADERF_MODULE_RX, (uint32_t)rate, &actual );
     if( ret ) {
       throw std::runtime_error( std::string(__FUNCTION__) + " " +
                                 "has failed to set fractional rate, error " +
@@ -359,7 +375,7 @@ double bladerf_source_c::get_sample_rate()
   int ret;
   unsigned int rate = 0;
 
-  ret = bladerf_get_sample_rate( this->dev, BLADERF_MODULE_RX, &rate );
+  ret = bladerf_get_sample_rate( _dev, BLADERF_MODULE_RX, &rate );
   if( ret ) {
     throw std::runtime_error( std::string(__FUNCTION__) + " " +
                               "has failed to get sample rate, error " +
@@ -371,7 +387,7 @@ double bladerf_source_c::get_sample_rate()
 
 osmosdr::freq_range_t bladerf_source_c::get_freq_range( size_t chan )
 {
-  return this->freq_range();
+  return freq_range();
 }
 
 double bladerf_source_c::set_center_freq( double freq, size_t chan )
@@ -383,7 +399,7 @@ double bladerf_source_c::set_center_freq( double freq, size_t chan )
       freq > get_freq_range( chan ).stop() ) {
     std::cerr << "Failed to set out of bound frequency: " << freq << std::endl;
   } else {
-    ret = bladerf_set_frequency( this->dev, BLADERF_MODULE_RX, (uint32_t)freq );
+    ret = bladerf_set_frequency( _dev, BLADERF_MODULE_RX, (uint32_t)freq );
     if( ret ) {
       throw std::runtime_error( std::string(__FUNCTION__) + " " +
                                 "failed to set center frequency " +
@@ -401,7 +417,7 @@ double bladerf_source_c::get_center_freq( size_t chan )
   uint32_t freq;
   int ret;
 
-  ret = bladerf_get_frequency( this->dev, BLADERF_MODULE_RX, &freq );
+  ret = bladerf_get_frequency( _dev, BLADERF_MODULE_RX, &freq );
   if( ret ) {
     throw std::runtime_error( std::string(__FUNCTION__) + " " +
                               "failed to get center frequency, error " +
@@ -444,11 +460,11 @@ osmosdr::gain_range_t bladerf_source_c::get_gain_range( const std::string & name
   osmosdr::gain_range_t range;
 
   if( name == "LNA" ) {
-    range = this->lna_range;
+    range = _lna_range;
   } else if( name == "VGA1" ) {
-    range = this->vga1_range;
+    range = _vga1_range;
   } else if( name == "VGA2" ) {
-    range = this->vga2_range;
+    range = _vga2_range;
   } else {
     throw std::runtime_error( std::string(__FUNCTION__) + " " +
                               "requested an invalid gain element " + name );
@@ -492,11 +508,11 @@ double bladerf_source_c::set_gain( double gain, const std::string & name, size_t
                 << "setting to LNA_MAX (6dB)" << std::endl;
       g = BLADERF_LNA_GAIN_MAX;
     }
-    ret = bladerf_set_lna_gain( this->dev, g );
+    ret = bladerf_set_lna_gain( _dev, g );
   } else if( name == "VGA1" ) {
-    ret = bladerf_set_rxvga1( this->dev, (int)gain );
+    ret = bladerf_set_rxvga1( _dev, (int)gain );
   } else if( name == "VGA2" ) {
-    ret = bladerf_set_rxvga2( this->dev, (int)gain );
+    ret = bladerf_set_rxvga2( _dev, (int)gain );
   } else {
     throw std::runtime_error( std::string(__FUNCTION__) + " " +
                               "requested to set the gain "
@@ -526,12 +542,12 @@ double bladerf_source_c::get_gain( const std::string & name, size_t chan )
 
   if( name == "LNA" ) {
     bladerf_lna_gain lna_g;
-    ret = bladerf_get_lna_gain( this->dev, &lna_g );
+    ret = bladerf_get_lna_gain( _dev, &lna_g );
     g = lna_g == BLADERF_LNA_GAIN_BYPASS ? 0 : lna_g == BLADERF_LNA_GAIN_MID ? 3 : 6;
   } else if( name == "VGA1" ) {
-    ret = bladerf_get_rxvga1( this->dev, &g );
+    ret = bladerf_get_rxvga1( _dev, &g );
   } else if( name == "VGA2" ) {
-    ret = bladerf_get_rxvga2( this->dev, &g );
+    ret = bladerf_get_rxvga2( _dev, &g );
   } else {
     throw std::runtime_error( std::string(__FUNCTION__) + " " +
                               "requested to get the gain "
@@ -584,14 +600,14 @@ double bladerf_source_c::set_bandwidth( double bandwidth, size_t chan )
   int ret;
   uint32_t actual;
 
-  ret = bladerf_set_bandwidth( this->dev, BLADERF_MODULE_RX, (uint32_t)bandwidth, &actual );
+  ret = bladerf_set_bandwidth( _dev, BLADERF_MODULE_RX, (uint32_t)bandwidth, &actual );
   if( ret ) {
     throw std::runtime_error( std::string(__FUNCTION__) + " " +
                               "could not set bandwidth, error " +
                               boost::lexical_cast<std::string>(ret) );
   }
 
-  return this->get_bandwidth();
+  return get_bandwidth();
 }
 
 double bladerf_source_c::get_bandwidth( size_t chan )
@@ -599,7 +615,7 @@ double bladerf_source_c::get_bandwidth( size_t chan )
   uint32_t bandwidth;
   int ret;
 
-  ret = bladerf_get_bandwidth( this->dev, BLADERF_MODULE_RX, &bandwidth );
+  ret = bladerf_get_bandwidth( _dev, BLADERF_MODULE_RX, &bandwidth );
   if( ret ) {
     throw std::runtime_error( std::string(__FUNCTION__) + " " +
                               "could not get bandwidth, error " +
@@ -611,5 +627,5 @@ double bladerf_source_c::get_bandwidth( size_t chan )
 
 osmosdr::freq_range_t bladerf_source_c::get_bandwidth_range( size_t chan )
 {
-  return this->filter_bandwidths();
+  return filter_bandwidths();
 }
