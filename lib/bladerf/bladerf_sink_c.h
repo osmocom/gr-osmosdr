@@ -115,12 +115,35 @@ private: /* functions */
                                 size_t num_samples,
                                 void *user_data );
 
-  void *stream_task(void *samples, size_t num_samples);
+  void *get_next_buffer(void *samples, size_t num_samples);
 
   void write_task();
 
 private: /* members */
 
+  size_t _samples_per_buffer;
+
+  /* Array denoting whether each buffer is filled with data and ready to TX */
+  bool *_filled;
+
+  /* Acquire while updating _filled, and signalling/waiting on
+   * _buffer_emptied and _samples_avail */
+  boost::mutex _buf_status_lock;
+
+  /* wait() may block waiting for the TX callbacks to make a buffer availble.
+   * The callback uses this to signal when it has emptied out a buffer. */
+  boost::condition_variable _buffer_emptied;
+
+  /* The parent's _samples_avail is used to denote that work() has
+   * filled a buffer, unblocking a TX callback that's waiting for samples */
+
+
+  /* These values are only to be updated and accessed from within work() */
+  int16_t *_next_value; /* I/Q value insertion point in current buffer */
+  size_t _samples_left; /* # of samples left to fill  in our current buffer */
+
+  /* This should only be accessed and updated from TX callbacks */
+  size_t _next_to_tx;   /* Next buffer to transmit */
 };
 
 #endif /* INCLUDED_BLADERF_SINK_C_H */
