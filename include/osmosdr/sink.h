@@ -254,7 +254,7 @@ public:
 
   /*!
    * Set the bandpass filter on the radio frontend.
-   * \param bandwidth the filter bandwidth in Hz
+   * \param bandwidth the filter bandwidth in Hz, set to 0 for automatic selection
    * \param chan the channel index 0 to N-1
    * \return the actual filter bandwidth in Hz
    */
