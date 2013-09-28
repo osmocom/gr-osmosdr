@@ -632,6 +632,9 @@ double bladerf_sink_c::set_bandwidth( double bandwidth, size_t chan )
   int ret;
   uint32_t actual;
 
+  if ( bandwidth == 0.0 ) /* bandwidth of 0 means automatic filter selection */
+    bandwidth = get_sample_rate() * 0.75; /* select narrower filters to prevent aliasing */
+
   ret = bladerf_set_bandwidth( _dev, BLADERF_MODULE_TX, (uint32_t)bandwidth, &actual );
   if( ret ) {
     throw std::runtime_error( std::string(__FUNCTION__) + " " +
