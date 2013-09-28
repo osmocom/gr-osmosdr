@@ -166,7 +166,7 @@ hackrf_source_c::hackrf_source_c (const std::string &args)
   set_sample_rate( get_sample_rates().start() );
   set_bandwidth( 0 );
 
-  set_gain( 0 ); /* disable AMP gain stage by default */
+  set_gain( 14 ); /* enable AMP gain stage by default */
 
   set_if_gain( 16 ); /* preset to a reasonable default (non-GRC use case) */
 
