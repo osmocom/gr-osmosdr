@@ -121,6 +121,7 @@ class app_top_block(stdgui2.std_top_block, pubsub):
             options.center_freq = float(r.start()+r.stop())/2
 
         input_rate = self.src.set_sample_rate(options.samp_rate)
+        self.src.set_bandwidth(input_rate)
 
         self.src.set_gain(options.gain)
 
@@ -410,6 +411,12 @@ class app_top_block(stdgui2.std_top_block, pubsub):
         self.scope.set_sample_rate(samp_rate)
         if self._verbose:
             print "Set sample rate to:", samp_rate
+
+        try:
+            self[BWIDTH_KEY] = self.set_bandwidth(samp_rate)
+        except RuntimeError:
+            pass
+
         return samp_rate
 
     def get_gain_names(self):
@@ -435,6 +442,8 @@ class app_top_block(stdgui2.std_top_block, pubsub):
 
             if self._verbose:
                 print "Set bandwidth to:", bw
+
+        return bw
 
     def set_freq_from_callback(self, freq):
         freq = self.src.set_center_freq(freq)
