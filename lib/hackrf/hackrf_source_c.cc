@@ -93,7 +93,8 @@ hackrf_source_c::hackrf_source_c (const std::string &args)
     _auto_gain(false),
     _amp_gain(0),
     _lna_gain(0),
-    _vga_gain(0)
+    _vga_gain(0),
+    _bandwidth(0)
 {
   int ret;
 
@@ -162,8 +163,8 @@ hackrf_source_c::hackrf_source_c (const std::string &args)
               << std::endl;
   }
 
-//  set_sample_rate( get_sample_rates().start() );
-  set_sample_rate( 10e6 );
+  set_sample_rate( get_sample_rates().start() );
+  set_bandwidth( 0 );
 
   set_gain( 0 ); /* disable AMP gain stage by default */
 
@@ -387,7 +388,7 @@ double hackrf_source_c::set_sample_rate( double rate )
     ret = hackrf_set_sample_rate( _dev, rate );
     if ( HACKRF_SUCCESS == ret ) {
       _sample_rate = rate;
-      set_bandwidth( 0.0 ); /* bandwidth of 0 means automatic filter selection */
+      //set_bandwidth( 0.0 ); /* bandwidth of 0 means automatic filter selection */
     } else {
       HACKRF_THROW_ON_ERROR( ret, HACKRF_FUNC_STR( "hackrf_set_sample_rate", rate ) )
     }
