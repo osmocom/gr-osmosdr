@@ -101,14 +101,18 @@ rtl_source_c::rtl_source_c (const std::string &args)
   dict_t dict = params_to_dict(args);
 
   if (dict.count("rtl")) {
-    if ( (index = rtlsdr_get_index_by_serial( dict["rtl"].c_str() )) >= 0 ) {
+    std::string value = dict["rtl"];
+
+    if ( (index = rtlsdr_get_index_by_serial( value.c_str() )) >= 0 ) {
       dev_index = index; /* use the resolved index value */
     } else { /* use the numeric value of the argument */
-      try {
-        dev_index = boost::lexical_cast< unsigned int >( dict["rtl"] );
-      } catch ( std::exception &ex ) {
-        throw std::runtime_error(
-              "Failed to use '" + dict["rtl"] + "' as index: " + ex.what());
+      if ( value.length() ) {
+        try {
+          dev_index = boost::lexical_cast< unsigned int >( value );
+        } catch ( std::exception &ex ) {
+          throw std::runtime_error(
+                "Failed to use '" + value + "' as index: " + ex.what());
+        }
       }
     }
   }
