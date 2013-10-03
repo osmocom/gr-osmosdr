@@ -71,6 +71,7 @@ public:
 private:
   std::vector< sink_iface * > _devs;
 
+  /* cache to prevent multiple device calls with the same value coming from grc */
   double _sample_rate;
   std::map< size_t, double > _center_freq;
   std::map< size_t, double > _freq_corr;
