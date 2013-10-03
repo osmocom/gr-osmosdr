@@ -497,17 +497,14 @@ double bladerf_source_c::set_gain( double gain, const std::string & name, size_t
 
   if( name == "LNA" ) {
     bladerf_lna_gain g;
-    if( gain == 0.0 ) {
-      g = BLADERF_LNA_GAIN_BYPASS;
-    } else if( gain == 3.0 ) {
+
+    if ( gain >= 6.0f )
+      g = BLADERF_LNA_GAIN_MAX;
+    else if ( gain >= 3.0f )
       g = BLADERF_LNA_GAIN_MID;
-    } else if( gain == 6.0 ) {
-      g = BLADERF_LNA_GAIN_MAX;
-    } else {
-      std::cerr << "Invalid LNA gain requested: " << gain << ", "
-                << "setting to LNA_MAX (6dB)" << std::endl;
-      g = BLADERF_LNA_GAIN_MAX;
-    }
+    else /* gain < 3.0f */
+      g = BLADERF_LNA_GAIN_BYPASS;
+
     ret = bladerf_set_lna_gain( _dev, g );
   } else if( name == "VGA1" ) {
     ret = bladerf_set_rxvga1( _dev, (int)gain );
