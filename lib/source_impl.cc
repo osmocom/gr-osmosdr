@@ -722,7 +722,7 @@ double source_impl::set_bandwidth( double bandwidth, size_t chan )
   BOOST_FOREACH( source_iface *dev, _devs )
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
       if ( chan == channel++ ) {
-        if ( _bandwidth[ chan ] != bandwidth ) {
+        if ( _bandwidth[ chan ] != bandwidth || 0.0f == bandwidth ) {
           _bandwidth[ chan ] = bandwidth;
           return dev->set_bandwidth( bandwidth, dev_chan );
         } else { return _bandwidth[ chan ]; }
