@@ -65,7 +65,8 @@ osmosdr::sink::make( const std::string &args )
 sink_impl::sink_impl( const std::string &args )
   : gr::hier_block2 ("sink_impl",
         args_to_io_signature(args),
-        gr::io_signature::make(0, 0, 0))
+        gr::io_signature::make(0, 0, 0)),
+    _sample_rate(NAN)
 {
   size_t channel = 0;
   bool device_specified = false;
