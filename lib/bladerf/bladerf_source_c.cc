@@ -133,12 +133,12 @@ bladerf_source_c::bladerf_source_c (const std::string &args)
   if ( bladerf_get_serial( _dev, serial ) == 0 )
     std::cerr << " SN " << serial;
 
-  unsigned int major, minor;
-  if ( bladerf_get_fw_version( _dev, &major, &minor) == 0 )
-    std::cerr << " FW v" << major << "." << minor;
+  struct bladerf_version ver;
+  if ( bladerf_fw_version( _dev, &ver ) == 0 )
+    std::cerr << " FW v" << ver.major << "." << ver.minor << "." << ver.patch;
 
-  if ( bladerf_get_fpga_version( _dev, &major, &minor) == 0 )
-    std::cerr << " FPGA v" << major << "." << minor;
+  if ( bladerf_fpga_version( _dev, &ver ) == 0 )
+    std::cerr << " FPGA v" << ver.major << "." << ver.minor << "." << ver.patch;
 
   std::cerr << std::endl;
 
