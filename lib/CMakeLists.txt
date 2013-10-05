@@ -55,24 +55,12 @@ GR_OSMOSDR_APPEND_LIBS(
 GR_REGISTER_COMPONENT("Built-in GNU Radio runtime" ENABLE_RUNTIME RUNTIME_MODE)
 if(ENABLE_RUNTIME)
 
-set(GNURADIO_BLOCKS_FOUND TRUE)
-set(GNURADIO_UHD_FOUND TRUE)
-
-ADD_DEFINITIONS(-Dgnuradio_runtime_EXPORTS)
-ADD_DEFINITIONS(-Dgnuradio_blocks_EXPORTS)
-ADD_DEFINITIONS(-Dgnuradio_uhd_EXPORTS)
-
 message(STATUS "")
 INCLUDE(${CMAKE_CURRENT_SOURCE_DIR}/ConfigChecks.cmake)
 
 include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR}/runtime)
 
 GR_OSMOSDR_APPEND_SRCS(
-    runtime/blocks/file_source_impl.cc
-    runtime/blocks/throttle_impl.cc
-    runtime/blocks/null_sink_impl.cc
-    runtime/blocks/null_source_impl.cc
-
     runtime/math/fast_atan2f.cc
     runtime/math/fxpt.cc
     runtime/math/random.cc
@@ -81,9 +69,6 @@ GR_OSMOSDR_APPEND_SRCS(
     runtime/thread/thread.cc
     runtime/thread/thread_body_wrapper.cc
     runtime/thread/thread_group.cc
-
-    runtime/uhd/usrp_sink_impl.cc
-    runtime/uhd/usrp_source_impl.cc
 
     runtime/basic_block.cc
     runtime/block.cc
@@ -125,6 +110,30 @@ GR_OSMOSDR_APPEND_SRCS(
     runtime/vmcircbuf_prefs.cc
     runtime/vmcircbuf_sysv_shm.cc
 )
+
+ADD_DEFINITIONS(-Dgnuradio_runtime_EXPORTS)
+
+GR_OSMOSDR_APPEND_SRCS(
+    runtime/blocks/file_source_impl.cc
+    runtime/blocks/throttle_impl.cc
+    runtime/blocks/null_sink_impl.cc
+    runtime/blocks/null_source_impl.cc
+)
+
+set(GNURADIO_BLOCKS_FOUND TRUE)
+ADD_DEFINITIONS(-Dgnuradio_blocks_EXPORTS)
+
+if(UHD_FOUND)
+
+GR_OSMOSDR_APPEND_SRCS(
+    runtime/uhd/usrp_sink_impl.cc
+    runtime/uhd/usrp_source_impl.cc
+)
+
+set(GNURADIO_UHD_FOUND TRUE)
+ADD_DEFINITIONS(-Dgnuradio_uhd_EXPORTS)
+
+endif(UHD_FOUND)
 
 ########################################################################
 # Handle the generated constants
