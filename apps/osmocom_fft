@@ -72,6 +72,8 @@ class app_top_block(stdgui2.std_top_block, pubsub):
                           help="Set gain in dB (default is midpoint)")
         parser.add_option("-W", "--waterfall", action="store_true", default=False,
                           help="Enable waterfall display")
+        parser.add_option("-F", "--fosphor", action="store_true", default=False,
+                          help="Enable fosphor display")
         parser.add_option("-S", "--oscilloscope", action="store_true", default=False,
                           help="Enable oscilloscope display")
         parser.add_option("", "--avg-alpha", type="eng_float", default=1e-1,
@@ -163,7 +165,10 @@ class app_top_block(stdgui2.std_top_block, pubsub):
             #print key, "=", self[key]
             #self[key] = self[key]
 
-        if options.waterfall:
+        if options.fosphor:
+            from gnuradio import fosphor
+            self.scope = fosphor.glfw_sink_c()
+        elif options.waterfall:
             self.scope = waterfallsink2.waterfall_sink_c (panel,
                                                           fft_size=options.fft_size,
                                                           sample_rate=input_rate,
@@ -206,8 +211,9 @@ class app_top_block(stdgui2.std_top_block, pubsub):
 
     def _build_gui(self, vbox):
 
-        vbox.Add(self.scope.win, 0, wx.EXPAND)
-        vbox.AddSpacer(3)
+        if hasattr(self.scope, 'win'):
+            vbox.Add(self.scope.win, 0, wx.EXPAND)
+            vbox.AddSpacer(3)
 
         # add control area at the bottom
         self.myform = myform = form.form()
@@ -417,7 +423,8 @@ class app_top_block(stdgui2.std_top_block, pubsub):
 
     def set_sample_rate(self, samp_rate):
         samp_rate = self.src.set_sample_rate(samp_rate)
-        self.scope.set_sample_rate(samp_rate)
+        if hasattr(self.scope, 'set_sample_rate'):
+            self.scope.set_sample_rate(samp_rate)
         if self._verbose:
             print "Set sample rate to:", samp_rate
 
@@ -469,7 +476,7 @@ class app_top_block(stdgui2.std_top_block, pubsub):
 
         freq = self.src.set_center_freq(freq)
 
-        if not self.options.oscilloscope:
+        if hasattr(self.scope, 'set_baseband_freq'):
             self.scope.set_baseband_freq(freq)
 
         if freq is not None:
