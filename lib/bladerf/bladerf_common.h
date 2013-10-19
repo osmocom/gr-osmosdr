@@ -49,6 +49,8 @@
 
 #define BLADERF_SAMPLE_FIFO_MIN_SIZE  (3 * BLADERF_SAMPLE_BLOCK_SIZE)
 
+typedef boost::shared_ptr<struct bladerf> bladerf_sptr;
+
 class bladerf_common
 {
 public:
@@ -56,6 +58,8 @@ public:
   virtual ~bladerf_common();
 
 protected:
+  bladerf_sptr open(const std::string &device_name);
+
   osmosdr::freq_range_t freq_range();
   osmosdr::meta_range_t sample_rates();
   osmosdr::freq_range_t filter_bandwidths();
@@ -65,7 +69,7 @@ protected:
   bool is_running();
   void set_running(bool is_running);
 
-  bladerf *_dev;
+  bladerf_sptr _dev;
 
   void **_buffers;
   struct bladerf_stream *_stream;
@@ -83,6 +87,12 @@ protected:
 private:
   bool _is_running;
   boost::shared_mutex _state_lock;
+
+  static boost::mutex _devs_mutex;
+  static std::list<boost::weak_ptr<struct bladerf> > _devs;
+
+  static bladerf_sptr get_cached_device(struct bladerf_devinfo devinfo);
+  static void close(void *dev); /* called by shared_ptr */
 };
 
 #endif

@@ -37,4 +37,3 @@ set(bladerf_srcs
 ########################################################################
 list(APPEND gr_osmosdr_srcs ${bladerf_srcs})
 list(APPEND gr_osmosdr_libs ${LIBBLADERF_LIBRARIES})
-
