@@ -56,10 +56,14 @@ ENDIF()
    message(FATAL_ERROR "Option ${USE_SIMD} not supported, valid entries are ${USE_SIMD_VALUES}")
  ENDIF()
 
-IF(CMAKE_COMPILER_IS_GNUCXX)
+IF(CMAKE_CXX_COMPILER MATCHES ".*clang")
+    SET(CMAKE_COMPILER_IS_CLANGXX 1)
+ENDIF()
+
+IF(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_COMPILER_IS_CLANGXX)
     ADD_DEFINITIONS(-Wall)
     ADD_DEFINITIONS(-Wextra)
-    ADD_DEFINITIONS(-Wno-unused)
+    ADD_DEFINITIONS(-Wno-unused-parameter)
     ADD_DEFINITIONS(-Wsign-compare)
     #ADD_DEFINITIONS(-Wconversion)
     #ADD_DEFINITIONS(-pedantic)
@@ -86,7 +90,7 @@ ELSEIF(MSVC)
         ADD_DEFINITIONS(/arch:AVX)
         ADD_DEFINITIONS(-DUSE_AVX)
     ENDIF()
-ENDIF(CMAKE_COMPILER_IS_GNUCXX)
+ENDIF()
 
 ########################################################################
 # Setup boost
