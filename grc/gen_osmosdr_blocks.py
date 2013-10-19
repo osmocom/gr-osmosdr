@@ -122,10 +122,11 @@ While primarily being developed for the OsmoSDR hardware, this block as well sup
  * RTL-TCP spectrum server (see librtlsdr project)
  * MSi2500 based DVB-T dongles through libmirisdr
  * gnuradio .cfile input through libgnuradio-blocks
+ * RFSPACE NetSDR via direct TCP/UDP communication
 #end if
- * Ettus USRP Devices through Ettus UHD library
  * Great Scott Gadgets HackRF through libhackrf
  * Nuand LLC bladeRF through libbladeRF library
+ * Ettus USRP Devices through Ettus UHD library
 
 By using the osmocom $sourk block you can take advantage of a common software api in your application(s) independent of the underlying radio hardware.
 
@@ -151,10 +152,11 @@ Lines ending with ... mean it's possible to bind devices together by specifying 
   rtl_tcp=127.0.0.1:1234[,psize=16384][,direct_samp=0|1|2][,offset_tune=0|1] ...
   osmosdr=0[,buffers=32][,buflen=N*512] ...
   file='/path/to/your file',rate=1e6[,freq=100e6][,repeat=true][,throttle=true] ...
+  netsdr=127.0.0.1:50000[,nchan=1]
 #end if
+  hackrf=0[,buffers=32]
   bladerf=0[,fpga='/path/to/the/bitstream.rbf'][,fw='/path/to/the/firmware.img']
   uhd[,serial=...][,lo_offset=0][,mcr=52e6][,nchan=2][,subdev='\\\\'B:0 A:0\\\\''] ...
-  hackrf=0[,buffers=32]
 
 Num Channels:
 Selects the total number of channels in this multi-device configuration. Required when specifying multiple device arguments.
