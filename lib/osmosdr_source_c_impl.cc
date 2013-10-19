@@ -69,6 +69,10 @@
 #include <bladerf_source_c.h>
 #endif
 
+#ifdef ENABLE_NETSDR
+#include <netsdr_source_c.h>
+#endif
+
 #include <osmosdr_arg_helpers.h>
 
 /* This avoids throws in ctor of gr_hier_block2, as gnuradio is unable to deal
@@ -128,6 +132,9 @@ osmosdr_source_c_impl::osmosdr_source_c_impl (const std::string &args)
 #ifdef ENABLE_BLADERF
   dev_types.push_back("bladerf");
 #endif
+#ifdef ENABLE_NETSDR
+  dev_types.push_back("netsdr");
+#endif
   std::cerr << "gr-osmosdr "
             << GR_OSMOSDR_VERSION << " (" << GR_OSMOSDR_LIBVER << ") "
             << "gnuradio " << gr_version() << std::endl;
@@ -172,6 +179,10 @@ osmosdr_source_c_impl::osmosdr_source_c_impl (const std::string &args)
 #endif
 #ifdef ENABLE_BLADERF
   BOOST_FOREACH( std::string dev, bladerf_source_c::get_devices() )
+    dev_list.push_back( dev );
+#endif
+#ifdef ENABLE_NETSDR
+  BOOST_FOREACH( std::string dev, netsdr_source_c::get_devices() )
     dev_list.push_back( dev );
 #endif
 #ifdef ENABLE_HACKRF
@@ -260,6 +271,13 @@ osmosdr_source_c_impl::osmosdr_source_c_impl (const std::string &args)
 #ifdef ENABLE_BLADERF
     if ( dict.count("bladerf") ) {
       bladerf_source_c_sptr src = make_bladerf_source_c( arg );
+      block = src; iface = src.get();
+    }
+#endif
+
+#ifdef ENABLE_NETSDR
+    if ( dict.count("netsdr") ) {
+      netsdr_source_c_sptr src = make_netsdr_source_c( arg );
       block = src; iface = src.get();
     }
 #endif
