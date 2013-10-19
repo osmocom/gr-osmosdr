@@ -36,12 +36,16 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/assign.hpp>
 #include <boost/foreach.hpp>
+#include <boost/shared_ptr.hpp>
 
 #include "bladerf_common.h"
 
 #define BLADERF_FIFO_SIZE_ENV   "BLADERF_SAMPLE_FIFO_SIZE"
 
 using namespace boost::assign;
+
+boost::mutex bladerf_common::_devs_mutex;
+std::list<boost::weak_ptr<struct bladerf> > bladerf_common::_devs;
 
 bladerf_common::bladerf_common() :
   _is_running(false)
@@ -78,6 +82,68 @@ bladerf_common::bladerf_common() :
 bladerf_common::~bladerf_common()
 {
   delete _fifo;
+}
+
+bladerf_sptr bladerf_common:: get_cached_device(struct bladerf_devinfo devinfo)
+{
+  /* Lock to _devs must be aquired by caller */
+  BOOST_FOREACH( boost::weak_ptr<struct bladerf> dev, _devs )
+  {
+    struct bladerf_devinfo other_devinfo;
+
+    int rv = bladerf_get_devinfo(bladerf_sptr(dev).get(), &other_devinfo);
+    if (rv < 0)
+      throw std::runtime_error(std::string(__FUNCTION__) + " " +
+                               "Failed to get devinfo for cached device.");
+
+    if (bladerf_devinfo_matches(&devinfo, &other_devinfo)) {
+      return bladerf_sptr(dev);
+    }
+  }
+
+  return bladerf_sptr();
+}
+
+void bladerf_common::close(void* dev)
+{
+  boost::unique_lock<boost::mutex> lock(_devs_mutex);
+
+  std::list<boost::weak_ptr<struct bladerf> >::iterator it;
+  for (it = _devs.begin(); it != _devs.end(); ++it)
+    if ( (*it).expired() == 0 )
+      _devs.erase(it);
+
+  bladerf_close((struct bladerf *)dev);
+}
+
+bladerf_sptr bladerf_common::open(const std::string &device_name)
+{
+  int rv;
+  struct bladerf *raw_dev;
+  struct bladerf_devinfo devinfo;
+
+  boost::unique_lock<boost::mutex> lock(_devs_mutex);
+
+  rv = bladerf_get_devinfo_from_str(device_name.c_str(), &devinfo);
+  if (rv < 0)
+    throw std::runtime_error(std::string(__FUNCTION__) + " " +
+                             "Failed to get devinfo for '" + device_name + "'");
+
+  bladerf_sptr cached_dev = get_cached_device(devinfo);
+
+  if (cached_dev)
+    return cached_dev;
+
+  rv = bladerf_open_with_devinfo(&raw_dev, &devinfo);
+  if (rv < 0)
+    throw std::runtime_error(std::string(__FUNCTION__) + " " +
+                             "Failed to open device for '" + device_name + "'");
+
+  bladerf_sptr dev = bladerf_sptr(raw_dev, bladerf_common::close);
+
+  _devs.push_back(boost::weak_ptr<struct bladerf>(dev));
+
+  return dev;
 }
 
 osmosdr::freq_range_t bladerf_common::freq_range()

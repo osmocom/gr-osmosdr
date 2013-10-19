@@ -98,9 +98,9 @@ bladerf_sink_c::bladerf_sink_c (const std::string &args)
 
   device_name = boost::str(boost::format( "libusb:instance=%d" ) % device_number);
 
-  /* Open a handle to the device */
-  ret = bladerf_open( &_dev, device_name.c_str() );
-  if ( ret != 0 ) {
+  try {
+    _dev = bladerf_common::open(device_name);
+  } catch(...) {
     throw std::runtime_error( std::string(__FUNCTION__) + " " +
                               "failed to open bladeRF device " + device_name );
   }
@@ -111,7 +111,7 @@ bladerf_sink_c::bladerf_sink_c (const std::string &args)
 
     std::cerr << "Flashing firmware image " << fw << "..., DO NOT INTERRUPT!"
               << std::endl;
-    ret = bladerf_flash_firmware( _dev, fw.c_str() );
+    ret = bladerf_flash_firmware( _dev.get(), fw.c_str() );
     if ( ret != 0 )
       std::cerr << "bladerf_flash_firmware has failed with " << ret << std::endl;
     else
@@ -123,7 +123,7 @@ bladerf_sink_c::bladerf_sink_c (const std::string &args)
     std::string fpga = dict["fpga"];
 
     std::cerr << "Loading FPGA bitstream " << fpga << "..." << std::endl;
-    ret = bladerf_load_fpga( _dev, fpga.c_str() );
+    ret = bladerf_load_fpga( _dev.get(), fpga.c_str() );
     if ( ret != 0 && ret != 1 )
       std::cerr << "bladerf_load_fpga has failed with " << ret << std::endl;
     else
@@ -133,19 +133,19 @@ bladerf_sink_c::bladerf_sink_c (const std::string &args)
   std::cerr << "Using nuand LLC bladeRF #" << device_number;
 
   char serial[BLADERF_SERIAL_LENGTH];
-  if ( bladerf_get_serial( _dev, serial ) == 0 )
+  if ( bladerf_get_serial( _dev.get(), serial ) == 0 )
     std::cerr << " SN " << serial;
 
   struct bladerf_version ver;
-  if ( bladerf_fw_version( _dev, &ver ) == 0 )
+  if ( bladerf_fw_version( _dev.get(), &ver ) == 0 )
     std::cerr << " FW v" << ver.major << "." << ver.minor << "." << ver.patch;
 
-  if ( bladerf_fpga_version( _dev, &ver ) == 0 )
+  if ( bladerf_fpga_version( _dev.get(), &ver ) == 0 )
     std::cerr << " FPGA v" << ver.major << "." << ver.minor << "." << ver.patch;
 
   std::cerr << std::endl;
 
-  if ( bladerf_is_fpga_configured( _dev ) != 1 )
+  if ( bladerf_is_fpga_configured( _dev.get() ) != 1 )
   {
     std::ostringstream oss;
     oss << "The FPGA is not configured! "
@@ -200,7 +200,7 @@ bladerf_sink_c::bladerf_sink_c (const std::string &args)
   }
 
   /* Initialize the stream */
-  ret = bladerf_init_stream( &_stream, _dev, stream_callback,
+  ret = bladerf_init_stream( &_stream, _dev.get(), stream_callback,
                              &_buffers, _num_buffers, BLADERF_FORMAT_SC16_Q12,
                              _samples_per_buffer, transfers, this );
   if ( ret != 0 )
@@ -221,7 +221,7 @@ bladerf_sink_c::bladerf_sink_c (const std::string &args)
     _filled[i] = false;
   }
 
-  ret = bladerf_enable_module( _dev, BLADERF_MODULE_TX, true );
+  ret = bladerf_enable_module( _dev.get(), BLADERF_MODULE_TX, true );
   if ( ret != 0 )
     std::cerr << "bladerf_enable_module has failed with " << ret << std::endl;
 
@@ -246,15 +246,12 @@ bladerf_sink_c::~bladerf_sink_c ()
 
   _thread.join();
 
-  ret = bladerf_enable_module( _dev, BLADERF_MODULE_TX, false );
+  ret = bladerf_enable_module( _dev.get(), BLADERF_MODULE_TX, false );
   if ( ret != 0 )
     std::cerr << "bladerf_enable_module has failed with " << ret << std::endl;
 
   /* Release stream resources */
   bladerf_deinit_stream(_stream);
-
-  /* Close the device */
-  bladerf_close( _dev );
 
   delete[] _filled;
 }
@@ -407,7 +404,7 @@ double bladerf_sink_c::set_sample_rate(double rate)
   /* Check to see if the sample rate is an integer */
   if( (uint32_t)round(rate) == (uint32_t)rate )
   {
-    ret = bladerf_set_sample_rate( _dev, BLADERF_MODULE_TX, (uint32_t)rate, &actual );
+    ret = bladerf_set_sample_rate( _dev.get(), BLADERF_MODULE_TX, (uint32_t)rate, &actual );
     if( ret ) {
       throw std::runtime_error( std::string(__FUNCTION__) + " " +
                                 "has failed to set integer rate, error " +
@@ -415,7 +412,7 @@ double bladerf_sink_c::set_sample_rate(double rate)
     }
   } else {
     /* TODO: Fractional sample rate */
-    ret = bladerf_set_sample_rate( _dev, BLADERF_MODULE_TX, (uint32_t)rate, &actual );
+    ret = bladerf_set_sample_rate( _dev.get(), BLADERF_MODULE_TX, (uint32_t)rate, &actual );
     if( ret ) {
       throw std::runtime_error( std::string(__FUNCTION__) + " " +
                                 "has failed to set fractional rate, error " +
@@ -431,7 +428,7 @@ double bladerf_sink_c::get_sample_rate()
   int ret;
   unsigned int rate = 0;
 
-  ret = bladerf_get_sample_rate( _dev, BLADERF_MODULE_TX, &rate );
+  ret = bladerf_get_sample_rate( _dev.get(), BLADERF_MODULE_TX, &rate );
   if( ret ) {
     throw std::runtime_error( std::string(__FUNCTION__) + " " +
                               "has failed to get sample rate, error " +
@@ -455,7 +452,7 @@ double bladerf_sink_c::set_center_freq( double freq, size_t chan )
       freq > get_freq_range( chan ).stop() ) {
     std::cerr << "Failed to set out of bound frequency: " << freq << std::endl;
   } else {
-    ret = bladerf_set_frequency( _dev, BLADERF_MODULE_TX, (uint32_t)freq );
+    ret = bladerf_set_frequency( _dev.get(), BLADERF_MODULE_TX, (uint32_t)freq );
     if( ret ) {
       throw std::runtime_error( std::string(__FUNCTION__) + " " +
                                 "failed to set center frequency " +
@@ -473,7 +470,7 @@ double bladerf_sink_c::get_center_freq( size_t chan )
   uint32_t freq;
   int ret;
 
-  ret = bladerf_get_frequency( _dev, BLADERF_MODULE_TX, &freq );
+  ret = bladerf_get_frequency( _dev.get(), BLADERF_MODULE_TX, &freq );
   if( ret ) {
     throw std::runtime_error( std::string(__FUNCTION__) + " " +
                               "failed to get center frequency, error " +
@@ -547,9 +544,9 @@ double bladerf_sink_c::set_gain( double gain, const std::string & name, size_t c
   int ret = 0;
 
   if( name == "VGA1" ) {
-    ret = bladerf_set_txvga1( _dev, (int)gain );
+    ret = bladerf_set_txvga1( _dev.get(), (int)gain );
   } else if( name == "VGA2" ) {
-    ret = bladerf_set_txvga2( _dev, (int)gain );
+    ret = bladerf_set_txvga2( _dev.get(), (int)gain );
   } else {
     throw std::runtime_error( std::string(__FUNCTION__) + " " +
                               "requested to set the gain "
@@ -577,9 +574,9 @@ double bladerf_sink_c::get_gain( const std::string & name, size_t chan )
   int ret = 0;
 
   if( name == "VGA1" ) {
-    ret = bladerf_get_txvga1( _dev, &g );
+    ret = bladerf_get_txvga1( _dev.get(), &g );
   } else if( name == "VGA2" ) {
-    ret = bladerf_get_txvga2( _dev, &g );
+    ret = bladerf_get_txvga2( _dev.get(), &g );
   } else {
     throw std::runtime_error( std::string(__FUNCTION__) + " " +
                               "requested to get the gain "
@@ -635,7 +632,7 @@ double bladerf_sink_c::set_bandwidth( double bandwidth, size_t chan )
   if ( bandwidth == 0.0 ) /* bandwidth of 0 means automatic filter selection */
     bandwidth = get_sample_rate() * 0.75; /* select narrower filters to prevent aliasing */
 
-  ret = bladerf_set_bandwidth( _dev, BLADERF_MODULE_TX, (uint32_t)bandwidth, &actual );
+  ret = bladerf_set_bandwidth( _dev.get(), BLADERF_MODULE_TX, (uint32_t)bandwidth, &actual );
   if( ret ) {
     throw std::runtime_error( std::string(__FUNCTION__) + " " +
                               "could not set bandwidth, error " +
@@ -650,7 +647,7 @@ double bladerf_sink_c::get_bandwidth( size_t chan )
   uint32_t bandwidth;
   int ret;
 
-  ret = bladerf_get_bandwidth( _dev, BLADERF_MODULE_TX, &bandwidth );
+  ret = bladerf_get_bandwidth( _dev.get(), BLADERF_MODULE_TX, &bandwidth );
   if( ret ) {
     throw std::runtime_error( std::string(__FUNCTION__) + " " +
                               "could not get bandwidth, error " +
