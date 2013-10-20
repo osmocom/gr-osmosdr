@@ -176,6 +176,7 @@ class app_top_block(stdgui2.std_top_block, pubsub):
         if options.fosphor:
             from gnuradio import fosphor
             self.scope = fosphor.wx_sink_c(panel, size=(800,300))
+            self.frame.SetMinSize((800,600))
         elif options.waterfall:
             self.scope = waterfallsink2.waterfall_sink_c (panel,
                                                           fft_size=options.fft_size,
@@ -220,7 +221,7 @@ class app_top_block(stdgui2.std_top_block, pubsub):
     def _build_gui(self, vbox):
 
         if hasattr(self.scope, 'win'):
-            vbox.Add(self.scope.win, 0, wx.EXPAND)
+            vbox.Add(self.scope.win, 1, wx.EXPAND)
             vbox.AddSpacer(3)
 
         # add control area at the bottom
@@ -246,7 +247,6 @@ class app_top_block(stdgui2.std_top_block, pubsub):
         # Add frequency controls to top window sizer
         vbox.Add(fc_vbox, 0, wx.EXPAND)
         vbox.AddSpacer(5)
-        vbox.AddStretchSpacer()
 
         freq_hbox.AddSpacer(3)
         forms.text_box(
@@ -310,7 +310,6 @@ class app_top_block(stdgui2.std_top_block, pubsub):
         # Add gain controls to top window sizer
         vbox.Add(gc_vbox, 0, wx.EXPAND)
         vbox.AddSpacer(5)
-        vbox.AddStretchSpacer()
 
         for gain_name in self.get_gain_names():
             range = self[GAIN_RANGE_KEY(gain_name)]
@@ -362,7 +361,6 @@ class app_top_block(stdgui2.std_top_block, pubsub):
 
                 vbox.Add(bwidth_vbox, 0, wx.EXPAND)
                 vbox.AddSpacer(5)
-                vbox.AddStretchSpacer()
 
                 bwidth_hbox.AddSpacer(3)
                 forms.text_box(
@@ -405,7 +403,6 @@ class app_top_block(stdgui2.std_top_block, pubsub):
         # Add frequency controls to top window sizer
         vbox.Add(sr_vbox, 0, wx.EXPAND)
         vbox.AddSpacer(5)
-        vbox.AddStretchSpacer()
 
         sr_hbox.AddSpacer(3)
         forms.text_box(
