@@ -21,6 +21,7 @@
 #define FILE_SOURCE_C_H
 
 #include <gr_hier_block2.h>
+#include <gr_throttle.h>
 
 #include "osmosdr_src_iface.h"
 
@@ -71,6 +72,8 @@ public:
   std::string get_antenna( size_t chan = 0 );
 
 private:
+  gr_throttle::sptr _throttle;
+  double _file_rate;
   double _freq, _rate;
 };
 

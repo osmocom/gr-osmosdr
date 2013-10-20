@@ -26,7 +26,6 @@
 
 #include <gr_io_signature.h>
 #include <gr_file_source.h>
-#include <gr_throttle.h>
 
 #include "file_source_c.h"
 
@@ -73,18 +72,20 @@ file_source_c::file_source_c(const std::string &args) :
   if (_freq < 0)
     throw std::runtime_error("Parameter 'freq' may not be negative.");
 
-  if (0 == _rate)
+  if (0 == _rate && throttle)
     throw std::runtime_error("Parameter 'rate' is missing in arguments.");
+
+  _file_rate = _rate;
 
   gr_file_source_sptr src = gr_make_file_source( sizeof(gr_complex),
                                                  filename.c_str(),
                                                  repeat );
 
-  if (throttle) {
-    gr_throttle::sptr throttle = gr_make_throttle( sizeof(gr_complex), _rate );
+  _throttle = gr_make_throttle( sizeof(gr_complex), _file_rate );
 
-    connect( src, 0, throttle, 0 );
-    connect( throttle, 0, self(), 0 );
+  if (throttle) {
+    connect( src, 0, _throttle, 0 );
+    connect( _throttle, 0, self(), 0 );
   } else {
     connect( src, 0, self(), 0 );
   }
@@ -103,7 +104,8 @@ std::vector<std::string> file_source_c::get_devices()
 {
   std::vector<std::string> devices;
 
-  std::string args = "file='/path/to/your/file',rate=1e6,freq=100e6,repeat=true,throttle=true";
+  std::string args = "file='/path/to/your/file'";
+  args += ",rate=1e6,freq=100e6,repeat=true,throttle=true";
   args += ",label='Complex Sampled (IQ) File'";
   devices.push_back( args );
 
@@ -119,13 +121,24 @@ osmosdr::meta_range_t file_source_c::get_sample_rates( void )
 {
   osmosdr::meta_range_t range;
 
-  range += osmosdr::range_t( get_sample_rate() );
+  range += osmosdr::range_t( _file_rate ); /* always return file's original rate */
 
   return range;
 }
 
 double file_source_c::set_sample_rate( double rate )
 {
+  if ( _file_rate != rate )
+  {
+    std::cerr << boost::format("WARNING: Overriding original sample rate of %g with %g")
+                 % _file_rate % rate
+              << std::endl;
+  }
+
+  _throttle->set_sample_rate( rate );
+
+  _rate = rate;
+
   return get_sample_rate();
 }
 
