@@ -21,6 +21,7 @@
 #define FILE_SOURCE_C_H
 
 #include <gnuradio/hier_block2.h>
+#include <gnuradio/blocks/throttle.h>
 
 #include "source_iface.h"
 
@@ -71,6 +72,8 @@ public:
   std::string get_antenna( size_t chan = 0 );
 
 private:
+  gr::blocks::throttle::sptr _throttle;
+  double _file_rate;
   double _freq, _rate;
 };
 
