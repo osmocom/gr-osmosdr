@@ -236,8 +236,7 @@ int rtl_tcp_source_f::work (int noutput_items,
                             gr_vector_void_star &output_items)
 {
   float *out = (float *) output_items[0];
-  ssize_t r=0, nbytes=0, bytes_received=0;
-  ssize_t total_bytes = (ssize_t)(d_itemsize*noutput_items);
+  ssize_t r = 0;
 
   int bytesleft = noutput_items;
   int index = 0;
