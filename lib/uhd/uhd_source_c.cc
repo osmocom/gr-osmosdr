@@ -72,10 +72,10 @@ uhd_source_c::uhd_source_c(const std::string &args) :
 
   if (dict.count("subdev")) {
     _src->set_subdev_spec( dict["subdev"] );
-
-    std::cerr << "-- Using subdev spec '" << _src->get_subdev_spec() << "'."
-              << std::endl;
   }
+
+  std::cerr << "-- Using subdev spec '" << _src->get_subdev_spec() << "'."
+            << std::endl;
 
   if (0.0 != _lo_offset)
     std::cerr << "-- Using lo offset of " << _lo_offset << " Hz." << std::endl;
@@ -93,14 +93,18 @@ std::vector< std::string > uhd_source_c::get_devices()
   std::vector< std::string > devices;
 
   uhd::device_addr_t hint;
-  BOOST_FOREACH(const uhd::device_addr_t &dev, uhd::device::find(hint)) {
-    std::string args = "uhd,subdev='A:0'," + dev.to_string();
+  BOOST_FOREACH(const uhd::device_addr_t &dev, uhd::device::find(hint))
+  {
+    std::string args = "uhd," + dev.to_string();
+
+    std::string type = dev.cast< std::string >("type", "usrp");
+    std::string name = dev.cast< std::string >("name", "");
+    std::string serial = dev.cast< std::string >("serial", "");
 
     std::string label = "Ettus";
 
-    std::string type = dev.cast< std::string >("type", "USRP");
-    std::string name = dev.cast< std::string >("name", "");
-    std::string serial = dev.cast< std::string >("serial", "");
+    if ( "umtrx" == type )
+      label = "Fairwaves";
 
     if (type.length()) {
       boost::to_upper(type);
@@ -108,7 +112,7 @@ std::vector< std::string > uhd_source_c::get_devices()
     }
 
     if (name.length())
-      label += " " + name;
+      label += " (" + name + ")";
 
     if (serial.length())
       label += " " + serial;
@@ -117,9 +121,6 @@ std::vector< std::string > uhd_source_c::get_devices()
 
     devices.push_back( args );
   }
-
-  //devices.clear();
-  //devices.push_back( "uhd,type=usrp1,label='Ettus USRP'" );
 
   return devices;
 }
