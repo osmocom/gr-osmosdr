@@ -332,7 +332,7 @@ int bladerf_sink_c::work( int noutput_items,
                           gr_vector_void_star &output_items )
 {
   const gr_complex *in = (const gr_complex *) input_items[0];
-  int num_samples, to_copy;
+  int num_samples;
   bool running = is_running();
 
   /* Total samples we want to process */
