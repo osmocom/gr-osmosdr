@@ -26,7 +26,7 @@ MAIN_TMPL = """\
   <category>$($sourk.title())s</category>
   <throttle>1</throttle>
   <import>import osmosdr</import>
-  <make>osmosdr.$(sourk)( args="nchan=" + str(\$nchan) + " " + \$args )
+  <make>osmosdr.$(sourk)( args="numchan=" + str(\$nchan) + " " + \$args )
 self.\$(id).set_sample_rate(\$sample_rate)
 #for $n in range($max_nchan)
 \#if \$nchan() > $n
