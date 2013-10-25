@@ -102,7 +102,7 @@ struct is_nchan_argument
 {
   bool operator ()(const std::string &str)
   {
-    return str.find("nchan=") == 0;
+    return str.find("numchan=") == 0;
   }
 };
 
@@ -114,7 +114,7 @@ inline gr_io_signature_sptr args_to_io_signature( const std::string &args )
 
   BOOST_FOREACH( std::string arg, arg_list )
   {
-    if ( arg.find( "nchan=" ) == 0 ) // try to parse global nchan value
+    if ( arg.find( "numchan=" ) == 0 ) // try to parse global nchan value
     {
       pair_t pair = param_to_pair( arg );
       max_nchan = boost::lexical_cast<size_t>( pair.second );
