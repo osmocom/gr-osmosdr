@@ -209,6 +209,7 @@ hackrf_sink_c::hackrf_sink_c (const std::string &args)
               << std::endl;
   }
 
+  set_center_freq( (get_freq_range().start() + get_freq_range().stop()) / 2.0 );
   set_sample_rate( get_sample_rates().start() );
   set_bandwidth( 0 );
 
@@ -449,7 +450,7 @@ std::vector<std::string> hackrf_sink_c::get_devices()
 {
   std::vector<std::string> devices;
   std::string label;
-
+#if 0
   for (unsigned int i = 0; i < 1 /* TODO: missing libhackrf api */; i++) {
     std::string args = "hackrf=" + boost::lexical_cast< std::string >( i );
 
@@ -462,7 +463,49 @@ std::vector<std::string> hackrf_sink_c::get_devices()
     args += ",label='" + label + "'";
     devices.push_back( args );
   }
+#else
 
+  {
+    boost::mutex::scoped_lock lock( _usage_mutex );
+
+    if ( _usage == 0 )
+      hackrf_init(); /* call only once before the first open */
+
+    _usage++;
+  }
+
+  int ret;
+  hackrf_device *dev = NULL;
+  ret = hackrf_open(&dev);
+  if ( HACKRF_SUCCESS == ret )
+  {
+    std::string args = "hackrf=0";
+
+    label = "HackRF";
+
+    uint8_t board_id;
+    ret = hackrf_board_id_read( dev, &board_id );
+    if ( HACKRF_SUCCESS == ret )
+    {
+      label += std::string(" ") + hackrf_board_id_name(hackrf_board_id(board_id));
+    }
+
+    args += ",label='" + label + "'";
+    devices.push_back( args );
+
+    ret = hackrf_close(dev);
+  }
+
+  {
+    boost::mutex::scoped_lock lock( _usage_mutex );
+
+     _usage--;
+
+    if ( _usage == 0 )
+      hackrf_exit(); /* call only once after last close */
+  }
+
+#endif
   return devices;
 }
 
