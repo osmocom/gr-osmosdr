@@ -40,6 +40,14 @@
 #include "osmosdr_arg_helpers.h"
 #include "bladerf_source_c.h"
 
+/*
+ * Default size of sample FIFO, in entries.
+ */
+#define BLADERF_SAMPLE_FIFO_SIZE (2 * 1024 * 1024)
+
+#define BLADERF_SAMPLE_FIFO_MIN_SIZE  (3 * BLADERF_SAMPLE_BLOCK_SIZE)
+
+
 using namespace boost::assign;
 
 /*
@@ -75,6 +83,7 @@ bladerf_source_c::bladerf_source_c (const std::string &args)
 {
   int ret;
   unsigned int device_number = 0;
+  size_t fifo_size;
   std::string device_name;
 
   dict_t dict = params_to_dict(args);
@@ -100,6 +109,29 @@ bladerf_source_c::bladerf_source_c (const std::string &args)
   } catch(...) {
     throw std::runtime_error( std::string(__FUNCTION__) + " " +
                               "failed to open bladeRF device " + device_name );
+  }
+
+  /* Size of FIFO gr_complex samples, in # samples. */
+  fifo_size = BLADERF_SAMPLE_FIFO_SIZE;
+  if (dict.count("fifo")) {
+    try {
+      fifo_size = boost::lexical_cast<size_t>(dict["fifo"]);
+    } catch (const boost::bad_lexical_cast &e) {
+      std::cerr << "Warning: \"fifo\" value is invalid. Defaulting to "
+                << fifo_size;
+    }
+
+    if (fifo_size < BLADERF_SAMPLE_FIFO_MIN_SIZE) {
+      fifo_size = BLADERF_SAMPLE_FIFO_MIN_SIZE;
+      std::cerr << "Warning: \"fifo\" value is too small. Defaulting to "
+                << BLADERF_SAMPLE_FIFO_MIN_SIZE;
+    }
+  }
+
+  _fifo = new boost::circular_buffer<gr_complex>(fifo_size);
+  if (!_fifo) {
+    throw std::runtime_error( std::string(__FUNCTION__) +
+                              " has failed to allocate a sample FIFO!" );
   }
 
   if (dict.count("fw"))
@@ -212,6 +244,8 @@ bladerf_source_c::~bladerf_source_c ()
 
   /* Release stream resources */
   bladerf_deinit_stream(_stream);
+
+  delete _fifo;
 }
 
 void *bladerf_source_c::stream_callback( struct bladerf *dev,

@@ -127,16 +127,16 @@ private: /* members */
   bool *_filled;
 
   /* Acquire while updating _filled, and signalling/waiting on
-   * _buffer_emptied and _samples_avail */
+   * _buffer_emptied and _buffer_filled */
   boost::mutex _buf_status_lock;
 
-  /* wait() may block waiting for the TX callbacks to make a buffer availble.
-   * The callback uses this to signal when it has emptied out a buffer. */
+  /* work() may block waiting for the stream callback to empty (consume) a
+   * buffer. The callback uses this to signal when it has emptied a buffer. */
   boost::condition_variable _buffer_emptied;
 
-  /* The parent's _samples_avail is used to denote that work() has
-   * filled a buffer, unblocking a TX callback that's waiting for samples */
-
+  /* The stream callback may block waiting for work() to fill (produce) a
+   * buffer. work() uses this to signal that it has filled a buffer. */
+  boost::condition_variable _buffer_filled;
 
   /* These values are only to be updated and accessed from within work() */
   int16_t *_next_value; /* I/Q value insertion point in current buffer */

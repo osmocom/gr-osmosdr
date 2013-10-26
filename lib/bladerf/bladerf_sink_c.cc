@@ -240,7 +240,7 @@ bladerf_sink_c::~bladerf_sink_c ()
 
   /* Ensure work() or callbacks return from wait() calls */
   _buf_status_lock.lock();
-  _samp_avail.notify_all();
+  _buffer_filled.notify_all();
   _buffer_emptied.notify_all();
   _buf_status_lock.unlock();
 
@@ -297,7 +297,7 @@ void *bladerf_sink_c::get_next_buffer( void *samples, size_t num_samples)
 
     /* Wait for our next buffer to become filled */
     while ((running = is_running()) && !_filled[_next_to_tx]) {
-      _samp_avail.wait(lock);
+      _buffer_filled.wait(lock);
     }
 
     if (running) {
@@ -364,7 +364,7 @@ int bladerf_sink_c::work( int noutput_items,
         _samples_left = _samples_per_buffer;
 
         /* Signal that we have filled a buffer */
-        _samp_avail.notify_one();
+        _buffer_filled.notify_one();
 
         /* Wait here if the next buffer isn't full. The callback will
          * signal us when it has freed up a buffer */
