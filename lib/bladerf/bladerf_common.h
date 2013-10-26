@@ -28,6 +28,9 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/shared_mutex.hpp>
 #include <boost/thread/condition_variable.hpp>
+#include <boost/assign.hpp>
+#include <boost/format.hpp>
+#include <boost/lexical_cast.hpp>
 
 #include <gr_complex.h>
 #include <gruel/thread.h>
@@ -35,6 +38,7 @@
 #include <libbladeRF.h>
 
 #include "osmosdr/osmosdr_ranges.h"
+#include "osmosdr_arg_helpers.h"
 
 /* We currently read/write 1024 samples (pairs of 16-bit signed ints) */
 #define BLADERF_SAMPLE_BLOCK_SIZE     (1024)
@@ -48,7 +52,8 @@ public:
   virtual ~bladerf_common();
 
 protected:
-  bladerf_sptr open(const std::string &device_name);
+  /* Handle initialized and parameters common to both source & sink */
+  void init(dict_t &dict, const char *type);
 
   osmosdr::freq_range_t freq_range();
   osmosdr::meta_range_t sample_rates();
@@ -65,13 +70,19 @@ protected:
   struct bladerf_stream *_stream;
   size_t _num_buffers;
   size_t _buf_index;
+  size_t _samples_per_buffer;
+  size_t _num_transfers;
 
   gruel::thread _thread;
 
   osmosdr::gain_range_t _vga1_range;
   osmosdr::gain_range_t _vga2_range;
 
+  std::string _pfx;
+
 private:
+  bladerf_sptr open(const std::string &device_name);
+
   bool _is_running;
   boost::shared_mutex _state_lock;
 

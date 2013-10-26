@@ -40,9 +40,6 @@
 #include "osmosdr_arg_helpers.h"
 #include "bladerf_sink_c.h"
 
-#define NUM_BUFFERS 32
-#define NUM_SAMPLES_PER_BUFFER 4096
-
 using namespace boost::assign;
 
 /*
@@ -77,82 +74,11 @@ bladerf_sink_c::bladerf_sink_c (const std::string &args)
                     gr_make_io_signature (MIN_OUT, MAX_OUT, sizeof (gr_complex)))
 {
   int ret;
-  unsigned int device_number = 0;
-  std::string device_name;
 
   dict_t dict = params_to_dict(args);
 
-  if (dict.count("bladerf"))
-  {
-    std::string value = dict["bladerf"];
-    if ( value.length() )
-    {
-      try {
-        device_number = boost::lexical_cast< unsigned int >( value );
-      } catch ( std::exception &ex ) {
-        throw std::runtime_error(
-              "Failed to use '" + value + "' as device number: " + ex.what());
-      }
-    }
-  }
-
-  device_name = boost::str(boost::format( "libusb:instance=%d" ) % device_number);
-
-  try {
-    _dev = bladerf_common::open(device_name);
-  } catch(...) {
-    throw std::runtime_error( std::string(__FUNCTION__) + " " +
-                              "failed to open bladeRF device " + device_name );
-  }
-
-  if (dict.count("fw"))
-  {
-    std::string fw = dict["fw"];
-
-    std::cerr << "Flashing firmware image " << fw << "..., DO NOT INTERRUPT!"
-              << std::endl;
-    ret = bladerf_flash_firmware( _dev.get(), fw.c_str() );
-    if ( ret != 0 )
-      std::cerr << "bladerf_flash_firmware has failed with " << ret << std::endl;
-    else
-      std::cerr << "The firmware has been successfully flashed." << std::endl;
-  }
-
-  if (dict.count("fpga"))
-  {
-    std::string fpga = dict["fpga"];
-
-    std::cerr << "Loading FPGA bitstream " << fpga << "..." << std::endl;
-    ret = bladerf_load_fpga( _dev.get(), fpga.c_str() );
-    if ( ret != 0 && ret != 1 )
-      std::cerr << "bladerf_load_fpga has failed with " << ret << std::endl;
-    else
-      std::cerr << "The FPGA bitstream has been successfully loaded." << std::endl;
-  }
-
-  std::cerr << "Using nuand LLC bladeRF #" << device_number;
-
-  char serial[BLADERF_SERIAL_LENGTH];
-  if ( bladerf_get_serial( _dev.get(), serial ) == 0 )
-    std::cerr << " SN " << serial;
-
-  struct bladerf_version ver;
-  if ( bladerf_fw_version( _dev.get(), &ver ) == 0 )
-    std::cerr << " FW v" << ver.major << "." << ver.minor << "." << ver.patch;
-
-  if ( bladerf_fpga_version( _dev.get(), &ver ) == 0 )
-    std::cerr << " FPGA v" << ver.major << "." << ver.minor << "." << ver.patch;
-
-  std::cerr << std::endl;
-
-  if ( bladerf_is_fpga_configured( _dev.get() ) != 1 )
-  {
-    std::ostringstream oss;
-    oss << "The FPGA is not configured! "
-        << "Provide device argument fpga=/path/to/the/bitstream.rbf to load it.";
-
-    throw std::runtime_error( oss.str() );
-  }
+  /* Perform src/sink agnostic initializations */
+  init(dict, "source");
 
   /* Set the range of VGA1, VGA1GAINT[7:0] */
   _vga1_range = osmosdr::gain_range_t( -35, -4, 1 );
@@ -160,51 +86,13 @@ bladerf_sink_c::bladerf_sink_c (const std::string &args)
   /* Set the range of VGA2, VGA2GAIN[4:0] */
   _vga2_range = osmosdr::gain_range_t( 0, 25, 1 );
 
-  _num_buffers = _samples_per_buffer = 0;
-
-  /* Initialize buffer and sample configuration */
-  if (dict.count("buffers")) {
-    _num_buffers = boost::lexical_cast< size_t >( dict["buffers"] );
-  }
-
-  if (dict.count("buflen")) {
-    _samples_per_buffer = boost::lexical_cast< size_t >( dict["buflen"] );
-  }
-
-  unsigned int transfers = 0;
-  if (dict.count("transfers")) {
-    transfers = boost::lexical_cast< size_t >( dict["transfers"] );
-  }
-
-  /* Require value to be >= 2 so we can ensure we have twice as many
-   * buffers as transfers */
-  if (_num_buffers <= 1) {
-    _num_buffers = NUM_BUFFERS;
-  }
-
-  if (0 == _samples_per_buffer) {
-    _samples_per_buffer = NUM_SAMPLES_PER_BUFFER;
-  } else {
-    /* For SC16_Q12, 1 sample = 2 int16_t's */
-    _samples_per_buffer /= 2 * sizeof(int16_t);
-
-    if (_samples_per_buffer < 1024 || _samples_per_buffer % 1024 != 0)
-      _samples_per_buffer = NUM_SAMPLES_PER_BUFFER;
-  }
-
-
-
-  if (transfers == 0 || transfers > (_num_buffers / 2)) {
-      transfers = _num_buffers / 2;
-
-  }
-
   /* Initialize the stream */
   ret = bladerf_init_stream( &_stream, _dev.get(), stream_callback,
                              &_buffers, _num_buffers, BLADERF_FORMAT_SC16_Q12,
-                             _samples_per_buffer, transfers, this );
+                             _samples_per_buffer, _num_transfers, this );
   if ( ret != 0 )
-    std::cerr << "bladerf_init_stream has failed with " << ret << std::endl;
+    std::cerr << _pfx << "bladerf_init_stream failed:"
+              << bladerf_strerror(ret) << std::endl;
 
   /* Initialize buffer management */
   _buf_index = _next_to_tx = 0;
@@ -213,8 +101,8 @@ bladerf_sink_c::bladerf_sink_c (const std::string &args)
 
   _filled = new bool[_num_buffers];
   if (!_filled) {
-      throw std::runtime_error( std::string(__FUNCTION__) + ": " +
-                                "Failed to allocate _filled[]");
+      throw std::runtime_error( std::string(__FUNCTION__) + " " +
+                                "Failed to allocate _filled[]" );
   }
 
   for (size_t i = 0; i < _num_buffers; ++i) {
@@ -223,7 +111,8 @@ bladerf_sink_c::bladerf_sink_c (const std::string &args)
 
   ret = bladerf_enable_module( _dev.get(), BLADERF_MODULE_TX, true );
   if ( ret != 0 )
-    std::cerr << "bladerf_enable_module has failed with " << ret << std::endl;
+    std::cerr << _pfx << "bladerf_enable_module has failed:"
+              << bladerf_strerror(ret) << std::endl;
 
   set_running( true );
   _thread = gruel::thread( boost::bind(&bladerf_sink_c::write_task, this) );
@@ -248,7 +137,8 @@ bladerf_sink_c::~bladerf_sink_c ()
 
   ret = bladerf_enable_module( _dev.get(), BLADERF_MODULE_TX, false );
   if ( ret != 0 )
-    std::cerr << "bladerf_enable_module has failed with " << ret << std::endl;
+    std::cerr << _pfx << "bladerf_enable_module failed:"
+              << bladerf_strerror(ret) << std::endl;
 
   /* Release stream resources */
   bladerf_deinit_stream(_stream);
@@ -318,8 +208,16 @@ void bladerf_sink_c::write_task()
   /* Start stream and stay there until we kill the stream */
   status = bladerf_stream(_stream, BLADERF_MODULE_TX);
 
-  if (status < 0)
-      std::cerr << "Sink stream error: " << bladerf_strerror(status) << std::endl;
+  if ( status < 0 ) {
+      std::cerr << _pfx << "Sink stream error: "
+                << bladerf_strerror(status) << std::endl;
+
+      if ( status == BLADERF_ERR_TIMEOUT ) {
+        std::cerr << _pfx << "Try adjusting your sample rate or the "
+                  << "\"buffers\", \"buflen\", and \"transfers\" parameters. "
+                  << std::endl;
+      }
+  }
 
   set_running( false );
 }
@@ -407,16 +305,16 @@ double bladerf_sink_c::set_sample_rate(double rate)
     ret = bladerf_set_sample_rate( _dev.get(), BLADERF_MODULE_TX, (uint32_t)rate, &actual );
     if( ret ) {
       throw std::runtime_error( std::string(__FUNCTION__) + " " +
-                                "has failed to set integer rate, error " +
-                                boost::lexical_cast<std::string>(ret) );
+                                "Failed to set integer rate:" +
+                                std::string(bladerf_strerror(ret)));
     }
   } else {
     /* TODO: Fractional sample rate */
     ret = bladerf_set_sample_rate( _dev.get(), BLADERF_MODULE_TX, (uint32_t)rate, &actual );
     if( ret ) {
       throw std::runtime_error( std::string(__FUNCTION__) + " " +
-                                "has failed to set fractional rate, error " +
-                                boost::lexical_cast<std::string>(ret) );
+                                "Failed to set fractional rate: " +
+                                std::string(bladerf_strerror(ret)));
     }
   }
 
@@ -430,9 +328,9 @@ double bladerf_sink_c::get_sample_rate()
 
   ret = bladerf_get_sample_rate( _dev.get(), BLADERF_MODULE_TX, &rate );
   if( ret ) {
-    throw std::runtime_error( std::string(__FUNCTION__) + " " +
-                              "has failed to get sample rate, error " +
-                              boost::lexical_cast<std::string>(ret) );
+    throw std::runtime_error( std::string(__FUNCTION__) +
+                              "Failed to get sample rate:" +
+                              std::string(bladerf_strerror(ret)));
   }
 
   return (double)rate;
@@ -455,10 +353,9 @@ double bladerf_sink_c::set_center_freq( double freq, size_t chan )
     ret = bladerf_set_frequency( _dev.get(), BLADERF_MODULE_TX, (uint32_t)freq );
     if( ret ) {
       throw std::runtime_error( std::string(__FUNCTION__) + " " +
-                                "failed to set center frequency " +
+                                "Failed to set center frequency " +
                                 boost::lexical_cast<std::string>(freq) +
-                                ", error " +
-                                boost::lexical_cast<std::string>(ret) );
+                                ":" + std::string(bladerf_strerror(ret)));
     }
   }
 
@@ -473,8 +370,8 @@ double bladerf_sink_c::get_center_freq( size_t chan )
   ret = bladerf_get_frequency( _dev.get(), BLADERF_MODULE_TX, &freq );
   if( ret ) {
     throw std::runtime_error( std::string(__FUNCTION__) + " " +
-                              "failed to get center frequency, error " +
-                              boost::lexical_cast<std::string>(ret) );
+                              "Failed to get center frequency:" +
+                              std::string(bladerf_strerror(ret)));
   }
 
   return (double)freq;
@@ -518,7 +415,7 @@ osmosdr::gain_range_t bladerf_sink_c::get_gain_range( const std::string & name, 
     range = _vga2_range;
   } else {
     throw std::runtime_error( std::string(__FUNCTION__) + " " +
-                              "requested an invalid gain element " + name );
+                              "Requested an invalid gain element " + name );
   }
 
   return range;
@@ -549,15 +446,15 @@ double bladerf_sink_c::set_gain( double gain, const std::string & name, size_t c
     ret = bladerf_set_txvga2( _dev.get(), (int)gain );
   } else {
     throw std::runtime_error( std::string(__FUNCTION__) + " " +
-                              "requested to set the gain "
+                              "Requested to set the gain " +
                               "of an unknown gain element " + name );
   }
 
   /* Check for errors */
   if( ret ) {
-    throw std::runtime_error( std::string(__FUNCTION__) + " " +
-                              "could not set " + name + " gain, error " +
-                              boost::lexical_cast<std::string>(ret) );
+    throw std::runtime_error(std::string(__FUNCTION__) + " " +
+                             "Could not set " + name + " gain, error " +
+                             std::string(bladerf_strerror(ret)));
   }
 
   return get_gain( name, chan );
@@ -579,15 +476,15 @@ double bladerf_sink_c::get_gain( const std::string & name, size_t chan )
     ret = bladerf_get_txvga2( _dev.get(), &g );
   } else {
     throw std::runtime_error( std::string(__FUNCTION__) + " " +
-                              "requested to get the gain "
+                              "Requested to get the gain " +
                               "of an unknown gain element " + name );
   }
 
   /* Check for errors */
   if( ret ) {
     throw std::runtime_error( std::string(__FUNCTION__) + " " +
-                              "could not get " + name + " gain, error " +
-                              boost::lexical_cast<std::string>(ret) );
+                              "Could not get " + name + " gain, error " +
+                              std::string(bladerf_strerror(ret)));
   }
 
   return (double)g;
@@ -635,7 +532,7 @@ double bladerf_sink_c::set_bandwidth( double bandwidth, size_t chan )
   ret = bladerf_set_bandwidth( _dev.get(), BLADERF_MODULE_TX, (uint32_t)bandwidth, &actual );
   if( ret ) {
     throw std::runtime_error( std::string(__FUNCTION__) + " " +
-                              "could not set bandwidth, error " +
+                              "Could not set bandwidth, error " +
                               boost::lexical_cast<std::string>(ret) );
   }
 
@@ -650,7 +547,7 @@ double bladerf_sink_c::get_bandwidth( size_t chan )
   ret = bladerf_get_bandwidth( _dev.get(), BLADERF_MODULE_TX, &bandwidth );
   if( ret ) {
     throw std::runtime_error( std::string(__FUNCTION__) + " " +
-                              "could not get bandwidth, error " +
+                              "Could not get bandwidth, error " +
                               boost::lexical_cast<std::string>(ret) );
   }
 
