@@ -39,16 +39,6 @@
 /* We currently read/write 1024 samples (pairs of 16-bit signed ints) */
 #define BLADERF_SAMPLE_BLOCK_SIZE     (1024)
 
-/*
- * Default size of sample FIFO, in entries.
- * This can be overridden by the environment variable BLADERF_SAMPLE_FIFO_SIZE.
- */
-#ifndef BLADERF_SAMPLE_FIFO_SIZE
-#   define BLADERF_SAMPLE_FIFO_SIZE   (2 * 1024 * 1024)
-#endif
-
-#define BLADERF_SAMPLE_FIFO_MIN_SIZE  (3 * BLADERF_SAMPLE_BLOCK_SIZE)
-
 typedef boost::shared_ptr<struct bladerf> bladerf_sptr;
 
 class bladerf_common
@@ -78,12 +68,9 @@ protected:
 
   gr::thread::thread _thread;
 
-  boost::circular_buffer<gr_complex> *_fifo;
-  boost::mutex _fifo_lock;
-  boost::condition_variable _samp_avail;
-
   osmosdr::gain_range_t _vga1_range;
   osmosdr::gain_range_t _vga2_range;
+
 private:
   bool _is_running;
   boost::shared_mutex _state_lock;
