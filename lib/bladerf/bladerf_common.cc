@@ -40,6 +40,9 @@
 
 #include "bladerf_common.h"
 
+#define NUM_BUFFERS 32
+#define NUM_SAMPLES_PER_BUFFER (4 * 1024)
+
 using namespace boost::assign;
 
 boost::mutex bladerf_common::_devs_mutex;
@@ -108,6 +111,121 @@ bladerf_sptr bladerf_common::open(const std::string &device_name)
   _devs.push_back(boost::weak_ptr<struct bladerf>(dev));
 
   return dev;
+}
+
+void bladerf_common::init(dict_t &dict, const char *type)
+{
+  int ret;
+  unsigned int device_number = 0;
+  std::string device_name;
+  struct bladerf_version ver;
+  char serial[BLADERF_SERIAL_LENGTH];
+
+  _pfx = std::string("[bladeRF ") + std::string(type) + std::string("] ");
+
+  if (dict.count("bladerf"))
+  {
+    std::string value = dict["bladerf"];
+    if ( value.length() )
+    {
+      try {
+        device_number = boost::lexical_cast< unsigned int >( value );
+      } catch ( std::exception &ex ) {
+        throw std::runtime_error( _pfx + "Failed to use '" + value +
+                                  "' as device number: " + ex.what());
+      }
+    }
+  }
+
+  device_name = boost::str(boost::format( "libusb:instance=%d" ) % device_number);
+
+  try {
+    _dev = open(device_name);
+  } catch(...) {
+    throw std::runtime_error( _pfx + "Failed to open bladeRF device " +
+                              device_name );
+  }
+
+  /* Load an FPGA */
+  if ( dict.count("fpga") )
+  {
+    std::string fpga = dict["fpga"];
+
+    std::cerr << _pfx << "Loading FPGA bitstream " << fpga << "..." << std::endl;
+    ret = bladerf_load_fpga( _dev.get(), fpga.c_str() );
+    if ( ret != 0 )
+      std::cerr << _pfx << "bladerf_load_fpga has failed with " << ret << std::endl;
+    else
+      std::cerr << _pfx << "The FPGA bitstream has been successfully loaded." << std::endl;
+  }
+
+  if ( bladerf_is_fpga_configured( _dev.get() ) != 1 )
+  {
+    std::ostringstream oss;
+    oss << _pfx << "The FPGA is not configured! "
+        << "Provide device argument fpga=/path/to/the/bitstream.rbf to load it.";
+
+    throw std::runtime_error( oss.str() );
+  }
+
+
+  /* Show some info about the device we've opened */
+  std::cerr << _pfx << "Using nuand LLC bladeRF #" << device_number;
+
+  if ( bladerf_get_serial( _dev.get(), serial ) == 0 )
+    std::cerr << " SN " << serial;
+
+  if ( bladerf_fw_version( _dev.get(), &ver ) == 0 )
+    std::cerr << " FW v" << ver.major << "." << ver.minor << "." << ver.patch;
+
+  if ( bladerf_fpga_version( _dev.get(), &ver ) == 0 )
+    std::cerr << " FPGA v" << ver.major << "." << ver.minor << "." << ver.patch;
+
+  std::cerr << std::endl;
+
+  /* Initialize buffer and sample configuration */
+  _num_buffers = 0;
+  if (dict.count("buffers")) {
+    _num_buffers = boost::lexical_cast< size_t >( dict["buffers"] );
+  }
+
+  _samples_per_buffer = 0;
+  if (dict.count("buflen")) {
+    _samples_per_buffer = boost::lexical_cast< size_t >( dict["buflen"] );
+  }
+
+  _num_transfers = 0;
+  if (dict.count("transfers")) {
+    _num_transfers = boost::lexical_cast< size_t >( dict["transfers"] );
+  }
+
+  /* Require value to be >= 2 so we can ensure we have twice as many
+   * buffers as transfers */
+  if (_num_buffers <= 1) {
+    _num_buffers = NUM_BUFFERS;
+  }
+
+  if (0 == _samples_per_buffer) {
+    _samples_per_buffer = NUM_SAMPLES_PER_BUFFER;
+  } else {
+    if (_samples_per_buffer < 1024 || _samples_per_buffer % 1024 != 0) {
+
+      /* 0 likely implies the user did not specify this, so don't warn */
+      if (_samples_per_buffer != 0 ) {
+        std::cerr << _pfx << "Invalid \"buflen\" value. "
+                  << "A multiple of 1024 is required. Defaulting to "
+                  << NUM_SAMPLES_PER_BUFFER << std::endl;
+      }
+
+      _samples_per_buffer = NUM_SAMPLES_PER_BUFFER;
+    }
+  }
+
+
+
+  if (_num_transfers == 0 || _num_transfers > (_num_buffers / 2)) {
+      _num_transfers = _num_buffers / 2;
+  }
 }
 
 osmosdr::freq_range_t bladerf_common::freq_range()

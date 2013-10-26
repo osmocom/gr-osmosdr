@@ -120,8 +120,6 @@ private: /* functions */
 
 private: /* members */
 
-  size_t _samples_per_buffer;
-
   /* Array denoting whether each buffer is filled with data and ready to TX */
   bool *_filled;
 
