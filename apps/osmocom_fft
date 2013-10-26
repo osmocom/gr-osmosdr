@@ -111,18 +111,26 @@ class app_top_block(stdgui2.std_top_block, pubsub):
             options.samp_rate = self.src.get_sample_rates().start()
 
         if options.gain is None:
-            # if no gain was specified, use the mid-point in dB
-            r = self.src.get_gain_range()
-            try: # empty gain range returned in file= mode
-                options.gain = float(r.start()+r.stop())/2
-            except RuntimeError:
-                options.gain = 0
-                pass
+            gain = self.src.get_gain()
+            if gain is None:
+                # if no gain was specified, use the mid-point in dB
+                r = self.src.get_gain_range()
+                try: # empty gain range returned in file= mode
+                    options.gain = float(r.start()+r.stop())/2
+                except RuntimeError:
+                    options.gain = 0
+                    pass
+            else:
+                options.gain = gain
 
         if options.center_freq is None:
-            # if no freq was specified, use the mid-point in Hz
-            r = self.src.get_freq_range()
-            options.center_freq = float(r.start()+r.stop())/2
+            freq = self.src.get_center_freq()
+            if freq != 0:
+                options.center_freq = freq
+            else:
+                # if no freq was specified, use the mid-point in Hz
+                r = self.src.get_freq_range()
+                options.center_freq = float(r.start()+r.stop())/2
 
         input_rate = self.src.set_sample_rate(options.samp_rate)
         self.src.set_bandwidth(input_rate)
@@ -254,7 +262,7 @@ class app_top_block(stdgui2.std_top_block, pubsub):
                 key=CENTER_FREQ_KEY,
                 minimum=self[FREQ_RANGE_KEY].start(),
                 maximum=self[FREQ_RANGE_KEY].stop(),
-                num_steps=101,
+                num_steps=1000,
             )
             freq_hbox.AddSpacer(3)
 
