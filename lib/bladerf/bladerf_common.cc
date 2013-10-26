@@ -40,49 +40,13 @@
 
 #include "bladerf_common.h"
 
-#define BLADERF_FIFO_SIZE_ENV   "BLADERF_SAMPLE_FIFO_SIZE"
-
 using namespace boost::assign;
 
 boost::mutex bladerf_common::_devs_mutex;
 std::list<boost::weak_ptr<struct bladerf> > bladerf_common::_devs;
 
-bladerf_common::bladerf_common() :
-  _is_running(false)
-{
-  const char *env_fifo_size;
-  size_t fifo_size;
-
-  env_fifo_size = getenv(BLADERF_FIFO_SIZE_ENV);
-  fifo_size = BLADERF_SAMPLE_FIFO_SIZE;
-
-  if (env_fifo_size != NULL) {
-    try {
-      fifo_size = boost::lexical_cast<size_t>(env_fifo_size);
-    } catch (const boost::bad_lexical_cast &e) {
-      std::cerr << "Warning: \"" << BLADERF_FIFO_SIZE_ENV
-                << "\" is invalid" << "... defaulting to "
-                << fifo_size;
-    }
-
-    if (fifo_size < BLADERF_SAMPLE_FIFO_MIN_SIZE) {
-      fifo_size = BLADERF_SAMPLE_FIFO_MIN_SIZE;
-      std::cerr << "Warning: \"" << BLADERF_FIFO_SIZE_ENV
-                << "\" is too small" << "... defaulting to "
-                << BLADERF_SAMPLE_FIFO_MIN_SIZE;
-    }
-  }
-
-  _fifo = new boost::circular_buffer<gr_complex>(fifo_size);
-  if (!_fifo)
-    throw std::runtime_error( std::string(__FUNCTION__) +
-                              " has failed to allocate a sample FIFO!" );
-}
-
-bladerf_common::~bladerf_common()
-{
-  delete _fifo;
-}
+bladerf_common::bladerf_common() : _is_running(false) {}
+bladerf_common::~bladerf_common() {}
 
 bladerf_sptr bladerf_common:: get_cached_device(struct bladerf_devinfo devinfo)
 {
