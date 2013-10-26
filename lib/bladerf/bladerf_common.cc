@@ -149,14 +149,23 @@ void bladerf_common::init(dict_t &dict, const char *type)
   /* Load an FPGA */
   if ( dict.count("fpga") )
   {
-    std::string fpga = dict["fpga"];
 
-    std::cerr << _pfx << "Loading FPGA bitstream " << fpga << "..." << std::endl;
-    ret = bladerf_load_fpga( _dev.get(), fpga.c_str() );
-    if ( ret != 0 )
-      std::cerr << _pfx << "bladerf_load_fpga has failed with " << ret << std::endl;
-    else
-      std::cerr << _pfx << "The FPGA bitstream has been successfully loaded." << std::endl;
+    if ( dict.count("fpga-reload") == 0 &&
+         bladerf_is_fpga_configured( _dev.get() ) == 1 ) {
+
+      std::cerr << _pfx << "FPGA is already loaded. Set fpga-reload=1 "
+                << "to force a reload." << std::endl;
+
+    } else {
+      std::string fpga = dict["fpga"];
+
+      std::cerr << _pfx << "Loading FPGA bitstream " << fpga << "..." << std::endl;
+      ret = bladerf_load_fpga( _dev.get(), fpga.c_str() );
+      if ( ret != 0 )
+        std::cerr << _pfx << "bladerf_load_fpga has failed with " << ret << std::endl;
+      else
+        std::cerr << _pfx << "The FPGA bitstream has been successfully loaded." << std::endl;
+    }
   }
 
   if ( bladerf_is_fpga_configured( _dev.get() ) != 1 )
