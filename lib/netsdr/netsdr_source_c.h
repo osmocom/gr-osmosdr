@@ -20,7 +20,11 @@
 #ifndef INCLUDED_NETSDR_SOURCE_C_H
 #define INCLUDED_NETSDR_SOURCE_C_H
 
+//#define USE_ASIO
+
+#ifdef USE_ASIO
 #include <boost/asio.hpp>
+#endif
 
 #include <gruel/thread.h>
 #include <gr_block.h>
@@ -29,10 +33,15 @@
 #include "osmosdr/osmosdr_ranges.h"
 #include "osmosdr_src_iface.h"
 
+#ifdef USE_ASIO
 using boost::asio::ip::tcp;
 using boost::asio::ip::udp;
-
+#endif
 class netsdr_source_c;
+
+#ifndef SOCKET
+#define SOCKET int
+#endif
 
 /*
  * We use boost::shared_ptr's instead of raw pointers for all access
@@ -118,11 +127,15 @@ private: /* functions */
                     std::vector< unsigned char > &response );
 
 private: /* members */
+#ifdef USE_ASIO
   boost::asio::io_service _io_service;
   tcp::resolver _resolver;
   tcp::socket _t;
   udp::socket _u;
-
+#else
+  SOCKET _tcp;
+  SOCKET _udp;
+#endif
   bool _running;
   uint16_t _sequence;
 
