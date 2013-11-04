@@ -47,6 +47,8 @@ static std::string get_tuner_name( enum rtlsdr_tuner tuner_type )
     return "FC2580";
   else if ( RTLSDR_TUNER_R820T == tuner_type )
     return "R820T";
+  else if ( RTLSDR_TUNER_R828D == tuner_type )
+    return "R828D";
   else
     return "Unknown";
 }
@@ -221,6 +223,8 @@ osmosdr::freq_range_t rtl_tcp_source_c::get_freq_range( size_t chan )
     range += osmosdr::range_t( 146e6, 308e6 );
     range += osmosdr::range_t( 438e6, 924e6 );
   } else if ( tuner == RTLSDR_TUNER_R820T ) {
+    range += osmosdr::range_t( 24e6, 1766e6 );
+  } else if ( tuner == RTLSDR_TUNER_R828D ) {
     range += osmosdr::range_t( 24e6, 1766e6 );
   } else {
     range += osmosdr::range_t( 52e6, 2.2e9 ); // assume E4000 tuner
