@@ -464,6 +464,8 @@ osmosdr::freq_range_t rtl_source_c::get_freq_range( size_t chan )
       range += osmosdr::range_t( 438e6, 924e6 );
     } else if ( tuner == RTLSDR_TUNER_R820T ) {
       range += osmosdr::range_t( 24e6, 1766e6 );
+    } else if ( tuner == RTLSDR_TUNER_R828D ) {
+      range += osmosdr::range_t( 24e6, 1766e6 );
     }
   }
 
