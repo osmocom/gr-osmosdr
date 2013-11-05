@@ -135,6 +135,7 @@ private: /* members */
   SOCKET _udp;
 #endif
   bool _running;
+  bool _keep_running;
   uint16_t _sequence;
 
   size_t _nchan;
