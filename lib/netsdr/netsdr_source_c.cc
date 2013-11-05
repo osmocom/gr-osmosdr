@@ -100,6 +100,7 @@ netsdr_source_c::netsdr_source_c (const std::string &args)
     _udp(-1),
 #endif
     _running(false),
+    _keep_running(false),
     _sequence(0),
     _nchan(1)
 {
@@ -432,17 +433,29 @@ bool netsdr_source_c::start()
 {
   _sequence = 0;
   _running = true;
-
-  // TODO: implement 24 bit sample format
+  _keep_running = false;
 
   /* 4.2.1 Receiver State */
   unsigned char start[8] = { 0x08, 0x00, 0x18, 0x00, 0x80, 0x02, 0x00, 0x00 };
+
+  unsigned char mode = 0; /* 0 = 16 bit Contiguous Mode */
+
+  if ( 0 ) /* TODO: 24 bit Contiguous mode */
+    mode |= 0x80;
+
+  if ( 0 ) /* TODO: Hardware Triggered Pulse mode */
+    mode |= 0x03;
+
+  start[sizeof(start)-2] = mode;
+
   return transaction( start, sizeof(start) );
 }
 
 bool netsdr_source_c::stop()
 {
-  _running = false;
+  if ( ! _keep_running )
+    _running = false;
+  _keep_running = false;
 
   /* 4.2.1 Receiver State */
   unsigned char stop[8] = { 0x08, 0x00, 0x18, 0x00, 0x00, 0x01, 0x00, 0x00 };
@@ -474,7 +487,7 @@ int netsdr_source_c::work(int noutput_items,
   #define HEADER_SIZE 2
   #define SEQNUM_SIZE 2
 
-//  bool is_24_bit = false;
+//  bool is_24_bit = false;   // TODO: implement 24 bit sample format
 
   /* check header */
   if ( (0x04 == data[0] && (0x84 == data[1] || 0x82 == data[1])) )
@@ -790,16 +803,17 @@ size_t netsdr_source_c::get_num_channels()
   return _nchan;
 }
 
+#define MAX_RATE  2e6
+#define ADC_CLOCK 80e6
+
 osmosdr::meta_range_t netsdr_source_c::get_sample_rates()
 {
   osmosdr::meta_range_t range;
 
-  #define MAX_RATE 2e6
-
   /* Calculate NetSDR sample rates */
   for ( size_t i = 625; i >= 10; i-- )
   {
-    double rate = 80e6/(4.0*i);
+    double rate = ADC_CLOCK/(4.0*i);
 
     if ( rate > (MAX_RATE / _nchan) )
       break;
@@ -807,6 +821,8 @@ osmosdr::meta_range_t netsdr_source_c::get_sample_rates()
     if ( floor(rate) == rate )
       range += osmosdr::range_t( rate );
   }
+
+  /* TODO: Calculate SDR-IP sample rates */
 
   return range;
 }
@@ -823,20 +839,20 @@ double netsdr_source_c::set_sample_rate( double rate )
 
   std::vector< unsigned char > response;
 
-  // TODO: implement settable sample rates
-
-//  stop();
-
   if ( _running )
   {
-    std::cerr << "Changing the NetSDR sample rate not possible in run mode" << std::endl;
-    return get_sample_rate();
+    _keep_running = true;
+
+    stop();
   }
 
   if ( ! transaction( samprate, sizeof(samprate), response ) )
     throw std::runtime_error("set_sample_rate failed");
 
-//  start();
+  if ( _running )
+  {
+    start();
+  }
 
   u32_rate = 0;
   u32_rate |= response[sizeof(samprate)-4] <<  0;
@@ -847,7 +863,8 @@ double netsdr_source_c::set_sample_rate( double rate )
   _sample_rate = u32_rate;
 
   if ( rate != _sample_rate )
-    std::cerr << "Current NetSDR sample rate is " << (uint32_t)_sample_rate << std::endl;
+    std::cerr << "Radio reported a sample rate of " << (uint32_t)_sample_rate << " Hz"
+              << std::endl;
 
   return get_sample_rate();
 }
@@ -886,8 +903,8 @@ osmosdr::freq_range_t netsdr_source_c::get_freq_range( size_t chan )
     }
   }
 
-  if ( range.empty() )
-    range += osmosdr::range_t(0, 40e6);
+  if ( range.empty() ) /* assume reasonable default */
+    range += osmosdr::range_t(0, ADC_CLOCK/2.0);
 
   return range;
 }
