@@ -338,7 +338,7 @@ class app_top_block(stdgui2.std_top_block, pubsub):
                     key=GAIN_KEY(gain_name),
                     minimum=range.start(),
                     maximum=range.stop(),
-                    step_size=range.step(),
+                    step_size=range.step() or (range.stop() - range.start())/10,
                 )
                 gain_hbox.AddSpacer(3)
 
@@ -379,7 +379,7 @@ class app_top_block(stdgui2.std_top_block, pubsub):
                     key=BWIDTH_KEY,
                     minimum=bw_range.start(),
                     maximum=bw_range.stop(),
-                    step_size=bw_range.step(),
+                    step_size=bw_range.step() or (bw_range.stop() - bw_range.start())/100,
                 )
                 bwidth_hbox.AddSpacer(3)
 
