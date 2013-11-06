@@ -176,12 +176,14 @@ sink_impl::sink_impl( const std::string &args )
   } catch ( std::exception &ex ) {
     std::cerr << std::endl << "FATAL: " << ex.what() << std::endl << std::endl;
 
-    size_t missing_chans = output_signature()->max_streams() - channel;
+    size_t missing_chans = 0;
+    if ( input_signature()->max_streams() > 0 )
+      missing_chans = input_signature()->max_streams() - channel;
 
     std::cerr << "Trying to fill up " << missing_chans
               << " missing channel(s) with null sink(s).\n"
               << "This is being done to prevent the application from crashing\n"
-              << "due to a gnuradio bug. The maintainers have been informed.\n"
+              << "due to gnuradio bug #528.\n"
               << std::endl;
 
     for (size_t i = 0; i < missing_chans; i++) {
