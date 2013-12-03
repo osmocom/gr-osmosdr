@@ -166,6 +166,7 @@ osmosdr::meta_range_t rtl_tcp_source_c::get_sample_rates( void )
   range += osmosdr::range_t( 2000000 ); // known to work
   range += osmosdr::range_t( 2048000 ); // known to work
   range += osmosdr::range_t( 2400000 ); // known to work
+  range += osmosdr::range_t( 2560000 ); // known to work
 //  range += osmosdr::range_t( 2600000 ); // may work
 //  range += osmosdr::range_t( 2800000 ); // may work
 //  range += osmosdr::range_t( 3000000 ); // may work
