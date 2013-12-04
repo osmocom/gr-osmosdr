@@ -23,6 +23,7 @@
 #include <sstream>
 
 #include <boost/assign.hpp>
+#include <boost/format.hpp>
 
 #include <gr_io_signature.h>
 #include <gr_file_source.h>
