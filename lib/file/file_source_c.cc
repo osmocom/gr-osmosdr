@@ -23,6 +23,7 @@
 #include <sstream>
 
 #include <boost/assign.hpp>
+#include <boost/format.hpp>
 
 #include <gnuradio/io_signature.h>
 #include <gnuradio/blocks/file_source.h>
