@@ -119,6 +119,11 @@ devices_t device::find(const device_t &hint)
 {
   boost::mutex::scoped_lock lock(_device_mutex);
 
+  bool fake = true;
+
+  if ( hint.count("nofake") )
+    fake = false;
+
   devices_t devices;
 
 #ifdef ENABLE_OSMOSDR
@@ -150,7 +155,7 @@ devices_t device::find(const device_t &hint)
     devices.push_back( device_t(dev) );
 #endif
 #ifdef ENABLE_NETSDR
-  BOOST_FOREACH( std::string dev, netsdr_source_c::get_devices( true ) )
+  BOOST_FOREACH( std::string dev, netsdr_source_c::get_devices( fake ) )
     devices.push_back( device_t(dev) );
 #endif
 
@@ -159,11 +164,11 @@ devices_t device::find(const device_t &hint)
    * in a graphical interface etc... */
 
 #ifdef ENABLE_RTL_TCP
-  BOOST_FOREACH( std::string dev, rtl_tcp_source_c::get_devices() )
+  BOOST_FOREACH( std::string dev, rtl_tcp_source_c::get_devices( fake ) )
     devices.push_back( device_t(dev) );
 #endif
 #ifdef ENABLE_FILE
-  BOOST_FOREACH( std::string dev, file_source_c::get_devices() )
+  BOOST_FOREACH( std::string dev, file_source_c::get_devices( fake ) )
     devices.push_back( device_t(dev) );
 #endif
 
