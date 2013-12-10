@@ -127,6 +127,7 @@ While primarily being developed for the OsmoSDR hardware, this block as well sup
  * Great Scott Gadgets HackRF through libhackrf
  * Nuand LLC bladeRF through libbladeRF library
  * Ettus USRP Devices through Ettus UHD library
+ * Fairwaves UmTRX through Fairwaves' fork of UHD
 
 By using the osmocom $sourk block you can take advantage of a common software api in your application(s) independent of the underlying radio hardware.
 
