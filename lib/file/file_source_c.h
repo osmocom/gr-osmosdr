@@ -45,7 +45,7 @@ public:
 
   std::string name();
 
-  static std::vector< std::string > get_devices();
+  static std::vector< std::string > get_devices( bool fake = false );
 
   size_t get_num_channels( void );
 

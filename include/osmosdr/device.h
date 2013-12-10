@@ -101,6 +101,9 @@ namespace osmosdr {
      * The device hint should be used to narrow down the search
      * to particular transport types and/or transport arguments.
      *
+     * The device hint "nofake" switches off dummy devices created
+     * by "file" (and other) implementations.
+     *
      * \param hint a partially (or fully) filled in logical device
      * \return a vector of logical devices for all radios on the system
      */

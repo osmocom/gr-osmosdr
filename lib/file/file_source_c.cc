@@ -102,14 +102,17 @@ std::string file_source_c::name()
   return "IQ File Source";
 }
 
-std::vector<std::string> file_source_c::get_devices()
+std::vector<std::string> file_source_c::get_devices( bool fake )
 {
   std::vector<std::string> devices;
 
-  std::string args = "file='/path/to/your/file'";
-  args += ",rate=1e6,freq=100e6,repeat=true,throttle=true";
-  args += ",label='Complex Sampled (IQ) File'";
-  devices.push_back( args );
+  if ( fake )
+  {
+    std::string args = "file='/path/to/your/file'";
+    args += ",rate=1e6,freq=100e6,repeat=true,throttle=true";
+    args += ",label='Complex Sampled (IQ) File'";
+    devices.push_back( args );
+  }
 
   return devices;
 }
