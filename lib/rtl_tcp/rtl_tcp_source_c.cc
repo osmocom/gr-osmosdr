@@ -149,13 +149,16 @@ std::string rtl_tcp_source_c::name()
   return "RTL TCP Client";
 }
 
-std::vector<std::string> rtl_tcp_source_c::get_devices()
+std::vector<std::string> rtl_tcp_source_c::get_devices( bool fake )
 {
   std::vector<std::string> devices;
 
-  std::string args = "rtl_tcp=localhost:1234";
-  args += ",label='RTL-SDR Spectrum Server'";
-  devices.push_back( args );
+  if ( fake )
+  {
+    std::string args = "rtl_tcp=localhost:1234";
+    args += ",label='RTL-SDR Spectrum Server'";
+    devices.push_back( args );
+  }
 
   return devices;
 }
