@@ -17,8 +17,8 @@
  * the Free Software Foundation, Inc., 51 Franklin Street,
  * Boston, MA 02110-1301, USA.
  */
-#ifndef INCLUDED_NETSDR_SOURCE_C_H
-#define INCLUDED_NETSDR_SOURCE_C_H
+#ifndef INCLUDED_RFSPACE_SOURCE_C_H
+#define INCLUDED_RFSPACE_SOURCE_C_H
 
 //#define USE_ASIO
 
@@ -29,13 +29,17 @@
 #include <gnuradio/block.h>
 #include <gnuradio/sync_block.h>
 
+#include <boost/circular_buffer.hpp>
+#include <boost/thread/mutex.hpp>
+#include <boost/thread/condition_variable.hpp>
+
 #include "osmosdr/ranges.h"
 #include "source_iface.h"
 #ifdef USE_ASIO
 using boost::asio::ip::tcp;
 using boost::asio::ip::udp;
 #endif
-class netsdr_source_c;
+class rfspace_source_c;
 
 #ifndef SOCKET
 #define SOCKET int
@@ -52,30 +56,30 @@ class netsdr_source_c;
  *
  * As a convention, the _sptr suffix indicates a boost::shared_ptr
  */
-typedef boost::shared_ptr<netsdr_source_c> netsdr_source_c_sptr;
+typedef boost::shared_ptr<rfspace_source_c> rfspace_source_c_sptr;
 
 /*!
- * \brief Return a shared_ptr to a new instance of netsdr_source_c.
+ * \brief Return a shared_ptr to a new instance of rfspace_source_c.
  *
- * To avoid accidental use of raw pointers, netsdr_source_c's
- * constructor is private.  netsdr_make_source_c is the public
+ * To avoid accidental use of raw pointers, rfspace_source_c's
+ * constructor is private.  rfspace_make_source_c is the public
  * interface for creating new instances.
  */
-netsdr_source_c_sptr make_netsdr_source_c (const std::string & args = "");
+rfspace_source_c_sptr make_rfspace_source_c (const std::string & args = "");
 
-class netsdr_source_c :
+class rfspace_source_c :
     public gr::sync_block,
     public source_iface
 {
 private:
-  // The friend declaration allows netsdr_make_source_c to
+  // The friend declaration allows rfspace_make_source_c to
   // access the private constructor.
-  friend netsdr_source_c_sptr make_netsdr_source_c (const std::string & args);
+  friend rfspace_source_c_sptr make_rfspace_source_c (const std::string & args);
 
-  netsdr_source_c (const std::string & args);  	// private constructor
+  rfspace_source_c (const std::string & args);  	// private constructor
 
 public:
-  ~netsdr_source_c ();	// public destructor
+  ~rfspace_source_c ();	// public destructor
 
   bool start();
   bool stop();
@@ -117,14 +121,26 @@ public:
   osmosdr::freq_range_t get_bandwidth_range( size_t chan = 0 );
 
 private: /* functions */
-  void apply_channel(unsigned char *cmd, size_t chan_pos, size_t chan);
+  void apply_channel( unsigned char *cmd, size_t chan = 0 );
 
   bool transaction( const unsigned char *cmd, size_t size );
 
   bool transaction( const unsigned char *cmd, size_t size,
                     std::vector< unsigned char > &response );
 
+  void usb_read_task();
+
 private: /* members */
+  enum radio_type
+  {
+    RADIO_UNKNOWN = 0,
+    RFSPACE_SDR_IQ,
+    RFSPACE_SDR_IP,
+    RFSPACE_NETSDR
+  };
+
+  radio_type _radio;
+
 #ifdef USE_ASIO
   boost::asio::io_service _io_service;
   tcp::resolver _resolver;
@@ -134,6 +150,7 @@ private: /* members */
   SOCKET _tcp;
   SOCKET _udp;
 #endif
+  int _usb;
   bool _running;
   bool _keep_running;
   uint16_t _sequence;
@@ -141,6 +158,17 @@ private: /* members */
   size_t _nchan;
   double _sample_rate;
   double _bandwidth;
+
+  gr::thread::thread _thread;
+  bool _run_usb_read_task;
+
+  boost::circular_buffer<gr_complex> *_fifo;
+  boost::mutex _fifo_lock;
+  boost::condition_variable _samp_avail;
+
+  std::vector< unsigned char > _resp;
+  boost::mutex _resp_lock;
+  boost::condition_variable _resp_avail;
 };
 
-#endif /* INCLUDED_NETSDR_SOURCE_C_H */
+#endif /* INCLUDED_RFSPACE_SOURCE_C_H */

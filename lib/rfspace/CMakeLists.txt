@@ -25,13 +25,13 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-set(netsdr_srcs
-    ${CMAKE_CURRENT_SOURCE_DIR}/netsdr_source_c.cc
+set(rfspace_srcs
+    ${CMAKE_CURRENT_SOURCE_DIR}/rfspace_source_c.cc
 )
 
 ########################################################################
 # Append gnuradio-osmosdr library sources
 ########################################################################
-list(APPEND gr_osmosdr_srcs ${netsdr_srcs})
+list(APPEND gr_osmosdr_srcs ${rfspace_srcs})
 #list(APPEND gr_osmosdr_libs ...)
 
