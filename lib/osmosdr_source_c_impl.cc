@@ -69,8 +69,8 @@
 #include <bladerf_source_c.h>
 #endif
 
-#ifdef ENABLE_NETSDR
-#include <netsdr_source_c.h>
+#ifdef ENABLE_RFSPACE
+#include <rfspace_source_c.h>
 #endif
 
 #include <osmosdr_arg_helpers.h>
@@ -132,8 +132,8 @@ osmosdr_source_c_impl::osmosdr_source_c_impl (const std::string &args)
 #ifdef ENABLE_BLADERF
   dev_types.push_back("bladerf");
 #endif
-#ifdef ENABLE_NETSDR
-  dev_types.push_back("netsdr");
+#ifdef ENABLE_RFSPACE
+  dev_types.push_back("rfspace");
 #endif
   std::cerr << "gr-osmosdr "
             << GR_OSMOSDR_VERSION << " (" << GR_OSMOSDR_LIBVER << ") "
@@ -143,6 +143,12 @@ osmosdr_source_c_impl::osmosdr_source_c_impl (const std::string &args)
   BOOST_FOREACH(std::string dev_type, dev_types)
     std::cerr << dev_type << " ";
   std::cerr << std::endl << std::flush;
+
+#ifdef ENABLE_RFSPACE
+  dev_types.push_back("sdr-iq"); /* additional aliases for rfspace backend */
+  dev_types.push_back("sdr-ip");
+  dev_types.push_back("netsdr");
+#endif
 
   BOOST_FOREACH(std::string arg, arg_list) {
     dict_t dict = params_to_dict(arg);
@@ -181,8 +187,8 @@ osmosdr_source_c_impl::osmosdr_source_c_impl (const std::string &args)
   BOOST_FOREACH( std::string dev, bladerf_source_c::get_devices() )
     dev_list.push_back( dev );
 #endif
-#ifdef ENABLE_NETSDR
-  BOOST_FOREACH( std::string dev, netsdr_source_c::get_devices() )
+#ifdef ENABLE_RFSPACE
+  BOOST_FOREACH( std::string dev, rfspace_source_c::get_devices() )
     dev_list.push_back( dev );
 #endif
 #ifdef ENABLE_HACKRF
@@ -275,9 +281,12 @@ osmosdr_source_c_impl::osmosdr_source_c_impl (const std::string &args)
     }
 #endif
 
-#ifdef ENABLE_NETSDR
-    if ( dict.count("netsdr") ) {
-      netsdr_source_c_sptr src = make_netsdr_source_c( arg );
+#ifdef ENABLE_RFSPACE
+    if ( dict.count("rfspace") ||
+         dict.count("sdr-iq") ||
+         dict.count("sdr-ip") ||
+         dict.count("netsdr") ) {
+      rfspace_source_c_sptr src = make_rfspace_source_c( arg );
       block = src; iface = src.get();
     }
 #endif

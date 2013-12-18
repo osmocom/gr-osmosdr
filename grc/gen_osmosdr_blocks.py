@@ -122,7 +122,7 @@ While primarily being developed for the OsmoSDR hardware, this block as well sup
  * RTL-TCP spectrum server (see librtlsdr project)
  * MSi2500 based DVB-T dongles through libmirisdr
  * gnuradio .cfile input through libgnuradio-blocks
- * RFSPACE NetSDR via direct TCP/UDP communication
+ * RFSPACE SDR-IQ, SDR-IP, NetSDR (incl. X2 option)
 #end if
  * Great Scott Gadgets HackRF through libhackrf
  * Nuand LLC bladeRF through libbladeRF library
@@ -153,7 +153,9 @@ Lines ending with ... mean it's possible to bind devices together by specifying 
   rtl_tcp=127.0.0.1:1234[,psize=16384][,direct_samp=0|1|2][,offset_tune=0|1] ...
   osmosdr=0[,buffers=32][,buflen=N*512] ...
   file='/path/to/your file',rate=1e6[,freq=100e6][,repeat=true][,throttle=true] ...
-  netsdr=127.0.0.1:50000[,nchan=1]
+  netsdr=127.0.0.1[:50000][,nchan=2]
+  sdr-ip=127.0.0.1[:50000]
+  sdr-iq=/dev/ttyUSB0
 #end if
   hackrf=0[,buffers=32]
   bladerf=0[,fpga='/path/to/the/bitstream.rbf'][,fw='/path/to/the/firmware.img']
