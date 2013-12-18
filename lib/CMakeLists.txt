@@ -139,12 +139,12 @@ GR_INCLUDE_SUBDIRECTORY(bladerf)
 endif(ENABLE_BLADERF)
 
 ########################################################################
-# Setup NetSDR component
+# Setup RFSPACE component
 ########################################################################
-GR_REGISTER_COMPONENT("RFSPACE NetSDR" ENABLE_NETSDR)
-if(ENABLE_NETSDR)
-GR_INCLUDE_SUBDIRECTORY(netsdr)
-endif(ENABLE_NETSDR)
+GR_REGISTER_COMPONENT("RFSPACE Receivers" ENABLE_RFSPACE)
+if(ENABLE_RFSPACE)
+GR_INCLUDE_SUBDIRECTORY(rfspace)
+endif(ENABLE_RFSPACE)
 
 ########################################################################
 # Setup configuration file

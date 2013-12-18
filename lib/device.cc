@@ -66,8 +66,8 @@
 #include <bladerf_source_c.h>
 #endif
 
-#ifdef ENABLE_NETSDR
-#include <netsdr_source_c.h>
+#ifdef ENABLE_RFSPACE
+#include <rfspace_source_c.h>
 #endif
 
 #include "arg_helpers.h"
@@ -154,8 +154,8 @@ devices_t device::find(const device_t &hint)
   BOOST_FOREACH( std::string dev, hackrf_source_c::get_devices() )
     devices.push_back( device_t(dev) );
 #endif
-#ifdef ENABLE_NETSDR
-  BOOST_FOREACH( std::string dev, netsdr_source_c::get_devices( fake ) )
+#ifdef ENABLE_RFSPACE
+  BOOST_FOREACH( std::string dev, rfspace_source_c::get_devices( fake ) )
     devices.push_back( device_t(dev) );
 #endif
 
