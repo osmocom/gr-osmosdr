@@ -176,6 +176,7 @@ class app_top_block(stdgui2.std_top_block, pubsub):
         if options.fosphor:
             from gnuradio import fosphor
             self.scope = fosphor.wx_sink_c(panel, size=(800,300))
+            self.scope.set_sample_rate(input_rate)
             self.frame.SetMinSize((800,600))
         elif options.waterfall:
             self.scope = waterfallsink2.waterfall_sink_c (panel,
