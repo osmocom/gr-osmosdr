@@ -39,6 +39,7 @@
 
 #include "osmosdr_arg_helpers.h"
 #include "bladerf_source_c.h"
+#include "osmosdr/source.h"
 
 /*
  * Default size of sample FIFO, in entries.
@@ -557,6 +558,44 @@ std::string bladerf_source_c::get_antenna( size_t chan )
 {
   /* We only have a single receive antenna here */
   return "RX";
+}
+
+void bladerf_source_c::set_dc_offset_mode( int mode, size_t chan )
+{
+  std::cerr << __FUNCTION__ << " mode: " << mode << std::endl; /* TODO: remove */
+
+  if ( osmosdr::source::DCOffsetOff == mode ) {
+    //_src->set_auto_dc_offset( false, chan );
+    //_src->set_dc_offset( std::complex<double>(0.0, 0.0), chan ); /* TODO: reset to default for off-state */
+  } else if ( osmosdr::source::DCOffsetManual == mode ) {
+    //_src->set_auto_dc_offset( false, chan ); /* disable auto mode, but keep correcting with last known values */
+  } else if ( osmosdr::source::DCOffsetAutomatic == mode ) {
+    //_src->set_auto_dc_offset( true, chan );
+  }
+}
+
+void bladerf_source_c::set_dc_offset( const std::complex<double> &offset, size_t chan )
+{
+  std::cerr << __FUNCTION__ << " offset: " << offset.real() << " " << offset.imag() << std::endl; /* TODO: remove */
+}
+
+void bladerf_source_c::set_iq_balance_mode( int mode, size_t chan )
+{
+  std::cerr << __FUNCTION__ << " mode: " << mode << std::endl; /* TODO: remove */
+
+  if ( osmosdr::source::IQBalanceOff == mode ) {
+    //_src->set_auto_iq_balance( false, chan );
+    //_src->set_iq_balance( std::complex<double>(0.0, 0.0), chan ); /* TODO: reset to default for off-state */
+  } else if ( osmosdr::source::IQBalanceManual == mode ) {
+    //_src->set_auto_iq_balance( false, chan ); /* disable auto mode, but keep correcting with last known values */
+  } else if ( osmosdr::source::IQBalanceAutomatic == mode ) {
+    //_src->set_auto_iq_balance( true, chan );
+  }
+}
+
+void bladerf_source_c::set_iq_balance( const std::complex<double> &balance, size_t chan )
+{
+  std::cerr << __FUNCTION__ << " balance: " << balance.real() << " " << balance.imag() << std::endl; /* TODO: remove */
 }
 
 double bladerf_source_c::set_bandwidth( double bandwidth, size_t chan )

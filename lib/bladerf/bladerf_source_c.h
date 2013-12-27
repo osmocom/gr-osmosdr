@@ -103,6 +103,12 @@ public:
   std::string set_antenna( const std::string & antenna, size_t chan = 0 );
   std::string get_antenna( size_t chan = 0 );
 
+  void set_dc_offset_mode( int mode, size_t chan = 0 );
+  void set_dc_offset( const std::complex<double> &offset, size_t chan = 0 );
+
+  void set_iq_balance_mode( int mode, size_t chan = 0 );
+  void set_iq_balance( const std::complex<double> &balance, size_t chan = 0 );
+
   double set_bandwidth( double bandwidth, size_t chan = 0 );
   double get_bandwidth( size_t chan = 0 );
   osmosdr::freq_range_t get_bandwidth_range( size_t chan = 0 );
