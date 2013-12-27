@@ -42,6 +42,7 @@
 #include <termios.h>
 #include <sys/stat.h>
 #include <dirent.h>
+#include <libgen.h> /* basename */
 
 #include <algorithm>
 #include <iostream>
