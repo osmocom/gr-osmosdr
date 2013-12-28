@@ -158,7 +158,7 @@ Lines ending with ... mean it's possible to bind devices together by specifying 
   sdr-iq=/dev/ttyUSB0
 #end if
   hackrf=0[,buffers=32]
-  bladerf=0[,fpga='/path/to/the/bitstream.rbf'][,fw='/path/to/the/firmware.img']
+  bladerf=0[,fpga='/path/to/the/bitstream.rbf']
   uhd[,serial=...][,lo_offset=0][,mcr=52e6][,nchan=2][,subdev='\\\\'B:0 A:0\\\\''] ...
 
 Num Channels:
