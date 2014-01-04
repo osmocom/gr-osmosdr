@@ -123,6 +123,7 @@ While primarily being developed for the OsmoSDR hardware, this block as well sup
  * MSi2500 based DVB-T dongles through libmirisdr
  * gnuradio .cfile input through libgnuradio-blocks
  * RFSPACE SDR-IQ, SDR-IP, NetSDR (incl. X2 option)
+ * AirSpy Wideband Receiver through libairspy
 #end if
  * Great Scott Gadgets HackRF through libhackrf
  * Nuand LLC bladeRF through libbladeRF library
@@ -156,6 +157,7 @@ Lines ending with ... mean it's possible to bind devices together by specifying 
   netsdr=127.0.0.1[:50000][,nchan=2]
   sdr-ip=127.0.0.1[:50000]
   sdr-iq=/dev/ttyUSB0
+  airspy=0
 #end if
   hackrf=0[,buffers=32]
   bladerf=0[,fpga='/path/to/the/bitstream.rbf']
