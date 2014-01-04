@@ -8,6 +8,7 @@ While primarily being developed for the OsmoSDR hardware, this block as well sup
  * MSi2500 based DVB-T dongles through libmirisdr
  * gnuradio .cfile input through libgnuradio-blocks
  * RFSPACE SDR-IQ, SDR-IP, NetSDR (incl. X2 option)
+ * AirSpy Wideband Receiver through libairspy
  * Great Scott Gadgets HackRF through libhackrf
  * Nuand LLC bladeRF through libbladeRF library
  * Ettus USRP Devices through Ettus UHD library

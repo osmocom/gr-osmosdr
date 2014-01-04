@@ -146,6 +146,14 @@ GR_INCLUDE_SUBDIRECTORY(rfspace)
 endif(ENABLE_RFSPACE)
 
 ########################################################################
+# Setup AIRSPY component
+########################################################################
+GR_REGISTER_COMPONENT("AIRSPY Receiver" ENABLE_AIRSPY LIBAIRSPY_FOUND)
+if(ENABLE_AIRSPY)
+GR_INCLUDE_SUBDIRECTORY(airspy)
+endif(ENABLE_AIRSPY)
+
+########################################################################
 # Setup configuration file
 ########################################################################
 ADD_DEFINITIONS(-DHAVE_CONFIG_H=1)

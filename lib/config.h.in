@@ -14,5 +14,6 @@
 #cmakedefine ENABLE_HACKRF
 #cmakedefine ENABLE_BLADERF
 #cmakedefine ENABLE_RFSPACE
+#cmakedefine ENABLE_AIRSPY
 
 #endif // CONFIG_H_IN
