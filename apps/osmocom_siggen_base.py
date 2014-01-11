@@ -33,6 +33,10 @@ WAVEFORM2_FREQ_KEY = 'waveform2_freq'
 FREQ_RANGE_KEY = 'freq_range'
 GAIN_RANGE_KEY = lambda x: 'gain_range:'+x
 BWIDTH_RANGE_KEY = 'bwidth_range'
+DC_OFFSET_REAL = 'dc_offset_real'
+DC_OFFSET_IMAG = 'dc_offset_imag'
+IQ_BALANCE_MAG = 'iq_balance_mag'
+IQ_BALANCE_PHA = 'iq_balance_pha'
 TYPE_KEY = 'type'
 
 def setter(ps, key, val): ps[key] = val
@@ -143,6 +147,12 @@ class top_block(gr.top_block, pubsub):
         self[WAVEFORM_OFFSET_KEY] = options.offset
         self[WAVEFORM2_FREQ_KEY] = options.waveform2_freq
 
+        # initialize reasonable defaults for DC / IQ correction
+        self[DC_OFFSET_REAL] = 0
+        self[DC_OFFSET_IMAG] = 0
+        self[IQ_BALANCE_MAG] = 0
+        self[IQ_BALANCE_PHA] = 0
+
         #subscribe set methods
         self.subscribe(SAMP_RATE_KEY, self.set_samp_rate)
 
@@ -156,6 +166,11 @@ class top_block(gr.top_block, pubsub):
         self.subscribe(WAVEFORM_FREQ_KEY, self.set_waveform_freq)
         self.subscribe(WAVEFORM2_FREQ_KEY, self.set_waveform2_freq)
         self.subscribe(TYPE_KEY, self.set_waveform)
+
+        self.subscribe(DC_OFFSET_REAL, self.set_dc_offset)
+        self.subscribe(DC_OFFSET_IMAG, self.set_dc_offset)
+        self.subscribe(IQ_BALANCE_MAG, self.set_iq_balance)
+        self.subscribe(IQ_BALANCE_PHA, self.set_iq_balance)
 
         #force update on pubsub keys
         for key in (SAMP_RATE_KEY, GAIN_KEY, BWIDTH_KEY,
@@ -247,6 +262,28 @@ class top_block(gr.top_block, pubsub):
 
             if self._verbose:
                 print "Set bandwidth to:", bw
+
+    def set_dc_offset(self, value):
+        correction = complex( self[DC_OFFSET_REAL], self[DC_OFFSET_IMAG] )
+
+        try:
+            self._sink.set_dc_offset( correction )
+
+            if self._verbose:
+                print "Set DC offset to", correction
+        except RuntimeError as ex:
+            print ex
+
+    def set_iq_balance(self, value):
+        correction = complex( self[IQ_BALANCE_MAG], self[IQ_BALANCE_PHA] )
+
+        try:
+            self._sink.set_iq_balance( correction )
+
+            if self._verbose:
+                print "Set IQ balance to", correction
+        except RuntimeError as ex:
+            print ex
 
     def set_freq(self, freq):
         if freq is None:
