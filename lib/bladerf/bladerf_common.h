@@ -43,6 +43,15 @@
 /* We currently read/write 1024 samples (pairs of 16-bit signed ints) */
 #define BLADERF_SAMPLE_BLOCK_SIZE     (1024)
 
+/*
+ * BladeRF IQ correction defines
+ */
+#define BLADERF_RX_DC_RANGE     63
+#define BLADERF_TX_DC_RANGE     127
+#define BLADERF_GAIN_ZERO       4096
+#define BLADERF_GAIN_RANGE      4096
+#define BLADERF_PHASE_RANGE     2048
+
 typedef boost::shared_ptr<struct bladerf> bladerf_sptr;
 
 class bladerf_common
