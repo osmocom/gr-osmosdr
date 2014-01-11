@@ -314,6 +314,130 @@ class app_gui(pubsub):
             pass
 
         ##################################################
+        # DC Offset controls
+        ##################################################
+
+        dc_offset_vbox = forms.static_box_sizer(parent=self.panel,
+                                         label="DC Offset Correction",
+                                         orient=wx.VERTICAL,
+                                         bold=True)
+        dc_offset_vbox.AddSpacer(3)
+        # First row of sample rate controls
+        dc_offset_hbox = wx.BoxSizer(wx.HORIZONTAL)
+        dc_offset_vbox.Add(dc_offset_hbox, 0, wx.EXPAND)
+        dc_offset_vbox.AddSpacer(3)
+
+        # Add frequency controls to top window sizer
+        self.vbox.Add(dc_offset_vbox, 0, wx.EXPAND)
+        self.vbox.AddSpacer(3)
+
+        dc_offset_hbox.AddSpacer(3)
+        forms.text_box(
+            parent=self.panel, sizer=dc_offset_hbox,
+            label='Real',
+            proportion=1,
+            converter=forms.float_converter(),
+            ps=self.tb,
+            key=osmocom_siggen.DC_OFFSET_REAL
+        )
+        dc_offset_hbox.AddSpacer(3)
+
+        forms.slider(
+            parent=self.panel, sizer=dc_offset_hbox,
+            proportion=3,
+            minimum=-1,
+            maximum=+1,
+            step_size=0.001,
+            ps=self.tb,
+            key=osmocom_siggen.DC_OFFSET_REAL
+        )
+        dc_offset_hbox.AddSpacer(3)
+
+        dc_offset_hbox.AddSpacer(3)
+        forms.text_box(
+            parent=self.panel, sizer=dc_offset_hbox,
+            label='Imag',
+            proportion=1,
+            converter=forms.float_converter(),
+            ps=self.tb,
+            key=osmocom_siggen.DC_OFFSET_IMAG
+        )
+        dc_offset_hbox.AddSpacer(3)
+
+        forms.slider(
+            parent=self.panel, sizer=dc_offset_hbox,
+            proportion=3,
+            minimum=-1,
+            maximum=+1,
+            step_size=0.001,
+            ps=self.tb,
+            key=osmocom_siggen.DC_OFFSET_IMAG
+        )
+        dc_offset_hbox.AddSpacer(3)
+
+        ##################################################
+        # IQ Imbalance controls
+        ##################################################
+
+        iq_balance_vbox = forms.static_box_sizer(parent=self.panel,
+                                         label="IQ Imbalance Correction",
+                                         orient=wx.VERTICAL,
+                                         bold=True)
+        iq_balance_vbox.AddSpacer(3)
+        # First row of sample rate controls
+        iq_balance_hbox = wx.BoxSizer(wx.HORIZONTAL)
+        iq_balance_vbox.Add(iq_balance_hbox, 0, wx.EXPAND)
+        iq_balance_vbox.AddSpacer(3)
+
+        # Add frequency controls to top window sizer
+        self.vbox.Add(iq_balance_vbox, 0, wx.EXPAND)
+        self.vbox.AddSpacer(3)
+
+        iq_balance_hbox.AddSpacer(3)
+        forms.text_box(
+            parent=self.panel, sizer=iq_balance_hbox,
+            label='Mag',
+            proportion=1,
+            converter=forms.float_converter(),
+            ps=self.tb,
+            key=osmocom_siggen.IQ_BALANCE_MAG
+        )
+        iq_balance_hbox.AddSpacer(3)
+
+        forms.slider(
+            parent=self.panel, sizer=iq_balance_hbox,
+            proportion=3,
+            minimum=-1,
+            maximum=+1,
+            step_size=0.001,
+            ps=self.tb,
+            key=osmocom_siggen.IQ_BALANCE_MAG
+        )
+        iq_balance_hbox.AddSpacer(3)
+
+        iq_balance_hbox.AddSpacer(3)
+        forms.text_box(
+            parent=self.panel, sizer=iq_balance_hbox,
+            label='Phase',
+            proportion=1,
+            converter=forms.float_converter(),
+            ps=self.tb,
+            key=osmocom_siggen.IQ_BALANCE_PHA
+        )
+        iq_balance_hbox.AddSpacer(3)
+
+        forms.slider(
+            parent=self.panel, sizer=iq_balance_hbox,
+            proportion=3,
+            minimum=-1,
+            maximum=+1,
+            step_size=0.001,
+            ps=self.tb,
+            key=osmocom_siggen.IQ_BALANCE_PHA
+        )
+        iq_balance_hbox.AddSpacer(3)
+
+        ##################################################
         # Sample Rate controls
         ##################################################
         sam_hbox = forms.static_box_sizer(parent=self.panel,
