@@ -182,7 +182,14 @@ void bladerf_common::init(dict_t &dict, const char *type)
   std::cerr << _pfx << "Using nuand LLC bladeRF #" << device_number;
 
   if ( bladerf_get_serial( _dev.get(), serial ) == 0 )
-    std::cerr << " SN " << serial;
+  {
+    std::string strser(serial);
+
+    if ( strser.length() == 32 )
+      strser.replace( 4, 24, "..." );
+
+    std::cerr << " SN " << strser;
+  }
 
   if ( bladerf_fw_version( _dev.get(), &ver ) == 0 )
     std::cerr << " FW v" << ver.major << "." << ver.minor << "." << ver.patch;
@@ -288,6 +295,9 @@ std::vector< std::string > bladerf_common::devices()
 
       s << "bladerf=" << devices[i].instance << ","
         << "label='nuand bladeRF";
+
+      if ( serial.length() == 32 )
+        serial.replace( 4, 24, "..." );
 
       if ( serial.length() )
         s << " SN " << serial;
