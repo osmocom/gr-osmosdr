@@ -621,9 +621,14 @@ class app_top_block(stdgui2.std_top_block, pubsub):
 
     def set_dc_offset(self, value):
         correction = complex( self['dc_offset_real'], self['dc_offset_imag'] )
-        if self._verbose:
-            print "Set DC offset to", correction
-        self.src.set_dc_offset( correction )
+
+        try:
+            self.src.set_dc_offset( correction )
+
+            if self._verbose:
+                print "Set DC offset to", correction
+        except RuntimeError as ex:
+            print ex
 
     def set_iq_balance_mode(self, iq_balance_mode):
         if iq_balance_mode == 1:
@@ -645,9 +650,14 @@ class app_top_block(stdgui2.std_top_block, pubsub):
 
     def set_iq_balance(self, value):
         correction = complex( self['iq_balance_mag'], self['iq_balance_pha'] )
-        if self._verbose:
-            print "Set IQ balance to", correction
-        self.src.set_iq_balance( correction )
+
+        try:
+            self.src.set_iq_balance( correction )
+
+            if self._verbose:
+                print "Set IQ balance to", correction
+        except RuntimeError as ex:
+            print ex
 
     def set_sample_rate(self, samp_rate):
         samp_rate = self.src.set_sample_rate(samp_rate)
