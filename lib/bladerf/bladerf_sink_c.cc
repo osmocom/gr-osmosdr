@@ -521,6 +521,50 @@ std::string bladerf_sink_c::get_antenna( size_t chan )
   return "TX";
 }
 
+void bladerf_sink_c::set_dc_offset( const std::complex<double> &offset, size_t chan )
+{
+  int ret = 0;
+  int16_t val_i,val_q;
+
+  //the lms dc correction provides for 6 bits of DC correction and 1 sign bit
+  //scale the correction appropriately
+  val_i = (int16_t)(fabs(offset.real()) * BLADERF_TX_DC_RANGE);
+  val_q = (int16_t)(fabs(offset.imag()) * BLADERF_TX_DC_RANGE);
+
+
+  val_i = (offset.real() > 0) ? val_i : -val_i;
+  val_q = (offset.imag() > 0) ? val_q : -val_q;
+
+  ret = bladerf_set_correction(_dev.get(), BLADERF_IQ_CORR_TX_DC_I, val_i);
+  ret |= bladerf_set_correction(_dev.get(), BLADERF_IQ_CORR_TX_DC_Q, val_q);
+
+  if( ret ) {
+    throw std::runtime_error( std::string(__FUNCTION__) + " " +
+                              "could not set dc offset: " +
+                              std::string(bladerf_strerror(ret)) );
+  }
+}
+
+void bladerf_sink_c::set_iq_balance( const std::complex<double> &balance, size_t chan )
+{
+  int ret = 0;
+  int16_t val_gain,val_phase;
+
+  //FPGA gain correction defines 0.0 as BLADERF_GAIN_ZERO, scale the offset range to +/- BLADERF_GAIN_RANGE 
+  val_gain = (int16_t)(balance.real() * (int16_t)BLADERF_GAIN_RANGE) + BLADERF_GAIN_ZERO;
+  //FPGA phase correction steps from -45 to 45 degrees
+  val_phase = (int16_t)(balance.imag() * BLADERF_PHASE_RANGE);
+
+  ret = bladerf_set_correction(_dev.get(), BLADERF_IQ_CORR_TX_GAIN, val_gain);
+  ret |= bladerf_set_correction(_dev.get(), BLADERF_IQ_CORR_TX_PHASE, val_phase);
+
+  if( ret ) {
+    throw std::runtime_error( std::string(__FUNCTION__) + " " +
+                              "could not set iq balance: " +
+                              std::string(bladerf_strerror(ret)) );
+  }
+}
+
 double bladerf_sink_c::set_bandwidth( double bandwidth, size_t chan )
 {
   int ret;
@@ -532,8 +576,8 @@ double bladerf_sink_c::set_bandwidth( double bandwidth, size_t chan )
   ret = bladerf_set_bandwidth( _dev.get(), BLADERF_MODULE_TX, (uint32_t)bandwidth, &actual );
   if( ret ) {
     throw std::runtime_error( std::string(__FUNCTION__) + " " +
-                              "Could not set bandwidth, error " +
-                              boost::lexical_cast<std::string>(ret) );
+                              "could not set bandwidth:" +
+                              std::string(bladerf_strerror(ret)) );
   }
 
   return get_bandwidth();
@@ -547,8 +591,8 @@ double bladerf_sink_c::get_bandwidth( size_t chan )
   ret = bladerf_get_bandwidth( _dev.get(), BLADERF_MODULE_TX, &bandwidth );
   if( ret ) {
     throw std::runtime_error( std::string(__FUNCTION__) + " " +
-                              "Could not get bandwidth, error " +
-                              boost::lexical_cast<std::string>(ret) );
+                              "could not get bandwidth: " +
+                              std::string(bladerf_strerror(ret)) );
   }
 
   return (double)bandwidth;

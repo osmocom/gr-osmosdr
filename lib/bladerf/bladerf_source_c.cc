@@ -48,7 +48,6 @@
 
 #define BLADERF_SAMPLE_FIFO_MIN_SIZE  (3 * BLADERF_SAMPLE_BLOCK_SIZE)
 
-
 using namespace boost::assign;
 
 /*
@@ -562,40 +561,71 @@ std::string bladerf_source_c::get_antenna( size_t chan )
 
 void bladerf_source_c::set_dc_offset_mode( int mode, size_t chan )
 {
-  std::cerr << __FUNCTION__ << " mode: " << mode << std::endl; /* TODO: remove */
-
   if ( osmosdr::source::DCOffsetOff == mode ) {
     //_src->set_auto_dc_offset( false, chan );
-    //_src->set_dc_offset( std::complex<double>(0.0, 0.0), chan ); /* TODO: reset to default for off-state */
+    set_dc_offset( std::complex<double>(0.0, 0.0), chan ); /* reset to default for off-state */
   } else if ( osmosdr::source::DCOffsetManual == mode ) {
     //_src->set_auto_dc_offset( false, chan ); /* disable auto mode, but keep correcting with last known values */
   } else if ( osmosdr::source::DCOffsetAutomatic == mode ) {
     //_src->set_auto_dc_offset( true, chan );
+    std::cerr << "Automatic DC correction mode is not implemented." << std::endl;
   }
 }
 
 void bladerf_source_c::set_dc_offset( const std::complex<double> &offset, size_t chan )
 {
-  std::cerr << __FUNCTION__ << " offset: " << offset.real() << " " << offset.imag() << std::endl; /* TODO: remove */
+  int ret = 0;
+  int16_t val_i,val_q;
+
+  //the lms dc correction provides for 6 bits of DC correction and 1 sign bit
+  //scale the correction appropriately
+  val_i = (int16_t)(fabs(offset.real()) * BLADERF_RX_DC_RANGE);
+  val_q = (int16_t)(fabs(offset.imag()) * BLADERF_RX_DC_RANGE);
+
+  val_i = (offset.real() > 0) ? val_i : -val_i;
+  val_q = (offset.imag() > 0) ? val_q : -val_q;
+
+  ret = bladerf_set_correction(_dev.get(), BLADERF_IQ_CORR_RX_DC_I, val_i);
+  ret |= bladerf_set_correction(_dev.get(), BLADERF_IQ_CORR_RX_DC_Q, val_q);
+
+  if( ret ) {
+    throw std::runtime_error( std::string(__FUNCTION__) + " " +
+                              "could not set dc offset: " +
+                              std::string(bladerf_strerror(ret)) );
+  }
 }
 
 void bladerf_source_c::set_iq_balance_mode( int mode, size_t chan )
 {
-  std::cerr << __FUNCTION__ << " mode: " << mode << std::endl; /* TODO: remove */
-
   if ( osmosdr::source::IQBalanceOff == mode ) {
     //_src->set_auto_iq_balance( false, chan );
-    //_src->set_iq_balance( std::complex<double>(0.0, 0.0), chan ); /* TODO: reset to default for off-state */
+    set_iq_balance( std::complex<double>(0.0, 0.0), chan ); /* reset to default for off-state */
   } else if ( osmosdr::source::IQBalanceManual == mode ) {
     //_src->set_auto_iq_balance( false, chan ); /* disable auto mode, but keep correcting with last known values */
   } else if ( osmosdr::source::IQBalanceAutomatic == mode ) {
     //_src->set_auto_iq_balance( true, chan );
+    std::cerr << "Automatic IQ correction mode is not implemented." << std::endl;
   }
 }
 
 void bladerf_source_c::set_iq_balance( const std::complex<double> &balance, size_t chan )
 {
-  std::cerr << __FUNCTION__ << " balance: " << balance.real() << " " << balance.imag() << std::endl; /* TODO: remove */
+  int ret = 0;
+  int16_t val_gain,val_phase;
+
+  //FPGA gain correction defines 0.0 as BLADERF_GAIN_ZERO, scale the offset range to +/- BLADERF_GAIN_RANGE 
+  val_gain = (int16_t)(balance.real() * (int16_t)BLADERF_GAIN_RANGE) + BLADERF_GAIN_ZERO;
+  //FPGA phase correction steps from -45 to 45 degrees
+  val_phase = (int16_t)(balance.imag() * BLADERF_PHASE_RANGE);
+
+  ret = bladerf_set_correction(_dev.get(), BLADERF_IQ_CORR_RX_GAIN, val_gain);
+  ret |= bladerf_set_correction(_dev.get(), BLADERF_IQ_CORR_RX_PHASE, val_phase);
+
+  if( ret ) {
+    throw std::runtime_error( std::string(__FUNCTION__) + " " +
+                              "could not set iq balance: " +
+                              std::string(bladerf_strerror(ret)) );
+  }
 }
 
 double bladerf_source_c::set_bandwidth( double bandwidth, size_t chan )
