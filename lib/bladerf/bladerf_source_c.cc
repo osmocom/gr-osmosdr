@@ -331,44 +331,12 @@ osmosdr::meta_range_t bladerf_source_c::get_sample_rates()
 
 double bladerf_source_c::set_sample_rate( double rate )
 {
-  int ret;
-  uint32_t actual;
-
-  /* Check to see if the sample rate is an integer */
-  if( (uint32_t)round(rate) == (uint32_t)rate )
-  {
-    ret = bladerf_set_sample_rate( _dev.get(), BLADERF_MODULE_RX, (uint32_t)rate, &actual );
-    if( ret ) {
-      throw std::runtime_error( std::string(__FUNCTION__) + " " +
-                                "has failed to set integer rate: " +
-                                std::string(bladerf_strerror(ret)) );
-    }
-  } else {
-    /* TODO: Fractional sample rate */
-    ret = bladerf_set_sample_rate( _dev.get(), BLADERF_MODULE_RX, (uint32_t)rate, &actual );
-    if( ret ) {
-      throw std::runtime_error( std::string(__FUNCTION__) + " " +
-                                "has failed to set fractional rate: " +
-                                std::string(bladerf_strerror(ret)) );
-    }
-  }
-
-  return get_sample_rate();
+  return bladerf_common::set_sample_rate( BLADERF_MODULE_RX, rate);
 }
 
 double bladerf_source_c::get_sample_rate()
 {
-  int ret;
-  unsigned int rate = 0;
-
-  ret = bladerf_get_sample_rate( _dev.get(), BLADERF_MODULE_RX, &rate );
-  if( ret ) {
-    throw std::runtime_error( std::string(__FUNCTION__) + " " +
-                              "has failed to get sample rate, error " +
-                              std::string(bladerf_strerror(ret)) );
-  }
-
-  return (double)rate;
+  return bladerf_common::get_sample_rate( BLADERF_MODULE_RX );
 }
 
 osmosdr::freq_range_t bladerf_source_c::get_freq_range( size_t chan )

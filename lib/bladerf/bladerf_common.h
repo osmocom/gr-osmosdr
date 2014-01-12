@@ -64,6 +64,9 @@ protected:
   /* Handle initialized and parameters common to both source & sink */
   void init(dict_t &dict, const char *type);
 
+  double set_sample_rate(bladerf_module module, double rate);
+  double get_sample_rate(bladerf_module module);
+
   osmosdr::freq_range_t freq_range();
   osmosdr::meta_range_t sample_rates();
   osmosdr::freq_range_t filter_bandwidths();
