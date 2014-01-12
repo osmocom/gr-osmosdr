@@ -139,21 +139,6 @@ bladerf_source_c::bladerf_source_c (const std::string &args)
   /* Set the range of VGA2 VGA2GAIN[4:0], not recommended to be used above 30dB */
   _vga2_range = osmosdr::gain_range_t( 0, 60, 3 );
 
-  /* Initialize the stream */
-  _buf_index = 0;
-  ret = bladerf_init_stream( &_stream, _dev.get(), stream_callback,
-                             &_buffers, _num_buffers, BLADERF_FORMAT_SC16_Q12,
-                             _samples_per_buffer, _num_buffers, this );
-  if ( ret != 0 )
-    std::cerr << _pfx << "bladerf_init_stream failed: "
-              << bladerf_strerror(ret) << std::endl;
-
-  ret = bladerf_enable_module( _dev.get(), BLADERF_MODULE_RX, true );
-  if ( ret != 0 )
-    std::cerr << _pfx << "bladerf_enable_module failed:"
-              << bladerf_strerror(ret) << std::endl;
-
-  _thread = gr::thread::thread( boost::bind(&bladerf_source_c::read_task, this) );
 }
 
 /*
@@ -163,8 +148,11 @@ bladerf_source_c::~bladerf_source_c ()
 {
   int ret;
 
-  set_running(false);
-  _thread.join();
+  if (is_running()) {
+      std::cerr << _pfx << "Still running when destructor called!"
+                << std::endl;
+      stop();
+  }
 
   ret = bladerf_enable_module( _dev.get(), BLADERF_MODULE_RX, false );
   if ( ret != 0 )
@@ -249,16 +237,49 @@ void bladerf_source_c::read_task()
   status = bladerf_stream(_stream, BLADERF_MODULE_RX);
 
   if ( status < 0 ) {
-      std::cerr << "Source stream error: " << bladerf_strerror(status) << std::endl;
+    set_running( false );
+    std::cerr << "Source stream error: " << bladerf_strerror(status) << std::endl;
 
-      if ( status == BLADERF_ERR_TIMEOUT ) {
-        std::cerr << _pfx << "Try adjusting your sample rate or the "
-                  << "\"buffers\", \"buflen\", and \"transfers\" parameters. "
-                  << std::endl;
-      }
+    if ( status == BLADERF_ERR_TIMEOUT ) {
+      std::cerr << _pfx << "Try adjusting your sample rate or the "
+        << "\"buffers\", \"buflen\", and \"transfers\" parameters. "
+        << std::endl;
+    }
+  }
+}
+
+bool bladerf_source_c::start()
+{
+  int ret;
+
+  /* Initialize the stream */
+  _buf_index = 0;
+  ret = bladerf_init_stream( &_stream, _dev.get(), stream_callback,
+                             &_buffers, _num_buffers, BLADERF_FORMAT_SC16_Q12,
+                             _samples_per_buffer, _num_buffers, this );
+  if ( ret != 0 )
+    std::cerr << _pfx << "bladerf_init_stream failed: "
+              << bladerf_strerror(ret) << std::endl;
+
+  ret = bladerf_enable_module( _dev.get(), BLADERF_MODULE_RX, true );
+  if ( ret != 0 )
+    std::cerr << _pfx << "bladerf_enable_module failed:"
+              << bladerf_strerror(ret) << std::endl;
+
+  _thread = gr::thread::thread( boost::bind(&bladerf_source_c::read_task, this) );
+
+  while( is_running() == false ) {
+    boost::this_thread::sleep( boost::posix_time::milliseconds(1) );
   }
 
-  set_running( false );
+  return true;
+}
+
+bool bladerf_source_c::stop()
+{
+  set_running(false);
+  _thread.join();
+  return true;
 }
 
 /* Main work function, pull samples from the sample fifo */
@@ -286,8 +307,6 @@ int bladerf_source_c::work( int noutput_items,
       out[i] = _fifo->at(0);
       _fifo->pop_front();
     }
-
-    //std::cerr << "-" << std::flush;
   }
 
   return noutput_items;
@@ -313,7 +332,6 @@ double bladerf_source_c::set_sample_rate( double rate )
 {
   int ret;
   uint32_t actual;
-  /* Set the Si5338 to be 2x this sample rate */
 
   /* Check to see if the sample rate is an integer */
   if( (uint32_t)round(rate) == (uint32_t)rate )
@@ -612,7 +630,7 @@ void bladerf_source_c::set_iq_balance( const std::complex<double> &balance, size
   int ret = 0;
   int16_t val_gain,val_phase;
 
-  //FPGA gain correction defines 0.0 as BLADERF_GAIN_ZERO, scale the offset range to +/- BLADERF_GAIN_RANGE 
+  //FPGA gain correction defines 0.0 as BLADERF_GAIN_ZERO, scale the offset range to +/- BLADERF_GAIN_RANGE
   val_gain = (int16_t)(balance.real() * (int16_t)BLADERF_GAIN_RANGE) + BLADERF_GAIN_ZERO;
   //FPGA phase correction steps from -45 to 45 degrees
   val_phase = (int16_t)(balance.imag() * BLADERF_PHASE_RANGE);
