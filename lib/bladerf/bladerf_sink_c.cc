@@ -35,6 +35,7 @@
 #include <boost/format.hpp>
 #include <boost/lexical_cast.hpp>
 
+#include <gruel/thread.h>
 #include <gr_io_signature.h>
 
 #include "osmosdr_arg_helpers.h"
@@ -73,8 +74,6 @@ bladerf_sink_c::bladerf_sink_c (const std::string &args)
                     gr_make_io_signature (MIN_IN, MAX_IN, sizeof (gr_complex)),
                     gr_make_io_signature (MIN_OUT, MAX_OUT, sizeof (gr_complex)))
 {
-  int ret;
-
   dict_t dict = params_to_dict(args);
 
   /* Perform src/sink agnostic initializations */
@@ -86,36 +85,11 @@ bladerf_sink_c::bladerf_sink_c (const std::string &args)
   /* Set the range of VGA2, VGA2GAIN[4:0] */
   _vga2_range = osmosdr::gain_range_t( 0, 25, 1 );
 
-  /* Initialize the stream */
-  ret = bladerf_init_stream( &_stream, _dev.get(), stream_callback,
-                             &_buffers, _num_buffers, BLADERF_FORMAT_SC16_Q12,
-                             _samples_per_buffer, _num_transfers, this );
-  if ( ret != 0 )
-    std::cerr << _pfx << "bladerf_init_stream failed:"
-              << bladerf_strerror(ret) << std::endl;
-
-  /* Initialize buffer management */
-  _buf_index = _next_to_tx = 0;
-  _next_value = static_cast<int16_t*>(_buffers[0]);
-  _samples_left = _samples_per_buffer;
-
   _filled = new bool[_num_buffers];
   if (!_filled) {
       throw std::runtime_error( std::string(__FUNCTION__) + " " +
                                 "Failed to allocate _filled[]" );
   }
-
-  for (size_t i = 0; i < _num_buffers; ++i) {
-    _filled[i] = false;
-  }
-
-  ret = bladerf_enable_module( _dev.get(), BLADERF_MODULE_TX, true );
-  if ( ret != 0 )
-    std::cerr << _pfx << "bladerf_enable_module has failed:"
-              << bladerf_strerror(ret) << std::endl;
-
-  set_running( true );
-  _thread = gruel::thread( boost::bind(&bladerf_sink_c::write_task, this) );
 }
 
 /*
@@ -125,15 +99,11 @@ bladerf_sink_c::~bladerf_sink_c ()
 {
   int ret;
 
-  set_running(false);
-
-  /* Ensure work() or callbacks return from wait() calls */
-  _buf_status_lock.lock();
-  _buffer_filled.notify_all();
-  _buffer_emptied.notify_all();
-  _buf_status_lock.unlock();
-
-  _thread.join();
+  if( is_running() == true ) {
+    std::cerr << _pfx << "Still running when destructor called!"
+              << std::endl;
+    stop();
+  }
 
   ret = bladerf_enable_module( _dev.get(), BLADERF_MODULE_TX, false );
   if ( ret != 0 )
@@ -206,20 +176,63 @@ void bladerf_sink_c::write_task()
   int status;
 
   /* Start stream and stay there until we kill the stream */
+  set_running(true);
   status = bladerf_stream(_stream, BLADERF_MODULE_TX);
 
   if ( status < 0 ) {
-      std::cerr << _pfx << "Sink stream error: "
-                << bladerf_strerror(status) << std::endl;
+    set_running(false);
+    std::cerr << _pfx << "Sink stream error: "
+      << bladerf_strerror(status) << std::endl;
 
-      if ( status == BLADERF_ERR_TIMEOUT ) {
-        std::cerr << _pfx << "Try adjusting your sample rate or the "
-                  << "\"buffers\", \"buflen\", and \"transfers\" parameters. "
-                  << std::endl;
-      }
+    if ( status == BLADERF_ERR_TIMEOUT ) {
+      std::cerr << _pfx << "Try adjusting your sample rate or the "
+        << "\"buffers\", \"buflen\", and \"transfers\" parameters. "
+        << std::endl;
+    }
+  }
+}
+
+bool bladerf_sink_c::start()
+{
+  int ret;
+
+  /* Initialize the stream */
+  ret = bladerf_init_stream( &_stream, _dev.get(), stream_callback,
+                             &_buffers, _num_buffers, BLADERF_FORMAT_SC16_Q12,
+                             _samples_per_buffer, _num_transfers, this );
+  if ( ret != 0 ) {
+    throw std::runtime_error( std::string(__FUNCTION__) + " " +
+                              "bladerf_init_stream failed" ) ;
   }
 
-  set_running( false );
+  /* Initialize buffer management */
+  _buf_index = _next_to_tx = 0;
+  _next_value = static_cast<int16_t*>(_buffers[0]);
+  _samples_left = _samples_per_buffer;
+
+  for (size_t i = 0; i < _num_buffers; ++i) {
+    _filled[i] = false;
+  }
+
+  ret = bladerf_enable_module( _dev.get(), BLADERF_MODULE_TX, true );
+  if ( ret != 0 ) {
+    throw std::runtime_error(std::string(__FUNCTION__) + " " +
+                             "bladerf_enable_module has failed:" + bladerf_strerror(ret) );
+  }
+
+  _thread = gruel::thread( boost::bind(&bladerf_sink_c::write_task, this) );
+  while(is_running() == false) {
+    /* Not quite started up just yet, so wait for a short period of time */
+    boost::this_thread::sleep( boost::posix_time::milliseconds(1) );
+  }
+  return true;
+}
+
+bool bladerf_sink_c::stop()
+{
+  set_running(false);
+  _thread.join();
+  return true;
 }
 
 int bladerf_sink_c::work( int noutput_items,
@@ -550,7 +563,7 @@ void bladerf_sink_c::set_iq_balance( const std::complex<double> &balance, size_t
   int ret = 0;
   int16_t val_gain,val_phase;
 
-  //FPGA gain correction defines 0.0 as BLADERF_GAIN_ZERO, scale the offset range to +/- BLADERF_GAIN_RANGE 
+  //FPGA gain correction defines 0.0 as BLADERF_GAIN_ZERO, scale the offset range to +/- BLADERF_GAIN_RANGE
   val_gain = (int16_t)(balance.real() * (int16_t)BLADERF_GAIN_RANGE) + BLADERF_GAIN_ZERO;
   //FPGA phase correction steps from -45 to 45 degrees
   val_phase = (int16_t)(balance.imag() * BLADERF_PHASE_RANGE);
