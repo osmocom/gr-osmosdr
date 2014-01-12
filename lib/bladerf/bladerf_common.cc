@@ -326,3 +326,44 @@ void bladerf_common::set_running( bool is_running )
 
   _is_running = is_running;
 }
+
+double bladerf_common::set_sample_rate( bladerf_module module, double rate )
+{
+  int status;
+  struct bladerf_rational_rate rational_rate, actual;
+
+  rational_rate.integer = (uint32_t)rate;
+  rational_rate.den = 10000;
+  rational_rate.num = (rate - rational_rate.integer) * rational_rate.den;
+
+  status = bladerf_set_rational_sample_rate( _dev.get(), module,
+                                             &rational_rate, &actual );
+
+  if ( status != 0 ) {
+    throw std::runtime_error( std::string(__FUNCTION__) + " " +
+                              "Failed to set integer rate:" +
+                              std::string(bladerf_strerror(status)));
+  }
+
+  return actual.integer + actual.num / (double)actual.den;
+}
+
+double bladerf_common::get_sample_rate( bladerf_module module )
+{
+  int status;
+  double ret = 0.0;
+  struct bladerf_rational_rate rate;
+
+
+  status = bladerf_get_rational_sample_rate( _dev.get(), module, &rate );
+
+  if ( status != 0 ) {
+   throw std::runtime_error( std::string(__FUNCTION__) +
+                             "Failed to get sample rate:" +
+                             std::string(bladerf_strerror(status)) );
+  } else {
+    ret = rate.integer + rate.num / (double)rate.den;
+  }
+
+  return ret;
+}
