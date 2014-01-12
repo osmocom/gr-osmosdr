@@ -85,6 +85,7 @@ bladerf_source_c::bladerf_source_c (const std::string &args)
   int ret;
   size_t fifo_size;
   std::string device_name;
+  struct bladerf_version fpga_version;
 
   dict_t dict = params_to_dict(args);
 
@@ -140,6 +141,19 @@ bladerf_source_c::bladerf_source_c (const std::string &args)
 
   /* Set the range of VGA2 VGA2GAIN[4:0], not recommended to be used above 30dB */
   _vga2_range = osmosdr::gain_range_t( 0, 60, 3 );
+
+  /* Warn user about using an old FPGA version, as we no longer strip off the
+   * markers that were pressent in the pre-v0.0.1 FPGA */
+  if (bladerf_fpga_version( _dev.get(), &fpga_version ) != 0) {
+    std::cerr << _pfx << "Failed to get FPGA version" << std::endl;
+  } else if ( fpga_version.major <= 0 &&
+              fpga_version.minor <= 0 &&
+              fpga_version.patch < 1 ) {
+
+    std::cerr << _pfx << "Warning: FPGA version v0.0.1 or later is required. "
+              << "Using an earlier FPGA version will result in misinterpeted samples. "
+              << std::endl;
+  }
 }
 
 /*
@@ -187,6 +201,7 @@ void *bladerf_source_c::stream_task( void *samples, size_t num_samples )
   size_t i, n_avail, to_copy;
   int16_t *sample = (int16_t *)samples;
   void *ret;
+  const float scaling = 1.0f / 2048.0f;
 
   ret = _buffers[_buf_index];
   _buf_index = (_buf_index + 1) % _num_buffers;
@@ -197,17 +212,9 @@ void *bladerf_source_c::stream_task( void *samples, size_t num_samples )
   to_copy = (n_avail < num_samples ? n_avail : num_samples);
 
   for(i = 0; i < to_copy; i++ ) {
-    /* Mask valid bits only */
-    *(sample) &= 0xfff;
-    *(sample+1) &= 0xfff;
-
-    /* Sign extend the 12-bit IQ values, if needed */
-    if( (*sample) & 0x800 ) *(sample) |= 0xf000;
-    if( *(sample+1) & 0x800 ) *(sample+1) |= 0xf000;
-
     /* Push sample to the fifo */
-    _fifo->push_back( gr_complex( *sample * (1.0f/2048.0f),
-                                  *(sample+1) * (1.0f/2048.0f) ) );
+    _fifo->push_back( gr_complex( *sample * scaling,
+                                  *(sample+1) * scaling) );
 
     /* offset to the next I+Q sample */
     sample += 2;
