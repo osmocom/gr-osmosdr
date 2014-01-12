@@ -131,7 +131,7 @@ private: /* functions */
 private: /* members */
   osmosdr::gain_range_t _lna_range;
 
-  /* The stream callback converts SC16Q12 samples from the bladeRF to gr_complex
+  /* The stream callback converts SC16Q11 samples from the bladeRF to gr_complex
    * values, and adds them to this FIFO. work() fetches the gr_complex values
    * from this queue */
   boost::circular_buffer<gr_complex> *_fifo;

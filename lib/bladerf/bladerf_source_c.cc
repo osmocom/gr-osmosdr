@@ -256,7 +256,7 @@ bool bladerf_source_c::start()
   /* Initialize the stream */
   _buf_index = 0;
   ret = bladerf_init_stream( &_stream, _dev.get(), stream_callback,
-                             &_buffers, _num_buffers, BLADERF_FORMAT_SC16_Q12,
+                             &_buffers, _num_buffers, BLADERF_FORMAT_SC16_Q11,
                              _samples_per_buffer, _num_buffers, this );
   if ( ret != 0 )
     std::cerr << _pfx << "bladerf_init_stream failed: "
@@ -571,8 +571,11 @@ void bladerf_source_c::set_dc_offset( const std::complex<double> &offset, size_t
   val_i = (offset.real() > 0) ? val_i : -val_i;
   val_q = (offset.imag() > 0) ? val_q : -val_q;
 
-  ret = bladerf_set_correction(_dev.get(), BLADERF_IQ_CORR_RX_DC_I, val_i);
-  ret |= bladerf_set_correction(_dev.get(), BLADERF_IQ_CORR_RX_DC_Q, val_q);
+  ret = bladerf_set_correction(_dev.get(), BLADERF_MODULE_RX,
+                               BLADERF_IQ_CORR_DC_I, val_i);
+
+  ret |= bladerf_set_correction(_dev.get(), BLADERF_MODULE_RX,
+                                BLADERF_IQ_CORR_DC_Q, val_q);
 
   if( ret ) {
     throw std::runtime_error( std::string(__FUNCTION__) + " " +
@@ -604,8 +607,11 @@ void bladerf_source_c::set_iq_balance( const std::complex<double> &balance, size
   //FPGA phase correction steps from -45 to 45 degrees
   val_phase = (int16_t)(balance.imag() * BLADERF_PHASE_RANGE);
 
-  ret = bladerf_set_correction(_dev.get(), BLADERF_IQ_CORR_RX_GAIN, val_gain);
-  ret |= bladerf_set_correction(_dev.get(), BLADERF_IQ_CORR_RX_PHASE, val_phase);
+  ret = bladerf_set_correction(_dev.get(), BLADERF_MODULE_RX,
+                              BLADERF_IQ_CORR_GAIN, val_gain);
+
+  ret |= bladerf_set_correction(_dev.get(), BLADERF_MODULE_RX,
+                                BLADERF_IQ_CORR_PHASE, val_phase);
 
   if( ret ) {
     throw std::runtime_error( std::string(__FUNCTION__) + " " +
