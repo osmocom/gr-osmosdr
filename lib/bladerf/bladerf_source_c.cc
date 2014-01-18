@@ -568,21 +568,8 @@ void bladerf_source_c::set_dc_offset_mode( int mode, size_t chan )
 void bladerf_source_c::set_dc_offset( const std::complex<double> &offset, size_t chan )
 {
   int ret = 0;
-  int16_t val_i,val_q;
 
-  //the lms dc correction provides for 6 bits of DC correction and 1 sign bit
-  //scale the correction appropriately
-  val_i = (int16_t)(fabs(offset.real()) * BLADERF_RX_DC_RANGE);
-  val_q = (int16_t)(fabs(offset.imag()) * BLADERF_RX_DC_RANGE);
-
-  val_i = (offset.real() > 0) ? val_i : -val_i;
-  val_q = (offset.imag() > 0) ? val_q : -val_q;
-
-  ret = bladerf_set_correction(_dev.get(), BLADERF_MODULE_RX,
-                               BLADERF_IQ_CORR_DC_I, val_i);
-
-  ret |= bladerf_set_correction(_dev.get(), BLADERF_MODULE_RX,
-                                BLADERF_IQ_CORR_DC_Q, val_q);
+  ret = bladerf_common::set_dc_offset(BLADERF_MODULE_RX, offset, chan);
 
   if( ret ) {
     throw std::runtime_error( std::string(__FUNCTION__) + " " +
@@ -607,18 +594,8 @@ void bladerf_source_c::set_iq_balance_mode( int mode, size_t chan )
 void bladerf_source_c::set_iq_balance( const std::complex<double> &balance, size_t chan )
 {
   int ret = 0;
-  int16_t val_gain,val_phase;
 
-  //FPGA gain correction defines 0.0 as BLADERF_GAIN_ZERO, scale the offset range to +/- BLADERF_GAIN_RANGE
-  val_gain = (int16_t)(balance.real() * (int16_t)BLADERF_GAIN_RANGE) + BLADERF_GAIN_ZERO;
-  //FPGA phase correction steps from -45 to 45 degrees
-  val_phase = (int16_t)(balance.imag() * BLADERF_PHASE_RANGE);
-
-  ret = bladerf_set_correction(_dev.get(), BLADERF_MODULE_RX,
-                              BLADERF_IQ_CORR_GAIN, val_gain);
-
-  ret |= bladerf_set_correction(_dev.get(), BLADERF_MODULE_RX,
-                                BLADERF_IQ_CORR_PHASE, val_phase);
+  ret = bladerf_common::set_iq_balance(BLADERF_MODULE_RX, balance, chan);
 
   if( ret ) {
     throw std::runtime_error( std::string(__FUNCTION__) + " " +

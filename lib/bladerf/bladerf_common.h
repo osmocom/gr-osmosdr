@@ -43,15 +43,6 @@
 /* We currently read/write 1024 samples (pairs of 16-bit signed ints) */
 #define BLADERF_SAMPLE_BLOCK_SIZE     (1024)
 
-/*
- * BladeRF IQ correction defines
- */
-#define BLADERF_RX_DC_RANGE     63
-#define BLADERF_TX_DC_RANGE     127
-#define BLADERF_GAIN_ZERO       4096
-#define BLADERF_GAIN_RANGE      4096
-#define BLADERF_PHASE_RANGE     2048
-
 typedef boost::shared_ptr<struct bladerf> bladerf_sptr;
 
 class bladerf_common
@@ -66,6 +57,9 @@ protected:
 
   double set_sample_rate(bladerf_module module, double rate);
   double get_sample_rate(bladerf_module module);
+
+  int set_dc_offset(bladerf_module module, const std::complex<double> &offset, size_t chan);
+  int set_iq_balance(bladerf_module module, const std::complex<double> &balance, size_t chan);
 
   osmosdr::freq_range_t freq_range();
   osmosdr::meta_range_t sample_rates();
@@ -91,6 +85,13 @@ protected:
   osmosdr::gain_range_t _vga2_range;
 
   std::string _pfx;
+
+/*
+ * BladeRF IQ correction parameters
+ */
+  static const int16_t DCOFF_SCALE  = 2048;
+  static const int16_t GAIN_SCALE   = 4096;
+  static const int16_t PHASE_SCALE  = 4096;
 
 private:
   bladerf_sptr open(const std::string &device_name);

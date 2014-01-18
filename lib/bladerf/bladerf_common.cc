@@ -367,3 +367,31 @@ double bladerf_common::get_sample_rate( bladerf_module module )
 
   return ret;
 }
+
+int bladerf_common::set_dc_offset(bladerf_module module, const std::complex<double> &offset, size_t chan)
+{
+    int ret = 0;
+    int16_t val_i, val_q;
+
+    val_i = (int16_t)(offset.real() * DCOFF_SCALE);
+    val_q = (int16_t)(offset.imag() * DCOFF_SCALE);
+
+    ret  = bladerf_set_correction(_dev.get(), module, BLADERF_CORR_LMS_DCOFF_I, val_i);
+    ret |= bladerf_set_correction(_dev.get(), module, BLADERF_CORR_LMS_DCOFF_Q, val_q);
+
+    return ret;
+}
+
+int bladerf_common::set_iq_balance(bladerf_module module, const std::complex<double> &balance, size_t chan)
+{
+    int ret = 0;
+    int16_t val_gain, val_phase;
+
+    val_gain = (int16_t)(balance.real() * GAIN_SCALE);
+    val_phase = (int16_t)(balance.imag() * PHASE_SCALE);
+
+    ret  = bladerf_set_correction(_dev.get(), module, BLADERF_CORR_FPGA_GAIN, val_gain);
+    ret |= bladerf_set_correction(_dev.get(), module, BLADERF_CORR_FPGA_PHASE, val_phase);
+
+    return ret;
+}
