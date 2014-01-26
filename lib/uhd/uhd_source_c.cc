@@ -21,6 +21,7 @@
 #include <boost/foreach.hpp>
 #include <boost/assign.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/thread.hpp>
 
 //#include <uhd/property_tree.hpp>
 
@@ -28,6 +29,8 @@
 
 #include "uhd_source_c.h"
 #include "osmosdr/osmosdr_source_c.h"
+
+static void get_precision_time (long long *secs, double *fracs);
 
 using namespace boost::assign;
 
@@ -37,15 +40,20 @@ uhd_source_c_sptr make_uhd_source_c(const std::string &args)
 }
 
 uhd_source_c::uhd_source_c(const std::string &args) :
-    gr_hier_block2("uhd_source_c",
-                   gr_make_io_signature (0, 0, 0),
-                   args_to_io_signature(args)),
-    _center_freq(0.0f),
-    _freq_corr(0.0f),
-    _lo_offset(0.0f)
+  gr_hier_block2("uhd_source_c",
+                 gr_make_io_signature (0, 0, 0),
+                 args_to_io_signature(args)),
+  _center_freq(0.0f),
+  _freq_corr(0.0f),
+  _lo_offset(0.0f)
 {
   size_t nchan = 1;
   dict_t dict = params_to_dict(args);
+  uhd::stream_args_t stream_args("fc32", "sc16");
+  std::string extra_args;
+  std::vector <std::string> extra_list;
+  extra_list.push_back ("peak");
+  extra_list.push_back ("fullscale");
 
   if (dict.count("nchan"))
     nchan = boost::lexical_cast< size_t >( dict["nchan"] );
@@ -61,14 +69,50 @@ uhd_source_c::uhd_source_c(const std::string &args) :
     if ( "uhd" != entry.first &&
          "nchan" != entry.first &&
          "subdev" != entry.first &&
-         "lo_offset" != entry.first ) {
+         "lo_offset" != entry.first &&
+         "otw_format" != entry.first &&
+         "peak" != entry.first &&
+         "fullscale" != entry.first &&
+         "refclock" != entry.first &&
+         "pps" != entry.first  &&
+         "sync" != entry.first ) {
       arguments += entry.first + "=" + entry.second + ",";
     }
   }
 
+  stream_args.cpu_format = "fc32";
+  stream_args.otw_format = "sc16";
+
+  for (size_t chan = 0; chan < nchan; chan++)
+    stream_args.channels.push_back(chan); //linear mapping
+
+  if (dict.count("otw_format") )
+    stream_args.otw_format = dict["otw_format"];
+
+  // There's probably a more C++/Boosty way to do this.
+  // look for "peak" and "fullscale" args, and make up some lovely syntax
+  //  that will be acceptable in uhd::stream_args.args
+  for (unsigned int q = 0; q < extra_list.size(); q++)
+  {
+    if (dict.count(extra_list[q]) )
+    {
+      std::cout << "-- Setting " + extra_list[q] + "=" + dict[extra_list[q]] + "\n";
+      extra_args += extra_list[q] + "=" + dict[extra_list[q]];
+      if (q < (extra_list.size()-1))
+      {
+        extra_args += ",";
+      }
+    }
+  }
+
+  if (extra_args.length() > 0)
+  {
+    // Finally stuff the args
+    stream_args.args = extra_args;
+  }
+
   _src = uhd_make_usrp_source( arguments,
-                               uhd::io_type_t::COMPLEX_FLOAT32,
-                               nchan );
+                               stream_args );
 
   if (dict.count("subdev")) {
     _src->set_subdev_spec( dict["subdev"] );
@@ -79,6 +123,71 @@ uhd_source_c::uhd_source_c(const std::string &args) :
 
   if (0.0 != _lo_offset)
     std::cerr << "-- Using lo offset of " << _lo_offset << " Hz." << std::endl;
+  
+  // Fargking oogly.  Needs to pull ALL_MBOARDS constant out of multi_usrp:: but I can't figure out how
+  // So, ALL_MBOARDS is actually just size_t(~0)
+  size_t ALL_MBOARDS = size_t(~0);
+
+  if (dict.count("refclock") )
+  {
+    std::cout << "-- Setting refclock: "  + dict["refclock"] + "\n";
+    _src->set_clock_source (dict["refclock"], ALL_MBOARDS);
+
+    boost::this_thread::sleep(boost::posix_time::milliseconds(50));
+
+    uhd::sensor_value_t ref_locked = _src->get_mboard_sensor("ref_locked",0);
+    if (!ref_locked.to_bool())
+    {
+      std::cout << "-- WARNING: Requested ref-clock source: " << dict["refclock"] << "\n";
+      std::cout << "--          Ref-clock lock sensor indicates: UNLOCKED\n";
+      std::cout << "--          You may have poorer phase noise/frequency accuracy\n";
+      std::cout << "--          Phase-coherence with other devices will be poor.\n";
+    }
+  }
+
+  if (dict.count("pps") )
+  {
+    std::cout << "-- Setting PPS source: " + dict["refclock"] + "\n";
+    _src->set_time_source (dict["pps"], ALL_MBOARDS);
+  }
+
+  /*
+   * Set TOD across all MBOARDS to current host time
+   */
+  if (dict.count("sync") )
+  {
+    double fracts;
+    long long seconds;
+    std::string st = boost::to_upper_copy(dict["sync"]);
+
+    get_precision_time (&seconds, &fracts);
+
+    std::cout << "-- Setting TOD to: " << (long long)seconds << "." << (long long)fracts
+              << " with method: "+st << "\n";
+    if (dict["sync"] == "unknown" )
+    {
+      _src->set_time_unknown_pps (uhd::time_spec_t((time_t)seconds+1));
+    }
+    else if (dict["sync"] == "next")
+    {
+      _src->set_time_next_pps (uhd::time_spec_t((time_t)seconds+1));
+    }
+    else if (dict["sync"] == "now")
+    {
+      fracts += 0.001;
+      if (fracts >= 1.0)
+      {
+        fracts -= 1.0;
+        seconds += 1LL;
+      }
+
+      _src->set_time_now (uhd::time_spec_t((time_t)seconds, fracts), ALL_MBOARDS);
+    }
+    else
+    {
+      std::cout << "*** Not processing sync request: unknown type: " + dict["sync"] + "\n";
+    }
+  }
 
   for ( size_t i = 0; i < nchan; i++ )
     connect( _src, i, self(), i );
@@ -327,4 +436,25 @@ osmosdr::freq_range_t uhd_source_c::get_bandwidth_range( size_t chan )
       bandwidths += osmosdr::range_t( bw.start(), bw.stop(), bw.step() );
 
   return bandwidths;
+}
+
+static void
+get_precision_time (long long *secs, double *fracs)
+{
+  boost::posix_time::ptime now;
+  boost::posix_time::ptime epoch(boost::posix_time::from_time_t((time_t)0));
+  boost::posix_time::time_duration diff;
+  double  psecs;
+  double fracts;
+
+  now = boost::posix_time::microsec_clock::local_time();
+
+  diff = now - epoch;
+  psecs = (diff.total_milliseconds() / 1.0e3);
+
+  fracts = psecs - (long long)psecs;
+  fracts *= 1.0e3;
+
+  *secs = (long long)psecs;
+  *fracs = fracts;
 }
