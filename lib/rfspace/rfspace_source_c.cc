@@ -1124,7 +1124,7 @@ static std::string read_file(const char *filename)
     return contents;
   }
 
-  throw(errno);
+  return "";
 }
 
 static std::vector < unit_t > discover_sdr_iq()
@@ -1207,6 +1207,8 @@ static std::vector < unit_t > discover_sdr_iq()
         continue;
 
       std::string serial = read_file( (path + "/serial").c_str() );
+      if ( serial.empty() )
+        serial = "<none>";
 
       pos = serial.find('\n');
       if ( pos != std::string::npos )
