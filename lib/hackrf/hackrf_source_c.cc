@@ -45,7 +45,7 @@
 using namespace boost::assign;
 
 #define BUF_LEN  (16 * 32 * 512) /* must be multiple of 512 */
-#define BUF_NUM   32
+#define BUF_NUM   15
 
 #define BYTES_PER_SAMPLE  2 /* HackRF device produces 8 bit unsigned IQ data */
 

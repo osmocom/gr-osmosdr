@@ -45,7 +45,7 @@
 using namespace boost::assign;
 
 #define BUF_SIZE  2304 * 8 * 2
-#define BUF_NUM   32
+#define BUF_NUM   15
 #define BUF_SKIP  1 // buffers to skip due to garbage
 
 #define BYTES_PER_SAMPLE  4 // mirisdr device delivers 16 bit signed IQ data
@@ -210,7 +210,7 @@ void miri_source_c::_mirisdr_wait(miri_source_c *obj)
 
 void miri_source_c::mirisdr_wait()
 {
-  int ret = mirisdr_read_async( _dev, _mirisdr_callback, (void *)this, 0, BUF_SIZE );
+  int ret = mirisdr_read_async( _dev, _mirisdr_callback, (void *)this, _buf_num, BUF_SIZE );
 
   _running = false;
 

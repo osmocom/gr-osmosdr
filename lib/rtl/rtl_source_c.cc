@@ -46,7 +46,7 @@
 using namespace boost::assign;
 
 #define BUF_LEN  (16 * 32 * 512) /* must be multiple of 512 */
-#define BUF_NUM   32
+#define BUF_NUM   15
 #define BUF_SKIP  1 // buffers to skip due to initial garbage
 
 #define BYTES_PER_SAMPLE  2 // rtl device delivers 8 bit unsigned IQ data
@@ -301,7 +301,7 @@ void rtl_source_c::_rtlsdr_wait(rtl_source_c *obj)
 
 void rtl_source_c::rtlsdr_wait()
 {
-  int ret = rtlsdr_read_async( _dev, _rtlsdr_callback, (void *)this, 0, _buf_len );
+  int ret = rtlsdr_read_async( _dev, _rtlsdr_callback, (void *)this, _buf_num, _buf_len );
 
   _running = false;
 
