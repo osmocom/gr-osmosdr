@@ -44,7 +44,7 @@
 using namespace boost::assign;
 
 #define BUF_LEN  (16 * 32 * 512) /* must be multiple of 512 */
-#define BUF_NUM   32
+#define BUF_NUM   15
 #define BUF_SKIP  1 // buffers to skip due to garbage
 
 #define BYTES_PER_SAMPLE  4 // osmosdr device delivers 16 bit signed IQ data
@@ -203,7 +203,7 @@ void osmosdr_src_c::_osmosdr_wait(osmosdr_src_c *obj)
 
 void osmosdr_src_c::osmosdr_wait()
 {
-  int ret = osmosdr_read_async( _dev, _osmosdr_callback, (void *)this, 0, _buf_len );
+  int ret = osmosdr_read_async( _dev, _osmosdr_callback, (void *)this, _buf_num, _buf_len );
 
   _running = false;
 
