@@ -94,6 +94,8 @@ protected:
   static const int16_t PHASE_SCALE  = 4096;
 
 private:
+  void set_verbosity(const std::string &verbosity);
+  void set_loopback_mode(const std::string &loopback);
   bladerf_sptr open(const std::string &device_name);
 
   bool _is_running;

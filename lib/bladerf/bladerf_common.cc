@@ -113,6 +113,63 @@ bladerf_sptr bladerf_common::open(const std::string &device_name)
   return dev;
 }
 
+void bladerf_common::set_loopback_mode(const std::string &loopback)
+{
+    bladerf_loopback mode;
+    int status;
+
+    if (loopback == "bb_txlpf_rxvga2") {
+        mode = BLADERF_LB_BB_TXLPF_RXVGA2;
+    } else if (loopback == "bb_txlpf_rxlpf") {
+        mode = BLADERF_LB_BB_TXLPF_RXLPF;
+    } else if (loopback == "bb_txvga1_rxvga2") {
+        mode = BLADERF_LB_BB_TXVGA1_RXVGA2;
+    } else if (loopback == "bb_txvga1_rxlpf") {
+        mode = BLADERF_LB_BB_TXVGA1_RXLPF;
+    } else if (loopback == "rf_lna1") {
+        mode = BLADERF_LB_RF_LNA1;
+    } else if (loopback == "rf_lna2") {
+        mode = BLADERF_LB_RF_LNA2;
+    } else if (loopback == "rf_lna3") {
+        mode = BLADERF_LB_RF_LNA3;
+    } else if (loopback == "none") {
+        mode = BLADERF_LB_NONE;
+    } else {
+        throw std::runtime_error( _pfx + "Invalid loopback mode:" + loopback );
+    }
+
+    status = bladerf_set_loopback( _dev.get(), mode);
+    if ( status != 0 ) {
+        throw std::runtime_error( _pfx + "Failed to set loopback mode: " +
+                                  bladerf_strerror(status) );
+    }
+}
+
+void bladerf_common::set_verbosity(const std::string &verbosity)
+{
+    bladerf_log_level l;
+
+    if (verbosity == "verbose") {
+        l = BLADERF_LOG_LEVEL_VERBOSE;
+    } else if (verbosity == "debug") {
+        l = BLADERF_LOG_LEVEL_DEBUG;
+    } else if (verbosity == "info") {
+        l = BLADERF_LOG_LEVEL_INFO;
+    } else if (verbosity == "warning") {
+        l = BLADERF_LOG_LEVEL_WARNING;
+    } else if (verbosity == "error") {
+        l = BLADERF_LOG_LEVEL_ERROR;
+    } else if (verbosity == "critical") {
+        l = BLADERF_LOG_LEVEL_CRITICAL;
+    } else if (verbosity == "silent") {
+        l = BLADERF_LOG_LEVEL_SILENT;
+    } else {
+        throw std::runtime_error( _pfx + "Invalid log level: " + verbosity );
+    }
+
+    bladerf_log_set_verbosity(l);
+}
+
 void bladerf_common::init(dict_t &dict, const char *type)
 {
   int ret;
@@ -176,6 +233,14 @@ void bladerf_common::init(dict_t &dict, const char *type)
 
     throw std::runtime_error( oss.str() );
   }
+
+  if ( dict.count("loopback") )
+    set_loopback_mode( dict["loopback"] );
+  else
+    set_loopback_mode( "none" );
+
+  if ( dict.count("verbosity") )
+    set_verbosity( dict["verbosity"] );
 
 
   /* Show some info about the device we've opened */
