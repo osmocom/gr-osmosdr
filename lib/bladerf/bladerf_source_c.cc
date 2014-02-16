@@ -40,13 +40,6 @@
 #include "bladerf_source_c.h"
 #include "osmosdr/source.h"
 
-/*
- * Default size of sample FIFO, in entries.
- */
-#define BLADERF_SAMPLE_FIFO_SIZE (2 * 1024 * 1024)
-
-#define BLADERF_SAMPLE_FIFO_MIN_SIZE  (3 * BLADERF_SAMPLE_BLOCK_SIZE)
-
 using namespace boost::assign;
 
 /*
@@ -81,35 +74,12 @@ bladerf_source_c::bladerf_source_c (const std::string &args)
                     gr::io_signature::make (MIN_OUT, MAX_OUT, sizeof (gr_complex)))
 {
   int ret;
-  size_t fifo_size;
   std::string device_name;
   struct bladerf_version fpga_version;
 
   dict_t dict = params_to_dict(args);
 
-  init(dict, "source");
-
-  fifo_size = BLADERF_SAMPLE_FIFO_SIZE;
-  if (dict.count("fifo")) {
-    try {
-      fifo_size = boost::lexical_cast<size_t>(dict["fifo"]);
-    } catch (const boost::bad_lexical_cast &e) {
-      std::cerr << _pfx << "Warning: \"fifo\" value is invalid. Defaulting to "
-                << fifo_size;
-    }
-
-    if (fifo_size < BLADERF_SAMPLE_FIFO_MIN_SIZE) {
-      fifo_size = BLADERF_SAMPLE_FIFO_MIN_SIZE;
-      std::cerr << _pfx << "Warning: \"fifo\" value is too small. Defaulting to "
-                << BLADERF_SAMPLE_FIFO_MIN_SIZE;
-    }
-  }
-
-  _fifo = new boost::circular_buffer<gr_complex>(fifo_size);
-  if (!_fifo) {
-    throw std::runtime_error( std::string(__FUNCTION__) + " " +
-                              "Failed to allocate a sample FIFO!" );
-  }
+  init(dict, BLADERF_MODULE_RX);
 
   if (dict.count("sampling"))
   {
@@ -155,165 +125,61 @@ bladerf_source_c::bladerf_source_c (const std::string &args)
   }
 }
 
-/*
- * Our virtual destructor.
- */
-bladerf_source_c::~bladerf_source_c ()
-{
-  int ret;
-
-  if (is_running()) {
-      std::cerr << _pfx << "Still running when destructor called!"
-                << std::endl;
-      stop();
-  }
-
-  ret = bladerf_enable_module( _dev.get(), BLADERF_MODULE_RX, false );
-  if ( ret != 0 )
-    std::cerr << _pfx << "bladerf_enable_module failed: "
-              << bladerf_strerror(ret) << std::endl;
-
-  /* Release stream resources */
-  bladerf_deinit_stream(_stream);
-
-  delete _fifo;
-}
-
-void *bladerf_source_c::stream_callback( struct bladerf *dev,
-                                         struct bladerf_stream *stream,
-                                         struct bladerf_metadata *metadata,
-                                         void *samples,
-                                         size_t num_samples,
-                                         void *user_data )
-{
-  bladerf_source_c *obj = (bladerf_source_c *) user_data;
-
-  if ( ! obj->is_running() )
-    return NULL;
-
-  return obj->stream_task( samples, num_samples );
-}
-
-/* Convert & push samples to the sample fifo */
-void *bladerf_source_c::stream_task( void *samples, size_t num_samples )
-{
-  size_t i, n_avail, to_copy;
-  int16_t *sample = (int16_t *)samples;
-  void *ret;
-  const float scaling = 1.0f / 2048.0f;
-
-  ret = _buffers[_buf_index];
-  _buf_index = (_buf_index + 1) % _num_buffers;
-
-  _fifo_lock.lock();
-
-  n_avail = _fifo->capacity() - _fifo->size();
-  to_copy = (n_avail < num_samples ? n_avail : num_samples);
-
-  for(i = 0; i < to_copy; i++ ) {
-    /* Push sample to the fifo */
-    _fifo->push_back( gr_complex( *sample * scaling,
-                                  *(sample+1) * scaling) );
-
-    /* offset to the next I+Q sample */
-    sample += 2;
-  }
-
-  _fifo_lock.unlock();
-
-  /* We have made some new samples available to the consumer in work() */
-  if (to_copy) {
-    //std::cerr << "+" << std::flush;
-    _samp_avail.notify_one();
-  }
-
-  /* Indicate overrun, if neccesary */
-  if (to_copy < num_samples)
-    std::cerr << "O" << std::flush;
-
-  return ret;
-}
-
-void bladerf_source_c::read_task()
-{
-  int status;
-
-  set_running( true );
-
-  /* Start stream and stay there until we kill the stream */
-  status = bladerf_stream(_stream, BLADERF_MODULE_RX);
-
-  if ( status < 0 ) {
-    set_running( false );
-    std::cerr << "Source stream error: " << bladerf_strerror(status) << std::endl;
-
-    if ( status == BLADERF_ERR_TIMEOUT ) {
-      std::cerr << _pfx << "Try adjusting your sample rate or the "
-        << "\"buffers\", \"buflen\", and \"transfers\" parameters. "
-        << std::endl;
-    }
-  }
-}
-
 bool bladerf_source_c::start()
 {
-  int ret;
-
-  /* Initialize the stream */
-  _buf_index = 0;
-  ret = bladerf_init_stream( &_stream, _dev.get(), stream_callback,
-                             &_buffers, _num_buffers, BLADERF_FORMAT_SC16_Q11,
-                             _samples_per_buffer, _num_buffers, this );
-  if ( ret != 0 )
-    std::cerr << _pfx << "bladerf_init_stream failed: "
-              << bladerf_strerror(ret) << std::endl;
-
-  ret = bladerf_enable_module( _dev.get(), BLADERF_MODULE_RX, true );
-  if ( ret != 0 )
-    std::cerr << _pfx << "bladerf_enable_module failed:"
-              << bladerf_strerror(ret) << std::endl;
-
-  _thread = gr::thread::thread( boost::bind(&bladerf_source_c::read_task, this) );
-
-  while( is_running() == false ) {
-    boost::this_thread::sleep( boost::posix_time::milliseconds(1) );
-  }
-
-  return true;
+  return bladerf_common::start(BLADERF_MODULE_RX);
 }
 
 bool bladerf_source_c::stop()
 {
-  set_running(false);
-  _thread.join();
-  return true;
+  return bladerf_common::stop(BLADERF_MODULE_RX);
 }
 
-/* Main work function, pull samples from the sample fifo */
 int bladerf_source_c::work( int noutput_items,
                             gr_vector_const_void_star &input_items,
                             gr_vector_void_star &output_items )
 {
-  if ( ! is_running() )
+  int ret;
+  struct bladerf_metadata meta;
+  int16_t *current;
+  const float scaling = 1.0f / 2048.0f;
+  gr_complex *out = static_cast<gr_complex *>(output_items[0]);
+
+  if (noutput_items > _conv_buf_size) {
+    void *tmp;
+
+    _conv_buf_size = noutput_items;
+    tmp = realloc(_conv_buf, _conv_buf_size * 2 * sizeof(int16_t));
+    if (tmp == NULL) {
+      throw std::runtime_error( std::string(__FUNCTION__) +
+                                "Failed to realloc _conv_buf" );
+    }
+
+    _conv_buf = static_cast<int16_t*>(tmp);
+  }
+
+  /* Grab all the samples into the temporary buffer */
+  ret = bladerf_sync_rx(_dev.get(), static_cast<void *>(_conv_buf),
+                        noutput_items, &meta, _stream_timeout_ms);
+  if ( ret != 0 ) {
+    std::cerr << _pfx << "bladerf_sync_rx error: "
+              << bladerf_strerror(ret) << std::endl;
     return WORK_DONE;
+  }
 
-  if( noutput_items > 0 ) {
-    gr_complex *out = (gr_complex *)output_items[0];
+  current = _conv_buf;
 
-    boost::unique_lock<boost::mutex> lock(_fifo_lock);
+  /* Convert them from fixed to floating point */
+  for (int i = 0; i < noutput_items; ++i) {
+    float x, y;
 
-    /* Wait until we have the requested number of samples */
-    int n_samples_avail = _fifo->size();
+    x = scaling * *current;
+    current++;
 
-    while (n_samples_avail < noutput_items) {
-      _samp_avail.wait(lock);
-      n_samples_avail = _fifo->size();
-    }
+    y = scaling * *current;
+    current++;
 
-    for(int i = 0; i < noutput_items; ++i) {
-      out[i] = _fifo->at(0);
-      _fifo->pop_front();
-    }
+    out[i] = gr_complex(x, y) ;
   }
 
   return noutput_items;

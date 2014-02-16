@@ -42,7 +42,7 @@
 using namespace boost::assign;
 
 /*
- * Create a new instance of bladerf_source_c and return
+ * Create a new instance of bladerf_sink_c and return
  * a boost shared_ptr.  This is effectively the public constructor.
  */
 bladerf_sink_c_sptr make_bladerf_sink_c (const std::string &args)
@@ -75,162 +75,23 @@ bladerf_sink_c::bladerf_sink_c (const std::string &args)
   dict_t dict = params_to_dict(args);
 
   /* Perform src/sink agnostic initializations */
-  init(dict, "source");
+  init(dict, BLADERF_MODULE_TX);
 
   /* Set the range of VGA1, VGA1GAINT[7:0] */
   _vga1_range = osmosdr::gain_range_t( -35, -4, 1 );
 
   /* Set the range of VGA2, VGA2GAIN[4:0] */
   _vga2_range = osmosdr::gain_range_t( 0, 25, 1 );
-
-  _filled = new bool[_num_buffers];
-  if (!_filled) {
-      throw std::runtime_error( std::string(__FUNCTION__) + " " +
-                                "Failed to allocate _filled[]" );
-  }
-}
-
-/*
- * Our virtual destructor.
- */
-bladerf_sink_c::~bladerf_sink_c ()
-{
-  int ret;
-
-  if( is_running() == true ) {
-    std::cerr << _pfx << "Still running when destructor called!"
-              << std::endl;
-    stop();
-  }
-
-  ret = bladerf_enable_module( _dev.get(), BLADERF_MODULE_TX, false );
-  if ( ret != 0 )
-    std::cerr << _pfx << "bladerf_enable_module failed:"
-              << bladerf_strerror(ret) << std::endl;
-
-  /* Release stream resources */
-  bladerf_deinit_stream(_stream);
-
-  delete[] _filled;
-}
-
-void *bladerf_sink_c::stream_callback( struct bladerf *dev,
-                                       struct bladerf_stream *stream,
-                                       struct bladerf_metadata *metadata,
-                                       void *samples,
-                                       size_t num_samples,
-                                       void *user_data )
-{
-  bladerf_sink_c *obj = (bladerf_sink_c *) user_data;
-  return obj->get_next_buffer( samples, num_samples );
-}
-
-static size_t buffer2index(void **buffers, void *current, size_t num_buffers)
-{
-  for (size_t i = 0; i < num_buffers; ++i) {
-    if (static_cast<char*>(current) == static_cast<char*>(buffers[i]))
-      return i;
-  }
-
-  throw std::runtime_error( std::string(__FUNCTION__) + " " +
-                            "Has hit unexpected condition");
-}
-
-/* Fetch the next full buffer to pass down to the device */
-void *bladerf_sink_c::get_next_buffer( void *samples, size_t num_samples)
-{
-  void *ret;
-  bool running;
-
-  {
-    boost::unique_lock<boost::mutex> lock(_buf_status_lock);
-
-    /* Mark the incoming buffer empty and notify work() */
-    if (samples) {
-      size_t buffer_emptied_index = buffer2index(_buffers, samples, _num_buffers);
-
-      _filled[buffer_emptied_index] = false;
-      _buffer_emptied.notify_one();
-    }
-
-    /* Wait for our next buffer to become filled */
-    while ((running = is_running()) && !_filled[_next_to_tx]) {
-      _buffer_filled.wait(lock);
-    }
-
-    if (running) {
-      ret = _buffers[_next_to_tx];
-      _next_to_tx = (_next_to_tx + 1) % _num_buffers;
-    } else {
-      ret = NULL;
-    }
-  }
-
-  return ret;
-}
-
-void bladerf_sink_c::write_task()
-{
-  int status;
-
-  /* Start stream and stay there until we kill the stream */
-  set_running(true);
-  status = bladerf_stream(_stream, BLADERF_MODULE_TX);
-
-  if ( status < 0 ) {
-    set_running(false);
-    std::cerr << _pfx << "Sink stream error: "
-      << bladerf_strerror(status) << std::endl;
-
-    if ( status == BLADERF_ERR_TIMEOUT ) {
-      std::cerr << _pfx << "Try adjusting your sample rate or the "
-        << "\"buffers\", \"buflen\", and \"transfers\" parameters. "
-        << std::endl;
-    }
-  }
 }
 
 bool bladerf_sink_c::start()
 {
-  int ret;
-
-  /* Initialize the stream */
-  ret = bladerf_init_stream( &_stream, _dev.get(), stream_callback,
-                             &_buffers, _num_buffers, BLADERF_FORMAT_SC16_Q11,
-                             _samples_per_buffer, _num_transfers, this );
-  if ( ret != 0 ) {
-    throw std::runtime_error( std::string(__FUNCTION__) + " " +
-                              "bladerf_init_stream failed" ) ;
-  }
-
-  /* Initialize buffer management */
-  _buf_index = _next_to_tx = 0;
-  _next_value = static_cast<int16_t*>(_buffers[0]);
-  _samples_left = _samples_per_buffer;
-
-  for (size_t i = 0; i < _num_buffers; ++i) {
-    _filled[i] = false;
-  }
-
-  ret = bladerf_enable_module( _dev.get(), BLADERF_MODULE_TX, true );
-  if ( ret != 0 ) {
-    throw std::runtime_error(std::string(__FUNCTION__) + " " +
-                             "bladerf_enable_module has failed:" + bladerf_strerror(ret) );
-  }
-
-  _thread = gr::thread::thread( boost::bind(&bladerf_sink_c::write_task, this) );
-  while(is_running() == false) {
-    /* Not quite started up just yet, so wait for a short period of time */
-    boost::this_thread::sleep( boost::posix_time::milliseconds(1) );
-  }
-  return true;
+  return bladerf_common::start(BLADERF_MODULE_TX);
 }
 
 bool bladerf_sink_c::stop()
 {
-  set_running(false);
-  _thread.join();
-  return true;
+  return bladerf_common::stop(BLADERF_MODULE_TX);
 }
 
 int bladerf_sink_c::work( int noutput_items,
@@ -238,55 +99,42 @@ int bladerf_sink_c::work( int noutput_items,
                           gr_vector_void_star &output_items )
 {
   const gr_complex *in = (const gr_complex *) input_items[0];
-  int num_samples;
-  bool running = is_running();
+  struct bladerf_metadata meta;
+  const float scaling = 2000.0f;
+  int ret;
 
-  /* Total samples we want to process */
-  num_samples = noutput_items;
+  if (noutput_items > _conv_buf_size) {
+    void *tmp;
 
-  /* While there are still samples to copy out ... */
-  while (running && num_samples > 0) {
-
-    while (_samples_left && num_samples) {
-
-      /* Scale and sign extend I and then Q */
-      *_next_value = (int16_t)(real(*in) * 2000);
-      _next_value++;
-
-      *_next_value = (int16_t)(imag(*in) * 2000);
-      _next_value++;
-
-      /* Advance to next sample */
-      in++;
-      num_samples--;
-      _samples_left--;
+    _conv_buf_size = noutput_items;
+    tmp = realloc(_conv_buf, _conv_buf_size * 2 * sizeof(int16_t));
+    if (tmp == NULL) {
+      throw std::runtime_error( std::string(__FUNCTION__) +
+                                "Failed to realloc _conv_buf" );
     }
 
-    /* Advance to the next buffer if the current one is filled */
-    if (_samples_left == 0) {
-      {
-        boost::unique_lock<boost::mutex> lock(_buf_status_lock);
-
-        _filled[_buf_index] = true;
-        _buf_index = (_buf_index + 1) % _num_buffers;
-        _next_value = static_cast<int16_t*>(_buffers[_buf_index]);
-        _samples_left = _samples_per_buffer;
-
-        /* Signal that we have filled a buffer */
-        _buffer_filled.notify_one();
-
-        /* Wait here if the next buffer isn't full. The callback will
-         * signal us when it has freed up a buffer */
-        while (_filled[_buf_index] && running) {
-          _buffer_emptied.wait(lock);
-          running = is_running();
-        }
-      }
-    }
+    _conv_buf = static_cast<int16_t*>(tmp);
   }
 
-  return running ? noutput_items : 0;
+  /* Convert floating point samples into fixed point */
+  for (int i = 0; i < 2 * noutput_items;) {
+    _conv_buf[i++] = (int16_t)(scaling * real(*in));
+    _conv_buf[i++] = (int16_t)(scaling * imag(*in++));
+  }
+
+  /* Submit them to the device */
+  ret = bladerf_sync_tx(_dev.get(), static_cast<void *>(_conv_buf),
+                        noutput_items, &meta, _stream_timeout_ms);
+
+  if ( ret != 0 ) {
+    std::cerr << _pfx << "bladerf_sync_tx error: "
+              << bladerf_strerror(ret) << std::endl;
+    return WORK_DONE;
+  }
+
+  return noutput_items;
 }
+
 
 std::vector<std::string> bladerf_sink_c::get_devices()
 {

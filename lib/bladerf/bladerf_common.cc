@@ -48,8 +48,12 @@ using namespace boost::assign;
 boost::mutex bladerf_common::_devs_mutex;
 std::list<boost::weak_ptr<struct bladerf> > bladerf_common::_devs;
 
-bladerf_common::bladerf_common() : _is_running(false) {}
-bladerf_common::~bladerf_common() {}
+bladerf_common::bladerf_common() : _conv_buf(NULL), _conv_buf_size(4096) {}
+
+bladerf_common::~bladerf_common()
+{
+    free(_conv_buf);
+}
 
 bladerf_sptr bladerf_common:: get_cached_device(struct bladerf_devinfo devinfo)
 {
@@ -170,13 +174,53 @@ void bladerf_common::set_verbosity(const std::string &verbosity)
     bladerf_log_set_verbosity(l);
 }
 
-void bladerf_common::init(dict_t &dict, const char *type)
+bool bladerf_common::start(bladerf_module module)
+{
+  int ret;
+
+  ret = bladerf_sync_config(_dev.get(), module, BLADERF_FORMAT_SC16_Q11,
+                            _num_buffers, _samples_per_buffer,
+                            _num_transfers, _stream_timeout_ms);
+
+  if ( ret != 0 ) {
+    std::cerr << _pfx << "bladerf_sync_config failed: "
+              << bladerf_strerror(ret) << std::endl;
+    return false;
+  }
+
+  ret = bladerf_enable_module(_dev.get(), module, true);
+  if ( ret != 0 ) {
+    std::cerr << _pfx << "bladerf_enable_module failed: "
+              << bladerf_strerror(ret) << std::endl;
+    return false;
+  }
+
+  return true;
+}
+
+bool bladerf_common::stop(bladerf_module module)
+{
+  int ret;
+
+  ret = bladerf_enable_module(_dev.get(), module, false);
+
+  if ( ret != 0 ) {
+    std::cerr << _pfx << "bladerf_enable_modue failed: "
+              << bladerf_strerror(ret) << std::endl;
+    return false;
+  }
+
+  return true;
+}
+
+void bladerf_common::init(dict_t &dict, bladerf_module module)
 {
   int ret;
   unsigned int device_number = 0;
   std::string device_name;
   struct bladerf_version ver;
   char serial[BLADERF_SERIAL_LENGTH];
+  const char *type = (module == BLADERF_MODULE_TX ? "sink" : "source");
 
   _pfx = std::string("[bladeRF ") + std::string(type) + std::string("] ");
 
@@ -280,6 +324,11 @@ void bladerf_common::init(dict_t &dict, const char *type)
     _num_transfers = boost::lexical_cast< size_t >( dict["transfers"] );
   }
 
+  _stream_timeout_ms = 3000;
+  if (dict.count("stream_timeout_ms")) {
+      _stream_timeout_ms = boost::lexical_cast< unsigned int >(dict["stream_timout_ms"] );
+  }
+
   /* Require value to be >= 2 so we can ensure we have twice as many
    * buffers as transfers */
   if (_num_buffers <= 1) {
@@ -306,6 +355,13 @@ void bladerf_common::init(dict_t &dict, const char *type)
 
   if (_num_transfers == 0 || _num_transfers > (_num_buffers / 2)) {
       _num_transfers = _num_buffers / 2;
+  }
+
+  _conv_buf = static_cast<int16_t*>(malloc(_conv_buf_size * 2 * sizeof(int16_t)));
+
+  if (_conv_buf == NULL) {
+    throw std::runtime_error( std::string(__FUNCTION__) +
+                              "Failed to allocate _conv_buf" );
   }
 }
 
@@ -376,20 +432,6 @@ std::vector< std::string > bladerf_common::devices()
   }
 
   return ret;
-}
-
-bool bladerf_common::is_running()
-{
-  boost::shared_lock<boost::shared_mutex> lock(_state_lock);
-
-  return _is_running;
-}
-
-void bladerf_common::set_running( bool is_running )
-{
-  boost::unique_lock<boost::shared_mutex> lock(_state_lock);
-
-  _is_running = is_running;
 }
 
 double bladerf_common::set_sample_rate( bladerf_module module, double rate )

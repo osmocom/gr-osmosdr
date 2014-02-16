@@ -66,8 +66,6 @@ private:
   bladerf_sink_c (const std::string & args);  	// private constructor
 
 public:
-  ~bladerf_sink_c (); 	// public destructor
-
   bool start();
   bool stop();
 
@@ -111,42 +109,6 @@ public:
   double set_bandwidth( double bandwidth, size_t chan = 0 );
   double get_bandwidth( size_t chan = 0 );
   osmosdr::freq_range_t get_bandwidth_range( size_t chan = 0 );
-
-private: /* functions */
-  static void *stream_callback( struct bladerf *_dev,
-                                struct bladerf_stream *stream,
-                                struct bladerf_metadata *metadata,
-                                void *samples,
-                                size_t num_samples,
-                                void *user_data );
-
-  void *get_next_buffer(void *samples, size_t num_samples);
-
-  void write_task();
-
-private: /* members */
-
-  /* Array denoting whether each buffer is filled with data and ready to TX */
-  bool *_filled;
-
-  /* Acquire while updating _filled, and signalling/waiting on
-   * _buffer_emptied and _buffer_filled */
-  boost::mutex _buf_status_lock;
-
-  /* work() may block waiting for the stream callback to empty (consume) a
-   * buffer. The callback uses this to signal when it has emptied a buffer. */
-  boost::condition_variable _buffer_emptied;
-
-  /* The stream callback may block waiting for work() to fill (produce) a
-   * buffer. work() uses this to signal that it has filled a buffer. */
-  boost::condition_variable _buffer_filled;
-
-  /* These values are only to be updated and accessed from within work() */
-  int16_t *_next_value; /* I/Q value insertion point in current buffer */
-  size_t _samples_left; /* # of samples left to fill  in our current buffer */
-
-  /* This should only be accessed and updated from TX callbacks */
-  size_t _next_to_tx;   /* Next buffer to transmit */
 };
 
 #endif /* INCLUDED_BLADERF_SINK_C_H */
