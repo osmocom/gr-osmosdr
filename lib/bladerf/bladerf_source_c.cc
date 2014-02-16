@@ -138,7 +138,7 @@ bladerf_source_c::bladerf_source_c (const std::string &args)
   _vga1_range = osmosdr::gain_range_t( 5, 30, 1 );
 
   /* Set the range of VGA2 VGA2GAIN[4:0], not recommended to be used above 30dB */
-  _vga2_range = osmosdr::gain_range_t( 0, 60, 3 );
+  _vga2_range = osmosdr::gain_range_t( 0, 30, 3 );
 
 
   /* Warn user about using an old FPGA version, as we no longer strip off the
