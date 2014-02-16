@@ -40,9 +40,6 @@
 #include "osmosdr/osmosdr_ranges.h"
 #include "osmosdr_arg_helpers.h"
 
-/* We currently read/write 1024 samples (pairs of 16-bit signed ints) */
-#define BLADERF_SAMPLE_BLOCK_SIZE     (1024)
-
 typedef boost::shared_ptr<struct bladerf> bladerf_sptr;
 
 class bladerf_common
@@ -53,7 +50,10 @@ public:
 
 protected:
   /* Handle initialized and parameters common to both source & sink */
-  void init(dict_t &dict, const char *type);
+  void init(dict_t &dict, bladerf_module module);
+
+  bool start(bladerf_module module);
+  bool stop(bladerf_module module);
 
   double set_sample_rate(bladerf_module module, double rate);
   double get_sample_rate(bladerf_module module);
@@ -67,45 +67,36 @@ protected:
 
   static std::vector< std::string > devices();
 
-  bool is_running();
-  void set_running(bool is_running);
-
   bladerf_sptr _dev;
 
-  void **_buffers;
-  struct bladerf_stream *_stream;
   size_t _num_buffers;
-  size_t _buf_index;
   size_t _samples_per_buffer;
   size_t _num_transfers;
+  unsigned int _stream_timeout_ms;
 
-  gruel::thread _thread;
+  int16_t *_conv_buf;
+  int _conv_buf_size; /* In units of samples */
 
   osmosdr::gain_range_t _vga1_range;
   osmosdr::gain_range_t _vga2_range;
 
   std::string _pfx;
 
-/*
- * BladeRF IQ correction parameters
- */
+  /* BladeRF IQ correction parameters */
   static const int16_t DCOFF_SCALE  = 2048;
   static const int16_t GAIN_SCALE   = 4096;
   static const int16_t PHASE_SCALE  = 4096;
 
 private:
+  bladerf_sptr open(const std::string &device_name);
+  static void close(void *dev); /* called by shared_ptr */
+  static bladerf_sptr get_cached_device(struct bladerf_devinfo devinfo);
+
   void set_verbosity(const std::string &verbosity);
   void set_loopback_mode(const std::string &loopback);
-  bladerf_sptr open(const std::string &device_name);
-
-  bool _is_running;
-  boost::shared_mutex _state_lock;
 
   static boost::mutex _devs_mutex;
   static std::list<boost::weak_ptr<struct bladerf> > _devs;
-
-  static bladerf_sptr get_cached_device(struct bladerf_devinfo devinfo);
-  static void close(void *dev); /* called by shared_ptr */
 };
 
 #endif
