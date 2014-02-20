@@ -217,7 +217,7 @@ hackrf_sink_c::hackrf_sink_c (const std::string &args)
 
   set_if_gain( 16 ); /* preset to a reasonable default (non-GRC use case) */
 
-  _buf = (unsigned char *) malloc( BUF_LEN );
+  _buf = (char *) malloc( BUF_LEN );
 
   cb_init( &_cbuf, _buf_num, BUF_LEN );
 
@@ -325,11 +325,9 @@ bool hackrf_sink_c::stop()
 }
 
 #ifdef USE_AVX
-void convert_avx(const float* inbuf, unsigned char* outbuf,const unsigned int count)
+void convert_avx(const float* inbuf, char* outbuf,const unsigned int count)
 {
   __m256 mulme = _mm256_set_ps(127.0f, 127.0f, 127.0f, 127.0f, 127.0f, 127.0f, 127.0f, 127.0f);
-  __m128i addme = _mm_set_epi16(127, 127, 127, 127, 127, 127, 127, 127);
-
   for(unsigned int i=0; i<count;i++){
 
   __m256i itmp3 = _mm256_cvtps_epi32(_mm256_mul_ps(_mm256_loadu_ps(&inbuf[i*16+0]), mulme));
@@ -340,19 +338,19 @@ void convert_avx(const float* inbuf, unsigned char* outbuf,const unsigned int co
   __m128i a3 = _mm256_extractf128_si256(itmp4, 1);
   __m128i a2 = _mm256_castsi256_si128(itmp4);
 
-  __m128i outshorts1 = _mm_add_epi16(_mm_packs_epi32(a0, a1), addme);
-  __m128i outshorts2 = _mm_add_epi16(_mm_packs_epi32(a2, a3), addme);
-  __m128i outbytes = _mm_packus_epi16(outshorts1, outshorts2);
+  __m128i outshorts1 = _mm_packs_epi32(a0, a1);
+  __m128i outshorts2 = _mm_packs_epi32(a2, a3);
+
+  __m128i outbytes = _mm_packs_epi16(outshorts1, outshorts2);
 
   _mm_storeu_si128 ((__m128i*)&outbuf[i*16], outbytes);
   }
 }
 
 #elif USE_SSE2
-void convert_sse2(const float* inbuf, unsigned char* outbuf,const unsigned int count)
+void convert_sse2(const float* inbuf, char* outbuf,const unsigned int count)
 {
   const register __m128 mulme = _mm_set_ps( 127.0f, 127.0f, 127.0f, 127.0f );
-  __m128i addme = _mm_set_epi16( 127, 127, 127, 127, 127, 127, 127, 127);
   __m128 itmp1,itmp2,itmp3,itmp4;
   __m128i otmp1,otmp2,otmp3,otmp4;
 
@@ -371,20 +369,20 @@ void convert_sse2(const float* inbuf, unsigned char* outbuf,const unsigned int c
   otmp3 = _mm_cvtps_epi32(itmp3);
   otmp4 = _mm_cvtps_epi32(itmp4);
 
-  outshorts1 = _mm_add_epi16(_mm_packs_epi32(otmp1, otmp2), addme);
-  outshorts2 = _mm_add_epi16(_mm_packs_epi32(otmp3, otmp4), addme);
+  outshorts1 = _mm_packs_epi32(otmp1, otmp2);
+  outshorts2 = _mm_packs_epi32(otmp3, otmp4);
 
-  outbytes = _mm_packus_epi16(outshorts1, outshorts2);
+  outbytes = _mm_packs_epi16(outshorts1, outshorts2);
 
   _mm_storeu_si128 ((__m128i*)&outbuf[i*16], outbytes);
   }
 }
 #endif
 
-void convert_default(float* inbuf, unsigned char* outbuf,const unsigned int count)
+void convert_default(float* inbuf, char* outbuf,const unsigned int count)
 {
   for(unsigned int i=0; i<count;i++){
-    outbuf[i]= inbuf[i]*127+127;
+    outbuf[i]= inbuf[i]*127;
   }
 }
 
@@ -401,7 +399,7 @@ int hackrf_sink_c::work( int noutput_items,
       _buf_cond.wait( lock );
   }
 
-  unsigned char *buf = _buf + _buf_used;
+  char *buf = _buf + _buf_used;
   unsigned int prev_buf_used = _buf_used;
 
   unsigned int remaining = (BUF_LEN-_buf_used)/2; //complex
