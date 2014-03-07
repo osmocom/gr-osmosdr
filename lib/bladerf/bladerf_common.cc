@@ -75,14 +75,20 @@ bladerf_sptr bladerf_common:: get_cached_device(struct bladerf_devinfo devinfo)
   return bladerf_sptr();
 }
 
+/* This is called when a bladerf_sptr hits a refcount of 0 */
 void bladerf_common::close(void* dev)
 {
   boost::unique_lock<boost::mutex> lock(_devs_mutex);
 
-  std::list<boost::weak_ptr<struct bladerf> >::iterator it;
-  for (it = _devs.begin(); it != _devs.end(); ++it)
-    if ( (*it).expired() == 0 )
-      _devs.erase(it);
+  /* Prune expired entries from device cache */
+  std::list<boost::weak_ptr<struct bladerf> >::iterator it(_devs.begin());
+  while ( it != _devs.end() ) {
+    if ( (*it).expired() ) {
+      it = _devs.erase(it);
+    } else {
+      ++it;
+    }
+  }
 
   bladerf_close((struct bladerf *)dev);
 }
