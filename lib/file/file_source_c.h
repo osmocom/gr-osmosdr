@@ -21,6 +21,7 @@
 #define FILE_SOURCE_C_H
 
 #include <gnuradio/hier_block2.h>
+#include <gnuradio/blocks/file_source.h>
 #include <gnuradio/blocks/throttle.h>
 
 #include "source_iface.h"
@@ -49,6 +50,8 @@ public:
 
   size_t get_num_channels( void );
 
+  bool seek( long seek_point, int whence, size_t chan );
+
   osmosdr::meta_range_t get_sample_rates( void );
   double set_sample_rate( double rate );
   double get_sample_rate( void );
@@ -72,6 +75,7 @@ public:
   std::string get_antenna( size_t chan = 0 );
 
 private:
+  gr::blocks::file_source::sptr _source;
   gr::blocks::throttle::sptr _throttle;
   double _file_rate;
   double _freq, _rate;

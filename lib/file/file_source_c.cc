@@ -26,7 +26,6 @@
 #include <boost/format.hpp>
 
 #include <gnuradio/io_signature.h>
-#include <gnuradio/blocks/file_source.h>
 
 #include "file_source_c.h"
 
@@ -78,18 +77,17 @@ file_source_c::file_source_c(const std::string &args) :
 
   _file_rate = _rate;
 
-  gr::blocks::file_source::sptr src = \
-      gr::blocks::file_source::make( sizeof(gr_complex),
-                                     filename.c_str(),
-                                     repeat );
+  _source = gr::blocks::file_source::make( sizeof(gr_complex),
+                                           filename.c_str(),
+                                           repeat );
 
   _throttle = gr::blocks::throttle::make( sizeof(gr_complex), _file_rate );
 
   if (throttle) {
-    connect( src, 0, _throttle, 0 );
+    connect( _source, 0, _throttle, 0 );
     connect( _throttle, 0, self(), 0 );
   } else {
-    connect( src, 0, self(), 0 );
+    connect( _source, 0, self(), 0 );
   }
 }
 
@@ -120,6 +118,11 @@ std::vector<std::string> file_source_c::get_devices( bool fake )
 size_t file_source_c::get_num_channels( void )
 {
   return 1;
+}
+
+bool file_source_c::seek( long seek_point, int whence , size_t chan )
+{
+    return _source->seek( seek_point, whence );
 }
 
 osmosdr::meta_range_t file_source_c::get_sample_rates( void )

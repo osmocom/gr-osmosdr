@@ -376,6 +376,17 @@ size_t source_impl::get_num_channels()
   return channels;
 }
 
+bool source_impl::seek( long seek_point, int whence, size_t chan )
+{
+  size_t channel = 0;
+  BOOST_FOREACH( source_iface *dev, _devs )
+    for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
+      if ( chan == channel++ )
+        return dev->seek( seek_point, whence, dev_chan );
+
+  return false;
+}
+
 #define NO_DEVICES_MSG  "FATAL: No device(s) available to work with."
 
 osmosdr::meta_range_t source_impl::get_sample_rates()

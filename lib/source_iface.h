@@ -38,6 +38,15 @@ public:
   virtual size_t get_num_channels( void ) = 0;
 
   /*!
+   * \brief seek file to \p seek_point relative to \p whence
+   *
+   * \param seek_point	sample offset in file
+   * \param whence	one of SEEK_SET, SEEK_CUR, SEEK_END (man fseek)
+   * \return true on success
+   */
+  virtual bool seek( long seek_point, int whence, size_t chan = 0 ) { return false; }
+
+  /*!
    * Get the possible sample rates for the underlying radio hardware.
    * \return a range of rates in Sps
    */
