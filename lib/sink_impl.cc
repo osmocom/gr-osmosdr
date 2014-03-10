@@ -503,7 +503,7 @@ void sink_impl::set_dc_offset( const std::complex<double> &offset, size_t chan )
   BOOST_FOREACH( sink_iface *dev, _devs )
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
       if ( chan == channel++ )
-        return dev->set_dc_offset( offset, dev_chan );
+        dev->set_dc_offset( offset, dev_chan );
 }
 
 void sink_impl::set_iq_balance( const std::complex<double> &balance, size_t chan )
@@ -512,7 +512,7 @@ void sink_impl::set_iq_balance( const std::complex<double> &balance, size_t chan
   BOOST_FOREACH( sink_iface *dev, _devs )
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
       if ( chan == channel++ )
-        return dev->set_iq_balance( balance, dev_chan );
+        dev->set_iq_balance( balance, dev_chan );
 }
 
 double sink_impl::set_bandwidth( double bandwidth, size_t chan )
