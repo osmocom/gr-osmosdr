@@ -21,6 +21,7 @@
 #define FILE_SOURCE_C_H
 
 #include <gr_hier_block2.h>
+#include <gr_file_source.h>
 #include <gr_throttle.h>
 
 #include "osmosdr_src_iface.h"
@@ -49,6 +50,8 @@ public:
 
   size_t get_num_channels( void );
 
+  bool seek( long seek_point, int whence, size_t chan );
+
   osmosdr::meta_range_t get_sample_rates( void );
   double set_sample_rate( double rate );
   double get_sample_rate( void );
@@ -72,7 +75,9 @@ public:
   std::string get_antenna( size_t chan = 0 );
 
 private:
+  gr_file_source_sptr _source;
   gr_throttle::sptr _throttle;
+
   double _file_rate;
   double _freq, _rate;
 };
