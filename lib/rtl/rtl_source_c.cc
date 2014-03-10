@@ -84,7 +84,7 @@ rtl_source_c::rtl_source_c (const std::string &args)
         gr::io_signature::make(MIN_OUT, MAX_OUT, sizeof (gr_complex))),
     _dev(NULL),
     _buf(NULL),
-    _running(true),
+    _running(false),
     _no_tuner(false),
     _auto_gain(false),
     _if_gain(0),
@@ -236,8 +236,6 @@ rtl_source_c::rtl_source_c (const std::string &args)
     for(unsigned int i = 0; i < _buf_num; ++i)
       _buf[i] = (unsigned short *) malloc(_buf_len);
   }
-
-  _thread = gr::thread::thread(_rtlsdr_wait, this);
 }
 
 /*
@@ -246,9 +244,13 @@ rtl_source_c::rtl_source_c (const std::string &args)
 rtl_source_c::~rtl_source_c ()
 {
   if (_dev) {
-    _running = false;
-    rtlsdr_cancel_async( _dev );
-    _thread.join();
+    if (_running)
+    {
+      _running = false;
+      rtlsdr_cancel_async( _dev );
+      _thread.join();
+    }
+
     rtlsdr_close( _dev );
     _dev = NULL;
   }
@@ -262,6 +264,24 @@ rtl_source_c::~rtl_source_c ()
     free(_buf);
     _buf = NULL;
   }
+}
+
+bool rtl_source_c::start()
+{
+  _running = true;
+  _thread = gr::thread::thread(_rtlsdr_wait, this);
+
+  return true;
+}
+
+bool rtl_source_c::stop()
+{
+  _running = false;
+  if (_dev)
+    rtlsdr_cancel_async( _dev );
+  _thread.join();
+
+  return true;
 }
 
 void rtl_source_c::_rtlsdr_callback(unsigned char *buf, uint32_t len, void *ctx)

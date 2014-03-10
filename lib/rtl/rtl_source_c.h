@@ -112,6 +112,10 @@ public:
   std::string set_antenna( const std::string & antenna, size_t chan = 0 );
   std::string get_antenna( size_t chan = 0 );
 
+protected:
+  bool start();
+  bool stop();
+
 private:
   static void _rtlsdr_callback(unsigned char *buf, uint32_t len, void *ctx);
   void rtlsdr_callback(unsigned char *buf, uint32_t len);
