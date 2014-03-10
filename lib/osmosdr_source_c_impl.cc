@@ -683,7 +683,7 @@ void osmosdr_source_c_impl::set_dc_offset_mode( int mode, size_t chan )
   BOOST_FOREACH( osmosdr_src_iface *dev, _devs )
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
       if ( chan == channel++ )
-        return dev->set_dc_offset_mode( mode, dev_chan );
+        dev->set_dc_offset_mode( mode, dev_chan );
 }
 
 void osmosdr_source_c_impl::set_dc_offset( const std::complex<double> &offset, size_t chan )
@@ -692,7 +692,7 @@ void osmosdr_source_c_impl::set_dc_offset( const std::complex<double> &offset, s
   BOOST_FOREACH( osmosdr_src_iface *dev, _devs )
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
       if ( chan == channel++ )
-        return dev->set_dc_offset( offset, dev_chan );
+        dev->set_dc_offset( offset, dev_chan );
 }
 
 void osmosdr_source_c_impl::set_iq_balance_mode( int mode, size_t chan )

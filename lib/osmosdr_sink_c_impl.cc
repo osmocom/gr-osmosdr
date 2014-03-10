@@ -502,7 +502,7 @@ void osmosdr_sink_c_impl::set_dc_offset( const std::complex<double> &offset, siz
   BOOST_FOREACH( osmosdr_snk_iface *dev, _devs )
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
       if ( chan == channel++ )
-        return dev->set_dc_offset( offset, dev_chan );
+        dev->set_dc_offset( offset, dev_chan );
 }
 
 void osmosdr_sink_c_impl::set_iq_balance( const std::complex<double> &balance, size_t chan )
@@ -511,7 +511,7 @@ void osmosdr_sink_c_impl::set_iq_balance( const std::complex<double> &balance, s
   BOOST_FOREACH( osmosdr_snk_iface *dev, _devs )
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
       if ( chan == channel++ )
-        return dev->set_iq_balance( balance, dev_chan );
+        dev->set_iq_balance( balance, dev_chan );
 }
 
 double osmosdr_sink_c_impl::set_bandwidth( double bandwidth, size_t chan )
