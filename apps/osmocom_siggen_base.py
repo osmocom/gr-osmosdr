@@ -200,6 +200,23 @@ class top_block(gr.top_block, pubsub):
             if self._verbose:
                 print "Set gain to:", gain
 
+        if self._verbose:
+            gain_names = self.src.get_gain_names()
+            for name in gain_names:
+                range = self.src.get_gain_range(name)
+                print "%s gain range: start %d stop %d step %d" % (name, range.start(), range.stop(), range.step())
+
+        if options.gains:
+            for tuple in options.gains.split(","):
+                name, gain = tuple.split(":")
+                gain = int(gain)
+                print "Setting gain %s to %d." % (name, gain)
+                self.src.set_gain(gain, name)
+
+        if self._verbose:
+            rates = self.src.get_sample_rates()
+            print 'Supported sample rates %d-%d step %d.' % (rates.start(), rates.stop(), rates.step())
+
         # Set the antenna
         if(options.antenna):
             ant = self._sink.set_antenna(options.antenna, 0)
@@ -436,6 +453,8 @@ def get_options():
                       help="Set sample rate (bandwidth), minimum by default")
     parser.add_option("-g", "--gain", type="eng_float", default=None,
                       help="Set gain in dB (default is midpoint)")
+    parser.add_option("-G", "--gains", type="string", default=None,
+                      help="Set named gain in dB, name:gain,name:gain,...")
     parser.add_option("-f", "--tx-freq", type="eng_float", default=None,
                       help="Set carrier frequency to FREQ [default=mid-point]",
                       metavar="FREQ")
