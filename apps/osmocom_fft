@@ -31,6 +31,7 @@ GAIN_RANGE_KEY = lambda x: 'gain_range:'+x
 BWIDTH_RANGE_KEY = 'bwidth_range'
 
 import osmosdr
+from gnuradio import blocks
 from gnuradio import gr, gru
 from gnuradio import eng_notation
 from gnuradio.gr.pubsub import pubsub
@@ -39,6 +40,8 @@ from optparse import OptionParser
 
 import sys
 import numpy
+import time
+import datetime
 
 try:
     from gnuradio.wxgui import stdgui2, form, slider
@@ -70,6 +73,10 @@ class app_top_block(stdgui2.std_top_block, pubsub):
                           help="Set frequency correction (ppm)")
         parser.add_option("-g", "--gain", type="eng_float", default=None,
                           help="Set gain in dB (default is midpoint)")
+        parser.add_option("-G", "--gains", type="string", default=None,
+                          help="Set named gain in dB, name:gain,name:gain,...")
+        parser.add_option("-r", "--record", type="string", default=None,
+                          help="Record to file, available wildcards: %S: sample rate, %F: center frequency, %T: timestamp, Example: /tmp/name-f%F-s%S-t%T.cfile")
         parser.add_option("", "--dc-offset-mode", type="int", default=None,
                           help="Set the RX frontend DC offset correction mode")
         parser.add_option("", "--iq-balance-mode", type="int", default=None,
@@ -129,6 +136,25 @@ class app_top_block(stdgui2.std_top_block, pubsub):
             else:
                 options.gain = gain
 
+        self.src.set_gain(options.gain)
+
+        if self._verbose:
+            gain_names = self.src.get_gain_names()
+            for name in gain_names:
+                range = self.src.get_gain_range(name)
+                print "%s gain range: start %d stop %d step %d" % (name, range.start(), range.stop(), range.step())
+
+        if options.gains:
+            for tuple in options.gains.split(","):
+                name, gain = tuple.split(":")
+                gain = int(gain)
+                print "Setting gain %s to %d." % (name, gain)
+                self.src.set_gain(gain, name)
+
+        if self._verbose:
+            rates = self.src.get_sample_rates()
+            print 'Supported sample rates %d-%d step %d.' % (rates.start(), rates.stop(), rates.step())
+
         if options.center_freq is None:
             freq = self.src.get_center_freq()
             if freq != 0:
@@ -140,8 +166,6 @@ class app_top_block(stdgui2.std_top_block, pubsub):
 
         input_rate = self.src.set_sample_rate(options.samp_rate)
         self.src.set_bandwidth(input_rate)
-
-        self.src.set_gain(options.gain)
 
         self.publish(SAMP_RANGE_KEY, self.src.get_sample_rates)
         self.publish(FREQ_RANGE_KEY, self.src.get_freq_range)
@@ -156,11 +180,12 @@ class app_top_block(stdgui2.std_top_block, pubsub):
 
         self.publish(BWIDTH_KEY, self.src.get_bandwidth)
 
-        #initialize values from options
+        # initialize values from options
         self[SAMP_RANGE_KEY] = self.src.get_sample_rates()
         self[SAMP_RATE_KEY] = options.samp_rate
         self[CENTER_FREQ_KEY] = options.center_freq
         self[FREQ_CORR_KEY] = options.freq_corr
+        self['record'] = self.record = options.record
 
         self.dc_offset_mode = options.dc_offset_mode
         self.iq_balance_mode = options.iq_balance_mode
@@ -226,6 +251,14 @@ class app_top_block(stdgui2.std_top_block, pubsub):
         self.connect(self.src, self.scope)
 
         self._build_gui(vbox)
+
+        if self.record != None:
+            self.recording = self.record_to_filename()
+
+            print "Recording samples to ", self.recording
+            self.file_sink = blocks.file_sink(gr.sizeof_gr_complex, self.recording, False)
+            self.file_sink.set_unbuffered(False)
+            self.connect(self.src, self.file_sink)
 
         if self.dc_offset_mode != None:
             self.set_dc_offset_mode(self.dc_offset_mode)
@@ -427,12 +460,12 @@ class app_top_block(stdgui2.std_top_block, pubsub):
         sr_vbox.Add(sr_hbox, 0, wx.EXPAND)
         sr_vbox.AddSpacer(5)
 
-        # Add frequency controls to top window sizer
+        # Add sample rate controls to top window sizer
         vbox.Add(sr_vbox, 0, wx.EXPAND)
         vbox.AddSpacer(5)
 
         sr_hbox.AddSpacer(3)
-        forms.text_box(
+        self.sample_rate_text = forms.text_box(
             parent=self.panel, sizer=sr_hbox,
             label='Sample Rate (Hz)',
             proportion=1,
@@ -452,6 +485,72 @@ class app_top_block(stdgui2.std_top_block, pubsub):
         #    step_size=self[SAMP_RANGE_KEY].step(),
         #)
         #sr_hbox.AddSpacer(3)
+
+
+        ##################################################
+        # File recording controls
+        ##################################################
+
+        if self.record != None:
+
+            rec_vbox = forms.static_box_sizer(parent=self.panel,
+                                             label="File recording",
+                                             orient=wx.VERTICAL,
+                                             bold=True)
+            rec_vbox.AddSpacer(3)
+            # First row of sample rate controls
+            rec_hbox = wx.BoxSizer(wx.HORIZONTAL)
+            rec_vbox.Add(rec_hbox, 0, wx.EXPAND)
+            rec_vbox.AddSpacer(5)
+
+            # Add sample rate controls to top window sizer
+            vbox.Add(rec_vbox, 0, wx.EXPAND)
+            vbox.AddSpacer(5)
+
+            rec_hbox.AddSpacer(3)
+            self.record_text = forms.text_box(
+                parent=self.panel, sizer=rec_hbox,
+                label='File Name',
+                proportion=1,
+                ps=self,
+                key='record',
+                converter=forms.str_converter(),
+            )
+            rec_hbox.AddSpacer(5)
+
+            def record_callback(value):
+                if value:
+                    self.sample_rate_text.Disable()
+                    self.record_text.Disable()
+
+                    self.recording = self.record_to_filename()
+
+                    print "Recording samples to ", self.recording
+                    self.file_sink.open(self.recording);
+
+                else:
+                    self.sample_rate_text.Enable()
+                    self.record_text.Enable()
+
+                    self.file_sink.close()
+                    print "Finished recording to", self.recording
+
+            forms.toggle_button(
+                sizer=rec_hbox,
+                parent=self.panel,
+                false_label='REC',
+                true_label='STOP',
+                value=True,
+                callback=record_callback,
+            )
+
+    def record_to_filename(self):
+        s = self['record']
+        s = s.replace('%S', '%e' % self.src.get_sample_rate())
+        s = s.replace('%F', '%e' % self.src.get_center_freq())
+        s = s.replace('%T', datetime.datetime.now().strftime('%Y%m%d%H%M%S'))
+        return s
+
 
         ##################################################
         # DC Offset controls
