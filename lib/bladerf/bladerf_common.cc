@@ -332,7 +332,7 @@ void bladerf_common::init(dict_t &dict, bladerf_module module)
 
   _stream_timeout_ms = 3000;
   if (dict.count("stream_timeout_ms")) {
-      _stream_timeout_ms = boost::lexical_cast< unsigned int >(dict["stream_timout_ms"] );
+      _stream_timeout_ms = boost::lexical_cast< unsigned int >(dict["stream_timeout_ms"] );
   }
 
   /* Require value to be >= 2 so we can ensure we have twice as many
