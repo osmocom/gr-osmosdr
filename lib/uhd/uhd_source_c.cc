@@ -140,7 +140,8 @@ std::string uhd_source_c::name()
 
 size_t uhd_source_c::get_num_channels()
 {
-  return _src->get_device()->get_rx_num_channels();
+//  return _src->get_device()->get_rx_num_channels();
+  return output_signature()->max_streams();
 }
 
 osmosdr::meta_range_t uhd_source_c::get_sample_rates( void )
