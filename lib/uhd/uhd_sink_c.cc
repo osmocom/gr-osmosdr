@@ -251,7 +251,8 @@ std::string uhd_sink_c::name()
 
 size_t uhd_sink_c::get_num_channels()
 {
-  return _snk->get_device()->get_rx_num_channels();
+//  return _snk->get_device()->get_rx_num_channels();
+  return input_signature()->max_streams();
 }
 
 osmosdr::meta_range_t uhd_sink_c::get_sample_rates( void )
