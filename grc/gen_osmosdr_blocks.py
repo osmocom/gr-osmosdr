@@ -281,16 +281,16 @@ PARAMS_TMPL = """
   <param>
     <name>Ch$(n): Gain Mode</name>
     <key>gain_mode$(n)</key>
-    <value>0</value>
-    <type>int</type>
+    <value>False</value>
+    <type>bool</type>
     <hide>\#if \$nchan() > $n then 'none' else 'all'#</hide>
     <option>
       <name>Manual</name>
-      <key>0</key>
+      <key>False</key>
     </option>
     <option>
       <name>Automatic</name>
-      <key>1</key>
+      <key>True</key>
     </option>
   </param>
 #end if
