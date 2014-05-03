@@ -79,6 +79,20 @@ public:
   double get_bandwidth( size_t chan = 0 );
   osmosdr::freq_range_t get_bandwidth_range( size_t chan = 0 );
 
+  void set_time_source(const std::string &source, const size_t mboard = 0);
+  std::string get_time_source(const size_t mboard);
+  std::vector<std::string> get_time_sources(const size_t mboard);
+  void set_clock_source(const std::string &source, const size_t mboard = 0);
+  std::string get_clock_source(const size_t mboard);
+  std::vector<std::string> get_clock_sources(const size_t mboard);
+  double get_clock_rate(size_t mboard = 0);
+  void set_clock_rate(double rate, size_t mboard = 0);
+  ::osmosdr::time_spec_t get_time_now(size_t mboard = 0);
+  ::osmosdr::time_spec_t get_time_last_pps(size_t mboard = 0);
+  void set_time_now(const ::osmosdr::time_spec_t &time_spec, size_t mboard = 0);
+  void set_time_next_pps(const ::osmosdr::time_spec_t &time_spec);
+  void set_time_unknown_pps(const ::osmosdr::time_spec_t &time_spec);
+
 private:
   double _center_freq;
   double _freq_corr;

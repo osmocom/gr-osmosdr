@@ -329,7 +329,7 @@ source_impl::source_impl( const std::string &args )
 #endif
       }
     } else if ( (iface != NULL) || (long(block.get()) != 0) )
-      throw std::runtime_error("Eitner iface or block are NULL.");
+      throw std::runtime_error("Either iface or block are NULL.");
 
   }
 
@@ -810,4 +810,103 @@ osmosdr::freq_range_t source_impl::get_bandwidth_range( size_t chan )
         return dev->get_bandwidth_range( dev_chan );
 
   return osmosdr::freq_range_t();
+}
+
+void source_impl::set_time_source(const std::string &source, const size_t mboard)
+{
+  if (mboard != osmosdr::ALL_MBOARDS){
+      _devs.at(mboard)->set_time_source( source );
+      return;
+  }
+
+  for (size_t m = 0; m < _devs.size(); m++){ /* propagate ALL_MBOARDS */
+      _devs.at(m)->set_time_source( source, osmosdr::ALL_MBOARDS );
+  }
+}
+
+std::string source_impl::get_time_source(const size_t mboard)
+{
+  return _devs.at(mboard)->get_time_source( mboard );
+}
+
+std::vector<std::string> source_impl::get_time_sources(const size_t mboard)
+{
+  return _devs.at(mboard)->get_time_sources( mboard );
+}
+
+void source_impl::set_clock_source(const std::string &source, const size_t mboard)
+{
+  if (mboard != osmosdr::ALL_MBOARDS){
+      _devs.at(mboard)->set_clock_source( source );
+      return;
+  }
+
+  for (size_t m = 0; m < _devs.size(); m++){ /* propagate ALL_MBOARDS */
+      _devs.at(m)->set_clock_source( source, osmosdr::ALL_MBOARDS );
+  }
+}
+
+std::string source_impl::get_clock_source(const size_t mboard)
+{
+  return _devs.at(mboard)->get_clock_source( mboard );
+}
+
+std::vector<std::string> source_impl::get_clock_sources(const size_t mboard)
+{
+  return _devs.at(mboard)->get_clock_sources( mboard );
+}
+
+double source_impl::get_clock_rate(size_t mboard)
+{
+  return _devs.at(mboard)->get_clock_rate( mboard );
+}
+
+void source_impl::set_clock_rate(double rate, size_t mboard)
+{
+  if (mboard != osmosdr::ALL_MBOARDS){
+      _devs.at(mboard)->set_clock_rate( rate );
+      return;
+  }
+
+  for (size_t m = 0; m < _devs.size(); m++){ /* propagate ALL_MBOARDS */
+      _devs.at(m)->set_clock_rate( rate, osmosdr::ALL_MBOARDS );
+  }
+}
+
+osmosdr::time_spec_t source_impl::get_time_now(size_t mboard)
+{
+  return _devs.at(mboard)->get_time_now( mboard );
+}
+
+osmosdr::time_spec_t source_impl::get_time_last_pps(size_t mboard)
+{
+  return _devs.at(mboard)->get_time_last_pps( mboard );
+}
+
+void source_impl::set_time_now(const osmosdr::time_spec_t &time_spec, size_t mboard)
+{
+  if (mboard != osmosdr::ALL_MBOARDS){
+      _devs.at(mboard)->set_time_now( time_spec );
+      return;
+  }
+
+  for (size_t m = 0; m < _devs.size(); m++){ /* propagate ALL_MBOARDS */
+      _devs.at(m)->set_time_now( time_spec, osmosdr::ALL_MBOARDS );
+  }
+}
+
+void source_impl::set_time_next_pps(const osmosdr::time_spec_t &time_spec)
+{
+  BOOST_FOREACH( source_iface *dev, _devs )
+  {
+    dev->set_time_next_pps( time_spec );
+  }
+}
+
+void source_impl::set_time_unknown_pps(const osmosdr::time_spec_t &time_spec)
+{
+  BOOST_FOREACH( source_iface *dev, _devs )
+  {
+    dev->set_time_unknown_pps( time_spec );
+  }
 }

@@ -26,7 +26,24 @@ MAIN_TMPL = """\
   <category>$($sourk.title())s</category>
   <throttle>1</throttle>
   <import>import osmosdr</import>
+  <import>import time</import>
   <make>osmosdr.$(sourk)( args="numchan=" + str(\$nchan) + " " + \$args )
+#for $m in range($max_mboards)
+########################################################################
+\#if \$num_mboards() > $m and \$clock_source$(m)()
+self.\$(id).set_clock_source(\$clock_source$(m), $m)
+\#end if
+########################################################################
+\#if \$num_mboards() > $m and \$time_source$(m)()
+self.\$(id).set_time_source(\$time_source$(m), $m)
+\#end if
+########################################################################
+#end for
+\#if \$sync() == 'sync'
+self.\$(id).set_time_unknown_pps(osmosdr.time_spec_t())
+\#elif \$sync() == 'pc_clock'
+self.\$(id).set_time_now(osmosdr.time_spec_t(time.time()), osmosdr.ALL_MBOARDS)
+\#end if
 self.\$(id).set_sample_rate(\$sample_rate)
 #for $n in range($max_nchan)
 \#if \$nchan() > $n
@@ -84,6 +101,79 @@ self.\$(id).set_bandwidth(\$bw$(n), $n)
     </hide>
   </param>
   <param>
+    <name>Sync</name>
+    <key>sync</key>
+    <value></value>
+    <type>enum</type>
+    <hide>\#if \$sync() then 'none' else 'part'#</hide>
+    <option>
+      <name>unknown PPS</name>
+      <key>sync</key>
+    </option>
+    <option>
+      <name>PC Clock</name>
+      <key>pc_clock</key>
+    </option>
+    <option>
+      <name>don't sync</name>
+      <key></key>
+    </option>
+  </param>
+  <param>
+    <name>Num Mboards</name>
+    <key>num_mboards</key>
+    <value>1</value>
+    <type>int</type>
+    <hide>part</hide>
+    #for $m in range(1, $max_mboards+1)
+    <option>
+      <name>$(m)</name>
+      <key>$m</key>
+    </option>
+    #end for
+  </param>
+  #for $m in range($max_mboards)
+  <param>
+    <name>Mb$(m): Clock Source</name>
+    <key>clock_source$(m)</key>
+    <value></value>
+    <type>string</type>
+    <hide>
+      \#if not \$num_mboards() > $m
+        all
+      \#elif \$clock_source$(m)()
+        none
+      \#else
+        part
+      \#end if
+    </hide>
+    <option><name>Default</name><key></key></option>
+    <option><name>Internal</name><key>internal</key></option>
+    <option><name>External</name><key>external</key></option>
+    <option><name>MIMO Cable</name><key>mimo</key></option>
+    <option><name>O/B GPSDO</name><key>gpsdo</key></option>
+  </param>
+  <param>
+    <name>Mb$(m): Time Source</name>
+    <key>time_source$(m)</key>
+    <value></value>
+    <type>string</type>
+    <hide>
+      \#if not \$num_mboards() > $m
+        all
+      \#elif \$time_source$(m)()
+        none
+      \#else
+        part
+      \#end if
+    </hide>
+    <option><name>Default</name><key></key></option>
+    <option><name>External</name><key>external</key></option>
+    <option><name>MIMO Cable</name><key>mimo</key></option>
+    <option><name>O/B GPSDO</name><key>gpsdo</key></option>
+  </param>
+  #end for
+  <param>
     <name>Num Channels</name>
     <key>nchan</key>
     <value>1</value>
@@ -104,6 +194,9 @@ self.\$(id).set_bandwidth(\$bw$(n), $n)
   $params
   <check>$max_nchan >= \$nchan</check>
   <check>\$nchan > 0</check>
+  <check>$max_mboards >= \$num_mboards</check>
+  <check>\$num_mboards > 0</check>
+  <check>\$nchan >= \$num_mboards</check>
   <$sourk>
     <name>$dir</name>
     <type>\$type.type</type>
@@ -351,7 +444,8 @@ def parse_tmpl(_tmpl, **kwargs):
   from Cheetah import Template
   return str(Template.Template(_tmpl, kwargs))
 
-max_num_channels = 5
+max_num_mboards = 8
+max_num_channels = max_num_mboards*4
 
 import os.path
 
@@ -379,6 +473,7 @@ if __name__ == '__main__':
     params = ''.join([parse_tmpl(PARAMS_TMPL, n=n, sourk=sourk) for n in range(max_num_channels)])
     open(file, 'w').write(parse_tmpl(MAIN_TMPL,
       max_nchan=max_num_channels,
+      max_mboards=max_num_mboards,
       params=params,
       title=title,
       prefix=prefix,

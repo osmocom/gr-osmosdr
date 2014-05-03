@@ -24,6 +24,7 @@ install(FILES
     api.h
     pimpl.h
     ranges.h
+    time_spec.h
     device.h
     source.h
     sink.h

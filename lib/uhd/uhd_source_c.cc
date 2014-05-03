@@ -388,3 +388,70 @@ osmosdr::freq_range_t uhd_source_c::get_bandwidth_range( size_t chan )
 
   return bandwidths;
 }
+
+void uhd_source_c::set_time_source(const std::string &source, const size_t mboard)
+{
+  _src->set_time_source( source, mboard );
+}
+
+std::string uhd_source_c::get_time_source(const size_t mboard)
+{
+  return _src->get_time_source( mboard );
+}
+
+std::vector<std::string> uhd_source_c::get_time_sources(const size_t mboard)
+{
+  return _src->get_time_sources( mboard );
+}
+
+void uhd_source_c::set_clock_source(const std::string &source, const size_t mboard)
+{
+  _src->set_clock_source( source,  mboard );
+}
+
+std::string uhd_source_c::get_clock_source(const size_t mboard)
+{
+  return _src->get_clock_source( mboard );
+}
+
+std::vector<std::string> uhd_source_c::get_clock_sources(const size_t mboard)
+{
+  return _src->get_clock_sources( mboard );
+}
+
+double uhd_source_c::get_clock_rate(size_t mboard)
+{
+  return _src->get_clock_rate( mboard );
+}
+
+void uhd_source_c::set_clock_rate(double rate, size_t mboard)
+{
+  _src->set_clock_rate( rate, mboard );
+}
+
+osmosdr::time_spec_t uhd_source_c::get_time_now(size_t mboard)
+{
+  uhd::time_spec_t ts = _src->get_time_now( mboard );
+  return osmosdr::time_spec_t( ts.get_full_secs(), ts.get_frac_secs() );
+}
+
+osmosdr::time_spec_t uhd_source_c::get_time_last_pps(size_t mboard)
+{
+  uhd::time_spec_t ts = _src->get_time_last_pps( mboard );
+  return osmosdr::time_spec_t( ts.get_full_secs(), ts.get_frac_secs() );
+}
+
+void uhd_source_c::set_time_now(const osmosdr::time_spec_t &time_spec, size_t mboard)
+{
+  _src->set_time_now( uhd::time_spec_t( time_spec.get_full_secs(), time_spec.get_frac_secs() ), mboard );
+}
+
+void uhd_source_c::set_time_next_pps(const osmosdr::time_spec_t &time_spec)
+{
+  _src->set_time_next_pps( uhd::time_spec_t( time_spec.get_full_secs(), time_spec.get_frac_secs() ) );
+}
+
+void uhd_source_c::set_time_unknown_pps(const osmosdr::time_spec_t &time_spec)
+{
+  _src->set_time_unknown_pps( uhd::time_spec_t( time_spec.get_full_secs(), time_spec.get_frac_secs() ) );
+}

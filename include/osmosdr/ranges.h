@@ -25,6 +25,12 @@
 
 namespace osmosdr{
 
+    //! A wildcard motherboard index
+    static const size_t ALL_MBOARDS = size_t(~0);
+
+    //! A wildcard channel index
+    static const size_t ALL_CHANS = size_t(~0);
+
     /*!
      * A range object describes a set of discrete values of the form:
      * y = start + step*n, where n is an integer between 0 and (stop - start)/step

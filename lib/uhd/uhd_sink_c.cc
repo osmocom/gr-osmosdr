@@ -356,3 +356,70 @@ osmosdr::freq_range_t uhd_sink_c::get_bandwidth_range( size_t chan )
 
   return bandwidths;
 }
+
+void uhd_sink_c::set_time_source(const std::string &source, const size_t mboard)
+{
+  _snk->set_time_source( source, mboard );
+}
+
+std::string uhd_sink_c::get_time_source(const size_t mboard)
+{
+  return _snk->get_time_source( mboard );
+}
+
+std::vector<std::string> uhd_sink_c::get_time_sources(const size_t mboard)
+{
+  return _snk->get_time_sources( mboard );
+}
+
+void uhd_sink_c::set_clock_source(const std::string &source, const size_t mboard)
+{
+  _snk->set_clock_source( source,  mboard );
+}
+
+std::string uhd_sink_c::get_clock_source(const size_t mboard)
+{
+  return _snk->get_clock_source( mboard );
+}
+
+std::vector<std::string> uhd_sink_c::get_clock_sources(const size_t mboard)
+{
+  return _snk->get_clock_sources( mboard );
+}
+
+double uhd_sink_c::get_clock_rate(size_t mboard)
+{
+  return _snk->get_clock_rate( mboard );
+}
+
+void uhd_sink_c::set_clock_rate(double rate, size_t mboard)
+{
+  _snk->set_clock_rate( rate, mboard );
+}
+
+osmosdr::time_spec_t uhd_sink_c::get_time_now(size_t mboard)
+{
+  uhd::time_spec_t ts = _snk->get_time_now( mboard );
+  return osmosdr::time_spec_t( ts.get_full_secs(), ts.get_frac_secs() );
+}
+
+osmosdr::time_spec_t uhd_sink_c::get_time_last_pps(size_t mboard)
+{
+  uhd::time_spec_t ts = _snk->get_time_last_pps( mboard );
+  return osmosdr::time_spec_t( ts.get_full_secs(), ts.get_frac_secs() );
+}
+
+void uhd_sink_c::set_time_now(const osmosdr::time_spec_t &time_spec, size_t mboard)
+{
+  _snk->set_time_now( uhd::time_spec_t( time_spec.get_full_secs(), time_spec.get_frac_secs() ), mboard );
+}
+
+void uhd_sink_c::set_time_next_pps(const osmosdr::time_spec_t &time_spec)
+{
+  _snk->set_time_next_pps( uhd::time_spec_t( time_spec.get_full_secs(), time_spec.get_frac_secs() ) );
+}
+
+void uhd_sink_c::set_time_unknown_pps(const osmosdr::time_spec_t &time_spec)
+{
+  _snk->set_time_unknown_pps( uhd::time_spec_t( time_spec.get_full_secs(), time_spec.get_frac_secs() ) );
+}

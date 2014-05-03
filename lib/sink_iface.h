@@ -22,6 +22,7 @@
 #define OSMOSDR_SINK_IFACE_H
 
 #include <osmosdr/ranges.h>
+#include <osmosdr/time_spec.h>
 #include <gnuradio/basic_block.h>
 
 /*!
@@ -253,6 +254,115 @@ public:
    */
   virtual osmosdr::freq_range_t get_bandwidth_range( size_t chan = 0 )
     { return osmosdr::freq_range_t(); }
+
+  /*!
+   * Set the time source for the device.
+   * This sets the method of time synchronization,
+   * typically a pulse per second or an encoded time.
+   * Typical options for source: external, MIMO.
+   * \param source a string representing the time source
+   * \param mboard which motherboard to set the config
+   */
+  virtual void set_time_source(const std::string &source,
+                               const size_t mboard = 0) { }
+
+  /*!
+   * Get the currently set time source.
+   * \param mboard which motherboard to get the config
+   * \return the string representing the time source
+   */
+  virtual std::string get_time_source(const size_t mboard) { return ""; }
+
+  /*!
+   * Get a list of possible time sources.
+   * \param mboard which motherboard to get the list
+   * \return a vector of strings for possible settings
+   */
+  virtual std::vector<std::string> get_time_sources(const size_t mboard)
+  {
+    return std::vector<std::string>();
+  }
+
+  /*!
+   * Set the clock source for the device.
+   * This sets the source for a 10 Mhz reference clock.
+   * Typical options for source: internal, external, MIMO.
+   * \param source a string representing the clock source
+   * \param mboard which motherboard to set the config
+   */
+  virtual void set_clock_source(const std::string &source,
+                                const size_t mboard = 0) { }
+
+  /*!
+   * Get the currently set clock source.
+   * \param mboard which motherboard to get the config
+   * \return the string representing the clock source
+   */
+  virtual std::string get_clock_source(const size_t mboard) { return ""; }
+
+  /*!
+   * Get a list of possible clock sources.
+   * \param mboard which motherboard to get the list
+   * \return a vector of strings for possible settings
+   */
+  virtual std::vector<std::string> get_clock_sources(const size_t mboard)
+  {
+    return std::vector<std::string>();
+  }
+
+  /*!
+   * Get the master clock rate.
+   * \param mboard the motherboard index 0 to M-1
+   * \return the clock rate in Hz
+   */
+  virtual double get_clock_rate(size_t mboard = 0) { return 0; }
+
+  /*!
+   * Set the master clock rate.
+   * \param rate the new rate in Hz
+   * \param mboard the motherboard index 0 to M-1
+   */
+  virtual void set_clock_rate(double rate, size_t mboard = 0) { }
+
+  /*!
+   * Get the current time registers.
+   * \param mboard the motherboard index 0 to M-1
+   * \return the current device time
+   */
+  virtual ::osmosdr::time_spec_t get_time_now(size_t mboard = 0)
+  {
+    return ::osmosdr::time_spec_t::get_system_time();
+  }
+
+  /*!
+   * Get the time when the last pps pulse occured.
+   * \param mboard the motherboard index 0 to M-1
+   * \return the current device time
+   */
+  virtual ::osmosdr::time_spec_t get_time_last_pps(size_t mboard = 0)
+  {
+    return ::osmosdr::time_spec_t::get_system_time();
+  }
+
+  /*!
+   * Sets the time registers immediately.
+   * \param time_spec the new time
+   * \param mboard the motherboard index 0 to M-1
+   */
+  virtual void set_time_now(const ::osmosdr::time_spec_t &time_spec,
+                            size_t mboard = 0) { }
+
+  /*!
+   * Set the time registers at the next pps.
+   * \param time_spec the new time
+   */
+  virtual void set_time_next_pps(const ::osmosdr::time_spec_t &time_spec) { }
+
+  /*!
+   * Sync the time registers with an unknown pps edge.
+   * \param time_spec the new time
+   */
+  virtual void set_time_unknown_pps(const ::osmosdr::time_spec_t &time_spec) { }
 };
 
 #endif // OSMOSDR_SINK_IFACE_H

@@ -37,8 +37,30 @@
 %template(devices_t) std::vector<osmosdr::device_t>;
 %include <osmosdr/device.h>
 
+//%extend std::map<std::string, std::string>{
+//    std::string __getitem__(std::string key) {return (*self)[key];}
+//    void __setitem__(std::string key, std::string val) {(*self)[key] = val;}
+//};
+
 %template(range_vector_t) std::vector<osmosdr::range_t>; //define before range
 %include <osmosdr/ranges.h>
+
+%include <osmosdr/time_spec.h>
+
+%extend osmosdr::time_spec_t{
+    osmosdr::time_spec_t __add__(const osmosdr::time_spec_t &what)
+    {
+        osmosdr::time_spec_t temp = *self;
+        temp += what;
+        return temp;
+    }
+    osmosdr::time_spec_t __sub__(const osmosdr::time_spec_t &what)
+    {
+        osmosdr::time_spec_t temp = *self;
+        temp -= what;
+        return temp;
+    }
+};
 
 %define OSMOSDR_SWIG_BLOCK_MAGIC2(PKG, BASE_NAME)
 %template(BASE_NAME ## _sptr) boost::shared_ptr<PKG ## :: ## BASE_NAME>;
@@ -53,3 +75,8 @@ BASE_NAME = BASE_NAME.make;
 
 OSMOSDR_SWIG_BLOCK_MAGIC2(osmosdr,source);
 OSMOSDR_SWIG_BLOCK_MAGIC2(osmosdr,sink);
+
+%{
+static const size_t ALL_MBOARDS = osmosdr::ALL_MBOARDS;
+%}
+//static const size_t ALL_MBOARDS;
