@@ -385,35 +385,51 @@ std::string uhd_source_c::get_antenna( size_t chan )
 
 void uhd_source_c::set_dc_offset_mode( int mode, size_t chan )
 {
-  if ( osmosdr_source_c::DCOffsetOff == mode ) {
-    _src->set_auto_dc_offset( false, chan );
-    _src->set_dc_offset( std::complex<double>(0.0, 0.0), chan ); /* uhd default */
-  } else if ( osmosdr_source_c::DCOffsetManual == mode ) {
-    _src->set_auto_dc_offset( false, chan );
-  } else if ( osmosdr_source_c::DCOffsetAutomatic == mode ) {
-    _src->set_auto_dc_offset( true, chan );
+  try {
+    if ( osmosdr_source_c::DCOffsetOff == mode ) {
+      _src->set_auto_dc_offset( false, chan );
+      _src->set_dc_offset( std::complex<double>(0.0, 0.0), chan ); /* uhd default */
+    } else if ( osmosdr_source_c::DCOffsetManual == mode ) {
+      _src->set_auto_dc_offset( false, chan );
+    } else if ( osmosdr_source_c::DCOffsetAutomatic == mode ) {
+      _src->set_auto_dc_offset( true, chan );
+    }
+  } catch ( const std::exception &ex ) {
+    std::cerr << __FUNCTION__ << ": " << ex.what() << std::endl;
   }
 }
 
 void uhd_source_c::set_dc_offset( const std::complex<double> &offset, size_t chan )
 {
-  _src->set_dc_offset( offset, chan );
+  try {
+    _src->set_dc_offset( offset, chan );
+  } catch ( const std::exception &ex ) {
+    std::cerr << __FUNCTION__ << ": " << ex.what() << std::endl;
+  }
 }
 
 void uhd_source_c::set_iq_balance_mode( int mode, size_t chan )
 {
-  if ( osmosdr_source_c::IQBalanceOff == mode ) {
-    _src->set_iq_balance( std::complex<double>(0.0, 0.0), chan ); /* uhd default */
-  } else if ( osmosdr_source_c::IQBalanceManual == mode ) {
-    /* nothing to do */
-  } else if ( osmosdr_source_c::IQBalanceAutomatic == mode ) {
-    throw std::runtime_error("Automatic IQ imbalance correction not implemented");
+  try {
+    if ( osmosdr_source_c::IQBalanceOff == mode ) {
+      _src->set_iq_balance( std::complex<double>(0.0, 0.0), chan ); /* uhd default */
+    } else if ( osmosdr_source_c::IQBalanceManual == mode ) {
+      /* nothing to do */
+    } else if ( osmosdr_source_c::IQBalanceAutomatic == mode ) {
+      throw std::runtime_error("Automatic IQ imbalance correction not implemented");
+    }
+  } catch ( const std::exception &ex ) {
+    std::cerr << __FUNCTION__ << ": " << ex.what() << std::endl;
   }
 }
 
 void uhd_source_c::set_iq_balance( const std::complex<double> &balance, size_t chan )
 {
-  _src->set_iq_balance( balance, chan );
+  try {
+    _src->set_iq_balance( balance, chan );
+  } catch ( const std::exception &ex ) {
+    std::cerr << __FUNCTION__ << ": " << ex.what() << std::endl;
+  }
 }
 
 double uhd_source_c::set_bandwidth( double bandwidth, size_t chan )

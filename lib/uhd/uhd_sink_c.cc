@@ -387,12 +387,20 @@ std::string uhd_sink_c::get_antenna( size_t chan )
 
 void uhd_sink_c::set_dc_offset( const std::complex<double> &offset, size_t chan )
 {
-  _snk->set_dc_offset( offset, chan );
+  try {
+    _snk->set_dc_offset( offset, chan );
+  } catch ( const std::exception &ex ) {
+    std::cerr << __FUNCTION__ << ": " << ex.what() << std::endl;
+  }
 }
 
 void uhd_sink_c::set_iq_balance( const std::complex<double> &balance, size_t chan )
 {
-  _snk->set_iq_balance( balance, chan );
+  try {
+    _snk->set_iq_balance( balance, chan );
+  } catch ( const std::exception &ex ) {
+    std::cerr << __FUNCTION__ << ": " << ex.what() << std::endl;
+  }
 }
 
 double uhd_sink_c::set_bandwidth( double bandwidth, size_t chan )
