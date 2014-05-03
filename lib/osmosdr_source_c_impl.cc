@@ -375,10 +375,10 @@ size_t osmosdr_source_c_impl::get_num_channels()
   return channels;
 }
 
-bool source_impl::seek( long seek_point, int whence, size_t chan )
+bool osmosdr_source_c_impl::seek( long seek_point, int whence, size_t chan )
 {
   size_t channel = 0;
-  BOOST_FOREACH( source_iface *dev, _devs )
+  BOOST_FOREACH( osmosdr_src_iface *dev, _devs )
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
       if ( chan == channel++ )
         return dev->seek( seek_point, whence, dev_chan );
