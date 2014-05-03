@@ -99,7 +99,7 @@ uhd_sink_c::uhd_sink_c(const std::string &args) :
   {
     if (dict.count(extra_list[q]) )
     {
-      std::cout << "-- Setting " + extra_list[q] + "=" + dict[extra_list[q]] + "\n";
+      std::cerr << "-- Setting " + extra_list[q] + "=" + dict[extra_list[q]] + "\n";
       extra_args += extra_list[q] + "=" + dict[extra_list[q]];
       if (q < (extra_list.size()-1))
       {
@@ -133,7 +133,7 @@ uhd_sink_c::uhd_sink_c(const std::string &args) :
 
   if (dict.count("refclock") )
   {
-    std::cout << "-- Setting refclock: "  + dict["refclock"] + "\n";
+    std::cerr << "-- Setting refclock: "  + dict["refclock"] + "\n";
     _snk->set_clock_source (dict["refclock"], ALL_MBOARDS);
 
     boost::this_thread::sleep(boost::posix_time::milliseconds(50));
@@ -141,16 +141,16 @@ uhd_sink_c::uhd_sink_c(const std::string &args) :
     uhd::sensor_value_t ref_locked = _snk->get_mboard_sensor("ref_locked",0);
     if (!ref_locked.to_bool())
     {
-      std::cout << "-- WARNING: Requested ref-clock source: " << dict["refclock"] << "\n";
-      std::cout << "--          Ref-clock lock sensor indicates: UNLOCKED\n";
-      std::cout << "--          You may have poorer phase noise/frequency accuracy\n";
-      std::cout << "--          Phase-coherence with other devices will be poor.\n";
+      std::cerr << "-- WARNING: Requested ref-clock source: " << dict["refclock"] << "\n";
+      std::cerr << "--          Ref-clock lock sensor indicates: UNLOCKED\n";
+      std::cerr << "--          You may have poorer phase noise/frequency accuracy\n";
+      std::cerr << "--          Phase-coherence with other devices will be poor.\n";
     }
   }
 
   if (dict.count("pps") )
   {
-    std::cout << "-- Setting PPS source: " + dict["refclock"] + "\n";
+    std::cerr << "-- Setting PPS source: " + dict["refclock"] + "\n";
     _snk->set_time_source (dict["pps"], ALL_MBOARDS);
   }
 
@@ -165,7 +165,7 @@ uhd_sink_c::uhd_sink_c(const std::string &args) :
     get_precision_time (&seconds, &fracts);
     std::string st = boost::to_upper_copy(dict["sync"]);
 
-    std::cout << "-- Setting TOD to: " << (long long)seconds << "."
+    std::cerr << "-- Setting TOD to: " << (long long)seconds << "."
               << (long long)fracts << " with method: "+st << "\n";
     if (dict["sync"] == "unknown" )
     {
@@ -187,7 +187,7 @@ uhd_sink_c::uhd_sink_c(const std::string &args) :
     }
     else
     {
-      std::cout << "*** Not processing sync request: unknown type: " + dict["sync"] + "\n";
+      std::cerr << "*** Not processing sync request: unknown type: " + dict["sync"] + "\n";
     }
   }
 
