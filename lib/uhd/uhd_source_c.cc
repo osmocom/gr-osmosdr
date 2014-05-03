@@ -447,7 +447,7 @@ get_precision_time (long long *secs, double *fracs)
   double  psecs;
   double fracts;
 
-  now = boost::posix_time::microsec_clock::local_time();
+  now = boost::posix_time::microsec_clock::universal_time();
 
   diff = now - epoch;
   psecs = (diff.total_milliseconds() / 1.0e3);
