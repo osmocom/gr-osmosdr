@@ -65,7 +65,7 @@ osmosdr_make_src_c (const std::string &args)
 osmosdr_src_c::osmosdr_src_c (const std::string &args)
   : gr::sync_block ("osmosdr_src_c",
         gr::io_signature::make(0, 0, sizeof (gr_complex)),
-        args_to_io_signature(args)),
+        gr::io_signature::make(1, 1, sizeof (gr_complex)) ),
     _dev(NULL),
     _buf(NULL),
     _running(true),
