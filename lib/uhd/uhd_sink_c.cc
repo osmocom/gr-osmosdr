@@ -37,7 +37,7 @@ uhd_sink_c_sptr make_uhd_sink_c(const std::string &args)
 
 uhd_sink_c::uhd_sink_c(const std::string &args) :
     gr::hier_block2("uhd_sink_c",
-                   args_to_io_signature(args),
+                   gr::io_signature::make(1, 1, sizeof(gr_complex)),
                    gr::io_signature::make(0, 0, 0)),
     _center_freq(0.0f),
     _freq_corr(0.0f),
@@ -45,6 +45,7 @@ uhd_sink_c::uhd_sink_c(const std::string &args) :
 {
   size_t nchan = 1;
   dict_t dict = params_to_dict(args);
+  uhd::stream_args_t stream_args;
 
   if (dict.count("nchan"))
     nchan = boost::lexical_cast< size_t >( dict["nchan"] );
@@ -56,18 +57,40 @@ uhd_sink_c::uhd_sink_c(const std::string &args) :
     _lo_offset = boost::lexical_cast< double >( dict["lo_offset"] );
 
   std::string arguments; // rebuild argument string without internal arguments
-  BOOST_FOREACH( dict_t::value_type &entry, dict ) {
-    if ( "uhd" != entry.first &&
-         "nchan" != entry.first &&
-         "subdev" != entry.first &&
-         "lo_offset" != entry.first ) {
-      arguments += entry.first + "=" + entry.second + ",";
-    }
+  BOOST_FOREACH( dict_t::value_type &entry, dict )
+  {
+    if ( "cpu_format" == entry.first ||
+         "otw_format" == entry.first ||
+         "fullscale" == entry.first ||
+         "peak" == entry.first ||
+         "nchan" == entry.first ||
+         "subdev" == entry.first ||
+         "lo_offset" == entry.first ||
+         "uhd" == entry.first )
+      continue;
+
+    arguments += entry.first + "=" + entry.second + ",";
   }
 
-  _snk = gr::uhd::usrp_sink::make( arguments,
-                                   uhd::io_type_t::COMPLEX_FLOAT32,
-                                   nchan );
+  stream_args.cpu_format = "fc32";
+  stream_args.otw_format = "sc16";
+
+  if (dict.count("cpu_format") )
+    stream_args.cpu_format = dict["cpu_format"];
+
+  if (dict.count("otw_format") )
+    stream_args.otw_format = dict["otw_format"];
+
+  for (size_t chan = 0; chan < nchan; chan++)
+    stream_args.channels.push_back(chan); // linear mapping
+
+  if (dict.count("peak") )
+    stream_args.args["peak"] = dict["peak"];
+
+  if (dict.count("fullscale") )
+    stream_args.args["fullscale"] = dict["fullscale"];
+
+  _snk = gr::uhd::usrp_sink::make( arguments, stream_args );
 
   if (dict.count("subdev")) {
     _snk->set_subdev_spec( dict["subdev"] );
@@ -77,7 +100,14 @@ uhd_sink_c::uhd_sink_c(const std::string &args) :
             << std::endl;
 
   if (0.0 != _lo_offset)
-    std::cerr << "-- Using lo offset of " << _lo_offset << " Hz." << std::endl;
+    std::cerr << "-- Using LO offset of " << _lo_offset << " Hz." << std::endl;
+
+  std::vector<int> sizes = _snk->input_signature()->sizeof_stream_items();
+
+  while ( sizes.size() > nchan )
+    sizes.erase( sizes.end() );
+
+  set_input_signature( gr::io_signature::makev( nchan, nchan, sizes ) );
 
   for ( size_t i = 0; i < nchan; i++ )
     connect( self(), i, _snk, i );
