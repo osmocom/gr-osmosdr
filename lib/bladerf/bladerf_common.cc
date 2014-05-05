@@ -230,6 +230,9 @@ void bladerf_common::init(dict_t &dict, bladerf_module module)
 
   _pfx = std::string("[bladeRF ") + std::string(type) + std::string("] ");
 
+  if ( dict.count("verbosity") )
+    set_verbosity( dict["verbosity"] );
+
   if (dict.count("bladerf"))
   {
     std::string value = dict["bladerf"];
@@ -288,9 +291,6 @@ void bladerf_common::init(dict_t &dict, bladerf_module module)
     set_loopback_mode( dict["loopback"] );
   else
     set_loopback_mode( "none" );
-
-  if ( dict.count("verbosity") )
-    set_verbosity( dict["verbosity"] );
 
 
   /* Show some info about the device we've opened */
