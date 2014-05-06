@@ -287,10 +287,23 @@ void bladerf_common::init(dict_t &dict, bladerf_module module)
     throw std::runtime_error( oss.str() );
   }
 
-  if ( dict.count("loopback") )
-    set_loopback_mode( dict["loopback"] );
-  else
-    set_loopback_mode( "none" );
+  if ( module == BLADERF_MODULE_RX )
+  {
+      if ( dict.count("loopback") )
+          set_loopback_mode( dict["loopback"] );
+      else
+          set_loopback_mode( "none" );
+  }
+  else if ( module == BLADERF_MODULE_TX && dict.count("loopback") )
+  {
+      std::cerr << _pfx
+                << "Warning: 'loopback' has been specified on a bladeRF sink, "
+                   "and will have no effect. This parameter should be "
+                   "specified on the associated bladeRF source."
+                << std::endl;
+
+
+  }
 
 
   /* Show some info about the device we've opened */
