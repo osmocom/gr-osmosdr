@@ -99,7 +99,7 @@ osmosdr::source::make( const std::string &args )
 source_impl::source_impl( const std::string &args )
   : gr::hier_block2 ("source_impl",
         gr::io_signature::make(0, 0, 0),
-        args_to_io_signature(args)),
+        gr::io_signature::make(1, 1, sizeof(gr_complex))),
     _sample_rate(NAN)
 {
   size_t channel = 0;
@@ -217,6 +217,10 @@ source_impl::source_impl( const std::string &args )
       throw std::runtime_error("No supported devices found to pick from.");
   }
 
+  int min_streams = 0, max_streams = 0;
+  std::vector<int> stream_items;
+  std::vector< gr::basic_block_sptr > blocks;
+
   BOOST_FOREACH(std::string arg, arg_list) {
 
     dict_t dict = params_to_dict(arg);
@@ -310,28 +314,71 @@ source_impl::source_impl( const std::string &args )
 
     if ( iface != NULL && long(block.get()) != 0 ) {
       _devs.push_back( iface );
+      blocks.push_back( block );
 
-      for (size_t i = 0; i < iface->get_num_channels(); i++) {
-#ifdef HAVE_IQBALANCE
-        gr::iqbalance::optimize_c::sptr iq_opt = gr::iqbalance::optimize_c::make( 0 );
-        gr::iqbalance::fix_cc::sptr     iq_fix = gr::iqbalance::fix_cc::make();
+      min_streams += block->output_signature()->min_streams();
+      max_streams += block->output_signature()->max_streams();
 
-        connect(block, i, iq_fix, 0);
-        connect(iq_fix, 0, self(), channel++);
-
-        connect(block, i, iq_opt, 0);
-        msg_connect(iq_opt, "iqbal_corr", iq_fix, "iqbal_corr");
-
-        _iq_opt.push_back( iq_opt.get() );
-        _iq_fix.push_back( iq_fix.get() );
-#else
-        connect(block, i, self(), channel++);
-#endif
+      BOOST_FOREACH(int size, block->output_signature()->sizeof_stream_items())
+      {
+        stream_items.push_back( size );
       }
     } else if ( (iface != NULL) || (long(block.get()) != 0) )
       throw std::runtime_error("Eitner iface or block are NULL.");
 
   }
+
+  std::cerr << min_streams << " " << max_streams << " { ";
+  for ( size_t i = 0; i < stream_items.size(); ++i )
+    std::cerr << stream_items[i] << " ";
+  std::cerr << "}" << std::endl;
+
+  set_output_signature( gr::io_signature::makev( min_streams,
+                                                 max_streams,
+                                                 stream_items ) );
+
+  for (size_t k = 0; k < _devs.size(); k++)
+  {
+    gr::basic_block_sptr block = blocks[k];
+
+    for (int i = 0; i < block->output_signature()->max_streams(); i++) {
+#ifdef HAVE_IQBALANCE
+#if 0
+        gr::iqbalance::optimize_c::sptr iq_opt = gr::iqbalance::optimize_c::make( 0 );
+        gr::iqbalance::fix_cc::sptr     iq_fix = gr::iqbalance::fix_cc::make();
+
+        std::cerr << block->output_signature()->sizeof_stream_item(i) << " "
+                  << iq_fix->input_signature()->sizeof_stream_item(0) << " ";
+
+        if ( block->output_signature()->sizeof_stream_item(i) ==
+             iq_fix->input_signature()->sizeof_stream_item(0) )
+        {
+          connect(block, i, iq_fix, 0);
+          connect(iq_fix, 0, self(), channel++);
+
+          connect(block, i, iq_opt, 0);
+          msg_connect(iq_opt, "iqbal_corr", iq_fix, "iqbal_corr");
+
+          _iq_opt.push_back( iq_opt.get() );
+          _iq_fix.push_back( iq_fix.get() );
+        }
+        else
+#endif
+        {
+//          std::cerr << "Signatures don't match, bypassing gr::iqbalance on channel "
+//                    << channel << std::endl;
+
+          std::cerr << "connect" << k << ": out" << i << " to in" << channel << std::endl;
+
+          connect(block, i, self(), channel++);
+        }
+#else
+        connect(block, i, self(), channel++);
+#endif
+    }
+  }
+
+  std::cerr << "connect passed" << std::endl;
 
   if (!_devs.size())
     throw std::runtime_error("No devices specified via device arguments.");

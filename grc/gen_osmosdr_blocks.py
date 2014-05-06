@@ -26,7 +26,7 @@ MAIN_TMPL = """\
   <category>$($sourk.title())s</category>
   <throttle>1</throttle>
   <import>import osmosdr</import>
-  <make>osmosdr.$(sourk)( args="numchan=" + str(\$nchan) + " " + \$args )
+  <make>osmosdr.$(sourk)( args=\$args )
 self.\$(id).set_sample_rate(\$sample_rate)
 #for $n in range($max_nchan)
 \#if \$nchan() > $n
@@ -68,6 +68,21 @@ self.\$(id).set_bandwidth(\$bw$(n), $n)
       <name>Complex float32</name>
       <key>fc32</key>
       <opt>type:fc32</opt>
+    </option>
+    <option>
+      <name>Complex int16</name>
+      <key>sc16</key>
+      <opt>type:sc16</opt>
+    </option>
+    <option>
+      <name>Complex int8</name>
+      <key>sc8</key>
+      <opt>type:sc8</opt>
+    </option>
+    <option>
+      <name>Octet stream</name>
+      <key>s8</key>
+      <opt>type:s8</opt>
     </option>
   </param>
   <param>
@@ -132,8 +147,11 @@ While primarily being developed for the OsmoSDR hardware, this block as well sup
 
 By using the osmocom $sourk block you can take advantage of a common software api in your application(s) independent of the underlying radio hardware.
 
-Output Type:
-This parameter controls the data type of the stream in gnuradio. Only complex float32 samples are supported at the moment.
+$(dir.title())put Type:
+This parameter controls the data type of the stream in gnuradio.
+Complex float32, Complex int16 and Complex int8 are available for UHD devices.
+Complex float32 and Octet stream are available for bladeRF sink.
+Complex float32 must be used for everything else.
 
 Device Arguments:
 The device argument is a comma delimited string used to locate devices on your system. Device arguments for multiple devices may be given by separating them with a space.
@@ -167,7 +185,7 @@ Num Channels:
 Selects the total number of channels in this multi-device configuration. Required when specifying multiple device arguments.
 
 Sample Rate:
-The sample rate is the number of samples per second output by this block on each channel.
+The sample rate is the number of samples per second on each channel.
 
 Frequency:
 The center frequency is the frequency the RF chain is tuned to.

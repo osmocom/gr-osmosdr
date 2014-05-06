@@ -64,7 +64,7 @@ osmosdr::sink::make( const std::string &args )
  */
 sink_impl::sink_impl( const std::string &args )
   : gr::hier_block2 ("sink_impl",
-        args_to_io_signature(args),
+        gr::io_signature::make(1, 1, sizeof(gr_complex)),
         gr::io_signature::make(0, 0, 0)),
     _sample_rate(NAN)
 {
@@ -129,6 +129,10 @@ sink_impl::sink_impl( const std::string &args )
       throw std::runtime_error("No supported devices found to pick from.");
   }
 
+  int min_streams = 0, max_streams = 0;
+  std::vector<int> stream_items;
+  std::vector< gr::basic_block_sptr > blocks;
+
   BOOST_FOREACH(std::string arg, arg_list) {
 
     dict_t dict = params_to_dict(arg);
@@ -161,13 +165,34 @@ sink_impl::sink_impl( const std::string &args )
 
     if ( iface != NULL && long(block.get()) != 0 ) {
       _devs.push_back( iface );
+      blocks.push_back( block );
 
-      for (size_t i = 0; i < iface->get_num_channels(); i++) {
-        connect(self(), channel++, block, i);
-      }
+      min_streams += block->input_signature()->min_streams();
+      max_streams += block->input_signature()->max_streams();
+
+      if ( stream_items.empty() )
+        stream_items.push_back( block->input_signature()->sizeof_stream_item(0) );
+
+//      BOOST_FOREACH(int size, block->input_signature()->sizeof_stream_items())
+//      {
+//        stream_items.push_back( size );
+//      }
     } else if ( (iface != NULL) || (long(block.get()) != 0) )
       throw std::runtime_error("Eitner iface or block are NULL.");
 
+  }
+
+  set_input_signature( gr::io_signature::makev( min_streams,
+                                                max_streams,
+                                                stream_items ) );
+
+  for (size_t k = 0; k < _devs.size(); k++)
+  {
+    gr::basic_block_sptr block = blocks[k];
+
+    for (size_t i = 0; i < _devs[k]->get_num_channels(); i++) {
+      connect(self(), channel++, block, i);
+    }
   }
 
   if (!_devs.size())
