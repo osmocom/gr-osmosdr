@@ -82,6 +82,8 @@ protected:
 
   std::string _pfx;
 
+  bool _xb_200_attached;
+
   /* BladeRF IQ correction parameters */
   static const int16_t DCOFF_SCALE  = 2048;
   static const int16_t GAIN_SCALE   = 4096;

@@ -48,7 +48,13 @@ using namespace boost::assign;
 boost::mutex bladerf_common::_devs_mutex;
 std::list<boost::weak_ptr<struct bladerf> > bladerf_common::_devs;
 
-bladerf_common::bladerf_common() : _conv_buf(NULL), _conv_buf_size(4096) {}
+bladerf_common::bladerf_common() :
+  _conv_buf(NULL),
+  _conv_buf_size(4096),
+  _xb_200_attached(false)
+{
+
+}
 
 bladerf_common::~bladerf_common()
 {
@@ -301,10 +307,37 @@ void bladerf_common::init(dict_t &dict, bladerf_module module)
                    "and will have no effect. This parameter should be "
                    "specified on the associated bladeRF source."
                 << std::endl;
-
-
   }
 
+  if ( dict.count("xb200") ) {
+    if (bladerf_expansion_attach(_dev.get(), BLADERF_XB_200)) {
+      std::cerr << _pfx << "Could not attach XB-200" << std::endl;
+    } else {
+      _xb_200_attached = true;
+
+      bladerf_xb200_filter filter = BLADERF_XB200_AUTO_1DB;
+
+      if ( dict["xb200"] == "custom" ) {
+        filter = BLADERF_XB200_CUSTOM;
+      } else if ( dict["xb200"] == "50M" ) {
+        filter = BLADERF_XB200_50M;
+      } else if ( dict["xb200"] == "144M" ) {
+        filter = BLADERF_XB200_144M;
+      } else if ( dict["xb200"] == "222M" ) {
+        filter = BLADERF_XB200_222M;
+      } else if ( dict["xb200"] == "auto3db" ) {
+        filter = BLADERF_XB200_AUTO_3DB;
+      } else if ( dict["xb200"] == "auto" ) {
+        filter = BLADERF_XB200_AUTO_1DB;
+      } else {
+        filter = BLADERF_XB200_AUTO_1DB;
+      }
+
+      if (bladerf_xb200_set_filterbank(_dev.get(), module, filter)) {
+          std::cerr << _pfx << "Could not set XB-200 filter" << std::endl;
+      }
+    }
+  }
 
   /* Show some info about the device we've opened */
   std::cerr << _pfx << "Using nuand LLC bladeRF #" << device_number;
@@ -387,7 +420,7 @@ void bladerf_common::init(dict_t &dict, bladerf_module module)
 osmosdr::freq_range_t bladerf_common::freq_range()
 {
   /* assuming the same for RX & TX */
-  return osmosdr::freq_range_t( 300e6, 3.8e9 );
+  return osmosdr::freq_range_t( _xb_200_attached ? 0 : 300e6, 3.8e9 );
 }
 
 osmosdr::meta_range_t bladerf_common::sample_rates()
