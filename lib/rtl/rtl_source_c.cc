@@ -347,37 +347,31 @@ int rtl_source_c::work( int noutput_items,
   if (!_running)
     return WORK_DONE;
 
-  unsigned short *buf = _buf[_buf_head] + _buf_offset;
+  while (noutput_items && _buf_used) {
+    const int nout = std::min(noutput_items, _samp_avail);
+    const unsigned short *buf = _buf[_buf_head] + _buf_offset;
 
-  if (noutput_items <= _samp_avail) {
-    for (int i = 0; i < noutput_items; ++i)
+    for (int i = 0; i < nout; ++i)
       *out++ = _lut[ *(buf + i) ];
 
-    _buf_offset += noutput_items;
-    _samp_avail -= noutput_items;
-  } else {
-    for (int i = 0; i < _samp_avail; ++i)
-      *out++ = _lut[ *(buf + i) ];
+    noutput_items -= nout;
+    _samp_avail -= nout;
 
-    {
-      boost::mutex::scoped_lock lock( _buf_mutex );
+    if (!_samp_avail) {
+      {
+        boost::mutex::scoped_lock lock( _buf_mutex );
 
-      _buf_head = (_buf_head + 1) % _buf_num;
-      _buf_used--;
+        _buf_head = (_buf_head + 1) % _buf_num;
+        _buf_used--;
+      }
+      _samp_avail = _buf_len / BYTES_PER_SAMPLE;
+      _buf_offset = 0;
+    } else {
+      _buf_offset += nout;
     }
-
-    buf = _buf[_buf_head];
-
-    int remaining = noutput_items - _samp_avail;
-
-    for (int i = 0; i < remaining; ++i)
-      *out++ = _lut[ *(buf + i) ];
-
-    _buf_offset = remaining;
-    _samp_avail = (_buf_len / BYTES_PER_SAMPLE) - remaining;
   }
 
-  return noutput_items;
+  return (out - ((gr_complex *)output_items[0]));
 }
 
 std::vector<std::string> rtl_source_c::get_devices()
