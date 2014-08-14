@@ -113,7 +113,7 @@ rtl_tcp_source_f::rtl_tcp_source_f(size_t itemsize,
   struct addrinfo *ip_src;      // store the source IP address to use
   struct addrinfo hints;
   memset( (void*)&hints, 0, sizeof(hints) );
-  hints.ai_family = AF_INET;
+  hints.ai_family = AF_UNSPEC;
   hints.ai_socktype = SOCK_STREAM;
   hints.ai_protocol = IPPROTO_TCP;
   hints.ai_flags = AI_PASSIVE;
