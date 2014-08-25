@@ -555,7 +555,7 @@ osmosdr::freq_range_t hackrf_sink_c::get_freq_range( size_t chan )
 {
   osmosdr::freq_range_t range;
 
-  range += osmosdr::range_t( 10e6, 6e9 );
+  range += osmosdr::range_t( _sample_rate / 2, 7250e6 - _sample_rate / 2 );
 
   return range;
 }
