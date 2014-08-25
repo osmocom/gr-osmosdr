@@ -148,7 +148,7 @@ set(GRC_BLOCKS_DIR      ${GR_PKG_DATA_DIR}/grc/blocks)
 # Find build dependencies
 ########################################################################
 set(GR_REQUIRED_COMPONENTS RUNTIME PMT BLOCKS)
-find_package(Gnuradio "3.7.0")
+find_package(Gnuradio 3.7.3 REQUIRED)
 find_package(GnuradioIQBalance)
 find_package(UHD)
 find_package(GnuradioUHD)
@@ -173,16 +173,12 @@ include_directories(
     ${CMAKE_SOURCE_DIR}/include
     ${CMAKE_SOURCE_DIR}/lib
     ${Boost_INCLUDE_DIRS}
-    ${GNURADIO_RUNTIME_INCLUDE_DIRS}
-    ${GNURADIO_PMT_INCLUDE_DIRS}
-    ${GNURADIO_BLOCKS_INCLUDE_DIRS}
+    ${GNURADIO_ALL_INCLUDE_DIRS}
 )
 
 link_directories(
     ${Boost_LIBRARY_DIRS}
-    ${GNURADIO_RUNTIME_LIBRARY_DIRS}
-    ${GNURADIO_PMT_LIBRARY_DIRS}
-    ${GNURADIO_BLOCKS_LIBRARY_DIRS}
+    ${GNURADIO_ALL_LIBRARY_DIRS}
 )
 
 # Set component parameters

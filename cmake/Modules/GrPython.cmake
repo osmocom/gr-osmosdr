@@ -192,7 +192,7 @@ function(GR_PYTHON_INSTALL)
         file(TO_NATIVE_PATH ${PYTHON_EXECUTABLE} pyexe_native)
 
         if (CMAKE_CROSSCOMPILING)
-           set(pyexe_native /usr/bin/env python)
+           set(pyexe_native "/usr/bin/env python")
         endif()
 
         foreach(pyfile ${GR_PYTHON_INSTALL_PROGRAMS})
@@ -207,8 +207,9 @@ function(GR_PYTHON_INSTALL)
             add_custom_command(
                 OUTPUT ${pyexefile} DEPENDS ${pyfile}
                 COMMAND ${PYTHON_EXECUTABLE} -c
-                \"open('${pyexefile}', 'w').write('\#!${pyexe_native}\\n'+open('${pyfile}').read())\"
+                "open('${pyexefile}','w').write('\#!${pyexe_native}\\n'+open('${pyfile}').read())"
                 COMMENT "Shebangin ${pyfile_name}"
+                VERBATIM
             )
 
             #on windows, python files need an extension to execute

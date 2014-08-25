@@ -33,5 +33,5 @@ set(file_srcs
 # Append gnuradio-osmosdr library sources
 ########################################################################
 list(APPEND gr_osmosdr_srcs ${file_srcs})
-list(APPEND gr_osmosdr_libs ${GNURADIO_BLOCKS_LIBRARIES})
+#list(APPEND gr_osmosdr_libs ${GNURADIO_BLOCKS_LIBRARIES})
 

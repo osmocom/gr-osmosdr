@@ -34,5 +34,5 @@ set(rtl_tcp_srcs
 # Append gnuradio-osmosdr library sources
 ########################################################################
 list(APPEND gr_osmosdr_srcs ${rtl_tcp_srcs})
-list(APPEND gr_osmosdr_libs ${GNURADIO_BLOCKS_LIBRARIES})
+#list(APPEND gr_osmosdr_libs ${GNURADIO_BLOCKS_LIBRARIES})
 
