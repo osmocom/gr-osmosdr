@@ -36,10 +36,24 @@ uhd_source_c_sptr make_uhd_source_c(const std::string &args)
   return gnuradio::get_initial_sptr(new uhd_source_c(args));
 }
 
+static size_t parse_nchan(const std::string &args)
+{
+  size_t nchan = 1;
+
+  dict_t dict = params_to_dict(args);
+
+  if (dict.count("nchan"))
+    nchan = boost::lexical_cast< size_t >( dict["nchan"] );
+
+  return nchan;
+}
+
 uhd_source_c::uhd_source_c(const std::string &args) :
     gr::hier_block2("uhd_source_c",
                    gr::io_signature::make(0, 0, 0),
-                   gr::io_signature::make(1, 1, sizeof(gr_complex))),
+                   gr::io_signature::make(parse_nchan(args),
+                                          parse_nchan(args),
+                                          sizeof(gr_complex))),
     _center_freq(0.0f),
     _freq_corr(0.0f),
     _lo_offset(0.0f)
@@ -101,14 +115,14 @@ uhd_source_c::uhd_source_c(const std::string &args) :
 
   if (0.0 != _lo_offset)
     std::cerr << "-- Using LO offset of " << _lo_offset << " Hz." << std::endl;
-
+#if 0
   std::vector<int> sizes = _src->output_signature()->sizeof_stream_items();
 
   while ( sizes.size() > nchan )
     sizes.erase( sizes.end() );
-
+  // TODO: setting the output signature is broken for hier blocks (gnuradio bug #719)
   set_output_signature( gr::io_signature::makev( nchan, nchan, sizes ) );
-
+#endif
   for ( size_t i = 0; i < nchan; i++ )
     connect( _src, i, self(), i );
 }

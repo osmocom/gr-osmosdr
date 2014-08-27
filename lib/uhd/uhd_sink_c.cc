@@ -35,9 +35,23 @@ uhd_sink_c_sptr make_uhd_sink_c(const std::string &args)
   return gnuradio::get_initial_sptr(new uhd_sink_c(args));
 }
 
+static size_t parse_nchan(const std::string &args)
+{
+  size_t nchan = 1;
+
+  dict_t dict = params_to_dict(args);
+
+  if (dict.count("nchan"))
+    nchan = boost::lexical_cast< size_t >( dict["nchan"] );
+
+  return nchan;
+}
+
 uhd_sink_c::uhd_sink_c(const std::string &args) :
     gr::hier_block2("uhd_sink_c",
-                   gr::io_signature::make(1, 1, sizeof(gr_complex)),
+                   gr::io_signature::make(parse_nchan(args),
+                                          parse_nchan(args),
+                                          sizeof(gr_complex)),
                    gr::io_signature::make(0, 0, 0)),
     _center_freq(0.0f),
     _freq_corr(0.0f),
@@ -92,23 +106,22 @@ uhd_sink_c::uhd_sink_c(const std::string &args) :
 
   _snk = gr::uhd::usrp_sink::make( arguments, stream_args );
 
-  if (dict.count("subdev")) {
+  if (dict.count("subdev"))
     _snk->set_subdev_spec( dict["subdev"] );
-  }
 
   std::cerr << "-- Using subdev spec '" << _snk->get_subdev_spec() << "'."
             << std::endl;
 
   if (0.0 != _lo_offset)
     std::cerr << "-- Using LO offset of " << _lo_offset << " Hz." << std::endl;
-
+#if 0
   std::vector<int> sizes = _snk->input_signature()->sizeof_stream_items();
 
   while ( sizes.size() > nchan )
     sizes.erase( sizes.end() );
-
+  // TODO: setting the input signature is broken for hier blocks (gnuradio bug #719)
   set_input_signature( gr::io_signature::makev( nchan, nchan, sizes ) );
-
+#endif
   for ( size_t i = 0; i < nchan; i++ )
     connect( self(), i, _snk, i );
 }
