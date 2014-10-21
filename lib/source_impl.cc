@@ -168,49 +168,49 @@ source_impl::source_impl( const std::string &args )
 #ifdef WORKAROUND_GR_HIER_BLOCK2_BUG
   try {
 #endif
-  std::vector< std::string > dev_list;
+  if ( ! device_specified ) {
+    std::vector< std::string > dev_list;
 #ifdef ENABLE_OSMOSDR
-  BOOST_FOREACH( std::string dev, osmosdr_src_c::get_devices() )
-    dev_list.push_back( dev );
+    BOOST_FOREACH( std::string dev, osmosdr_src_c::get_devices() )
+      dev_list.push_back( dev );
 #endif
 #ifdef ENABLE_FCD
-  BOOST_FOREACH( std::string dev, fcd_source_c::get_devices() )
-    dev_list.push_back( dev );
+    BOOST_FOREACH( std::string dev, fcd_source_c::get_devices() )
+      dev_list.push_back( dev );
 #endif
 #ifdef ENABLE_RTL
-  BOOST_FOREACH( std::string dev, rtl_source_c::get_devices() )
-    dev_list.push_back( dev );
+    BOOST_FOREACH( std::string dev, rtl_source_c::get_devices() )
+      dev_list.push_back( dev );
 #endif
 #ifdef ENABLE_UHD
-  BOOST_FOREACH( std::string dev, uhd_source_c::get_devices() )
-    dev_list.push_back( dev );
+    BOOST_FOREACH( std::string dev, uhd_source_c::get_devices() )
+      dev_list.push_back( dev );
 #endif
 #ifdef ENABLE_MIRI
-  BOOST_FOREACH( std::string dev, miri_source_c::get_devices() )
-    dev_list.push_back( dev );
+    BOOST_FOREACH( std::string dev, miri_source_c::get_devices() )
+      dev_list.push_back( dev );
 #endif
 #ifdef ENABLE_BLADERF
-  BOOST_FOREACH( std::string dev, bladerf_source_c::get_devices() )
-    dev_list.push_back( dev );
+    BOOST_FOREACH( std::string dev, bladerf_source_c::get_devices() )
+      dev_list.push_back( dev );
 #endif
 #ifdef ENABLE_RFSPACE
-  BOOST_FOREACH( std::string dev, rfspace_source_c::get_devices() )
-    dev_list.push_back( dev );
+    BOOST_FOREACH( std::string dev, rfspace_source_c::get_devices() )
+      dev_list.push_back( dev );
 #endif
 #ifdef ENABLE_HACKRF
-  BOOST_FOREACH( std::string dev, hackrf_source_c::get_devices() )
-    dev_list.push_back( dev );
+    BOOST_FOREACH( std::string dev, hackrf_source_c::get_devices() )
+      dev_list.push_back( dev );
 #endif
 #ifdef ENABLE_AIRSPY
-  BOOST_FOREACH( std::string dev, airspy_source_c::get_devices() )
-    dev_list.push_back( dev );
+    BOOST_FOREACH( std::string dev, airspy_source_c::get_devices() )
+      dev_list.push_back( dev );
 #endif
 
-//  std::cerr << std::endl;
-//  BOOST_FOREACH( std::string dev, dev_list )
-//    std::cerr << "'" << dev << "'" << std::endl;
+//    std::cerr << std::endl;
+//    BOOST_FOREACH( std::string dev, dev_list )
+//      std::cerr << "'" << dev << "'" << std::endl;
 
-  if (!device_specified) {
     if ( dev_list.size() )
       arg_list.push_back( dev_list.front() );
     else

@@ -104,25 +104,25 @@ sink_impl::sink_impl( const std::string &args )
 #ifdef WORKAROUND_GR_HIER_BLOCK2_BUG
   try {
 #endif
-  std::vector< std::string > dev_list;
+  if ( ! device_specified ) {
+    std::vector< std::string > dev_list;
 #ifdef ENABLE_UHD
-  BOOST_FOREACH( std::string dev, uhd_sink_c::get_devices() )
-    dev_list.push_back( dev );
+    BOOST_FOREACH( std::string dev, uhd_sink_c::get_devices() )
+      dev_list.push_back( dev );
 #endif
 #ifdef ENABLE_BLADERF
-  BOOST_FOREACH( std::string dev, bladerf_sink_c::get_devices() )
-    dev_list.push_back( dev );
+    BOOST_FOREACH( std::string dev, bladerf_sink_c::get_devices() )
+      dev_list.push_back( dev );
 #endif
 #ifdef ENABLE_HACKRF
-  BOOST_FOREACH( std::string dev, hackrf_sink_c::get_devices() )
-    dev_list.push_back( dev );
+    BOOST_FOREACH( std::string dev, hackrf_sink_c::get_devices() )
+      dev_list.push_back( dev );
 #endif
 
-//  std::cerr << std::endl;
-//  BOOST_FOREACH( std::string dev, dev_list )
-//    std::cerr << "'" << dev << "'" << std::endl;
+//    std::cerr << std::endl;
+//    BOOST_FOREACH( std::string dev, dev_list )
+//      std::cerr << "'" << dev << "'" << std::endl;
 
-  if (!device_specified) {
     if ( dev_list.size() )
       arg_list.push_back( dev_list.front() );
     else
