@@ -403,10 +403,18 @@ void bladerf_common::init(dict_t &dict, bladerf_module module)
     }
   }
 
-
-
-  if (_num_transfers == 0 || _num_transfers > (_num_buffers / 2)) {
+  /* If the user hasn't specified the desired number of transfers, set it to
+   * min(32, num_buffers / 2) */
+  if (_num_transfers == 0) {
       _num_transfers = _num_buffers / 2;
+      if (_num_transfers > 32) {
+          _num_transfers = 32;
+      }
+  } else if (_num_transfers >= _num_buffers) {
+      _num_transfers = _num_buffers - 1;
+      std::cerr << _pfx << "Clamping num_tranfers to " << _num_transfers << ". "
+                << "Try using a smaller num_transfers value if timeouts occur."
+                << std::endl;
   }
 
   _conv_buf = static_cast<int16_t*>(malloc(_conv_buf_size * 2 * sizeof(int16_t)));
