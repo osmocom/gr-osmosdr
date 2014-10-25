@@ -140,7 +140,6 @@ int bladerf_source_c::work( int noutput_items,
                             gr_vector_void_star &output_items )
 {
   int ret;
-  struct bladerf_metadata meta;
   int16_t *current;
   const float scaling = 1.0f / 2048.0f;
   gr_complex *out = static_cast<gr_complex *>(output_items[0]);
@@ -160,7 +159,7 @@ int bladerf_source_c::work( int noutput_items,
 
   /* Grab all the samples into the temporary buffer */
   ret = bladerf_sync_rx(_dev.get(), static_cast<void *>(_conv_buf),
-                        noutput_items, &meta, _stream_timeout_ms);
+                        noutput_items, NULL, _stream_timeout_ms);
   if ( ret != 0 ) {
     std::cerr << _pfx << "bladerf_sync_rx error: "
               << bladerf_strerror(ret) << std::endl;

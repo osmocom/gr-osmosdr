@@ -99,7 +99,6 @@ int bladerf_sink_c::work( int noutput_items,
                           gr_vector_void_star &output_items )
 {
   const gr_complex *in = (const gr_complex *) input_items[0];
-  struct bladerf_metadata meta;
   const float scaling = 2000.0f;
   int ret;
 
@@ -124,7 +123,7 @@ int bladerf_sink_c::work( int noutput_items,
 
   /* Submit them to the device */
   ret = bladerf_sync_tx(_dev.get(), static_cast<void *>(_conv_buf),
-                        noutput_items, &meta, _stream_timeout_ms);
+                        noutput_items, NULL, _stream_timeout_ms);
 
   if ( ret != 0 ) {
     std::cerr << _pfx << "bladerf_sync_tx error: "
