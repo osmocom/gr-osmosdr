@@ -51,7 +51,8 @@ std::list<boost::weak_ptr<struct bladerf> > bladerf_common::_devs;
 bladerf_common::bladerf_common() :
   _conv_buf(NULL),
   _conv_buf_size(4096),
-  _xb_200_attached(false)
+  _xb_200_attached(false),
+  _consecutive_failures(0)
 {
 
 }

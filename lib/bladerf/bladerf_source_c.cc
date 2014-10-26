@@ -163,7 +163,17 @@ int bladerf_source_c::work( int noutput_items,
   if ( ret != 0 ) {
     std::cerr << _pfx << "bladerf_sync_rx error: "
               << bladerf_strerror(ret) << std::endl;
-    return WORK_DONE;
+
+    _consecutive_failures++;
+
+    if ( _consecutive_failures >= MAX_CONSECUTIVE_FAILURES ) {
+        std::cerr << _pfx
+                  << "Consecutive error limit hit. Shutting down."
+                  << std::endl;
+        return WORK_DONE;
+    }
+  } else {
+      _consecutive_failures = 0;
   }
 
   current = _conv_buf;

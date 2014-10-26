@@ -128,7 +128,17 @@ int bladerf_sink_c::work( int noutput_items,
   if ( ret != 0 ) {
     std::cerr << _pfx << "bladerf_sync_tx error: "
               << bladerf_strerror(ret) << std::endl;
-    return WORK_DONE;
+
+    _consecutive_failures++;
+
+    if ( _consecutive_failures >= MAX_CONSECUTIVE_FAILURES ) {
+        noutput_items = WORK_DONE;
+        std::cerr << _pfx
+                  << "Consecutive error limit hit. Shutting down."
+                  << std::endl;
+    } else {
+      _consecutive_failures = 0;
+    }
   }
 
   return noutput_items;

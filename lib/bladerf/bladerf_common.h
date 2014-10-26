@@ -83,11 +83,14 @@ protected:
   std::string _pfx;
 
   bool _xb_200_attached;
+  unsigned int _consecutive_failures;
 
   /* BladeRF IQ correction parameters */
   static const int16_t DCOFF_SCALE  = 2048;
   static const int16_t GAIN_SCALE   = 4096;
   static const int16_t PHASE_SCALE  = 4096;
+
+  static const unsigned int MAX_CONSECUTIVE_FAILURES = 3;
 
 private:
   bladerf_sptr open(const std::string &device_name);
