@@ -136,9 +136,9 @@ int bladerf_sink_c::work( int noutput_items,
         std::cerr << _pfx
                   << "Consecutive error limit hit. Shutting down."
                   << std::endl;
-    } else {
-      _consecutive_failures = 0;
     }
+  } else {
+    _consecutive_failures = 0;
   }
 
   return noutput_items;
