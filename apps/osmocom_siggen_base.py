@@ -201,9 +201,9 @@ class top_block(gr.top_block, pubsub):
                 print "Set gain to:", gain
 
         if self._verbose:
-            gain_names = self.src.get_gain_names()
+            gain_names = self._sink.get_gain_names()
             for name in gain_names:
-                range = self.src.get_gain_range(name)
+                range = self._sink.get_gain_range(name)
                 print "%s gain range: start %d stop %d step %d" % (name, range.start(), range.stop(), range.step())
 
         if options.gains:
@@ -211,10 +211,10 @@ class top_block(gr.top_block, pubsub):
                 name, gain = tuple.split(":")
                 gain = int(gain)
                 print "Setting gain %s to %d." % (name, gain)
-                self.src.set_gain(gain, name)
+                self._sink.set_gain(gain, name)
 
         if self._verbose:
-            rates = self.src.get_sample_rates()
+            rates = self._sink.get_sample_rates()
             print 'Supported sample rates %d-%d step %d.' % (rates.start(), rates.stop(), rates.step())
 
         # Set the antenna
