@@ -123,6 +123,13 @@ airspy_source_c::airspy_source_c (const std::string &args)
 
   set_if_gain( 0 ); /* preset to a reasonable default (non-GRC use case) */
 
+  if ( dict.count( "bias" ) )
+  {
+    bool bias = boost::lexical_cast<bool>( dict["bias"] );
+    int ret = airspy_set_rf_bias(_dev, (uint8_t)bias);
+    AIRSPY_THROW_ON_ERROR(ret, "Failed to enable DC bias")
+  }
+
   _fifo = new boost::circular_buffer<gr_complex>(5000000);
   if (!_fifo) {
     throw std::runtime_error( std::string(__FUNCTION__) + " " +

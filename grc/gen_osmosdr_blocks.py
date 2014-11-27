@@ -250,7 +250,7 @@ Lines ending with ... mean it's possible to bind devices together by specifying 
   netsdr=127.0.0.1[:50000][,nchan=2]
   sdr-ip=127.0.0.1[:50000]
   sdr-iq=/dev/ttyUSB0
-  airspy=0
+  airspy=0[,bias=0|1]
 #end if
   hackrf=0[,buffers=32]
   bladerf=0[,fpga='/path/to/the/bitstream.rbf']
