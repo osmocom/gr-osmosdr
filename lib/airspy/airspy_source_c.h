@@ -124,9 +124,6 @@ private:
   static int _airspy_rx_callback(airspy_transfer* transfer);
   int airspy_rx_callback(void *samples, int sample_count);
 
-  static int _usage;
-  static boost::mutex _usage_mutex;
-
   airspy_device *_dev;
 
   boost::circular_buffer<gr_complex> *_fifo;

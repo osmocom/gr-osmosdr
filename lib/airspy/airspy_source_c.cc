@@ -52,9 +52,6 @@ using namespace boost::assign;
 #define AIRSPY_FUNC_STR(func, arg) \
   boost::str(boost::format(func "(%d)") % arg) + " has failed"
 
-int airspy_source_c::_usage = 0;
-boost::mutex airspy_source_c::_usage_mutex;
-
 airspy_source_c_sptr make_airspy_source_c (const std::string & args)
 {
   return gnuradio::get_initial_sptr(new airspy_source_c (args));
@@ -94,15 +91,6 @@ airspy_source_c::airspy_source_c (const std::string &args)
   int ret;
 
   dict_t dict = params_to_dict(args);
-
-  {
-    boost::mutex::scoped_lock lock( _usage_mutex );
-
-    if ( _usage == 0 )
-      airspy_init(); /* call only once before the first open */
-
-    _usage++;
-  }
 
   _dev = NULL;
   ret = airspy_open( &_dev );
@@ -159,15 +147,6 @@ airspy_source_c::~airspy_source_c ()
     ret = airspy_close( _dev );
     AIRSPY_THROW_ON_ERROR(ret, "Failed to close AirSpy")
     _dev = NULL;
-
-    {
-      boost::mutex::scoped_lock lock( _usage_mutex );
-
-       _usage--;
-
-      if ( _usage == 0 )
-        airspy_exit(); /* call only once after last close */
-    }
   }
 
   if (_fifo)
@@ -299,15 +278,6 @@ std::vector<std::string> airspy_source_c::get_devices()
   }
 #else
 
-  {
-    boost::mutex::scoped_lock lock( _usage_mutex );
-
-    if ( _usage == 0 )
-      airspy_init(); /* call only once before the first open */
-
-    _usage++;
-  }
-
   int ret;
   airspy_device *dev = NULL;
   ret = airspy_open(&dev);
@@ -328,15 +298,6 @@ std::vector<std::string> airspy_source_c::get_devices()
     devices.push_back( args );
 
     ret = airspy_close(dev);
-  }
-
-  {
-    boost::mutex::scoped_lock lock( _usage_mutex );
-
-     _usage--;
-
-    if ( _usage == 0 )
-      airspy_exit(); /* call only once after last close */
   }
 
 #endif
