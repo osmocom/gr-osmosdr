@@ -352,6 +352,7 @@ osmosdr::meta_range_t airspy_source_c::get_sample_rates()
 {
   osmosdr::meta_range_t range;
 
+  range += osmosdr::range_t( 2.5e6 );
   range += osmosdr::range_t( 10e6 );
 
   return range;
@@ -362,12 +363,22 @@ double airspy_source_c::set_sample_rate( double rate )
   int ret = AIRSPY_SUCCESS;
 
   if (_dev) {
-//    ret = airspy_set_sample_rate( _dev, rate );
+    airspy_samplerate_t samp = AIRSPY_SAMPLERATE_10MSPS;
+
+    if ( rate ==  2.5e6)
+      samp = AIRSPY_SAMPLERATE_2_5MSPS;
+    else if ( rate ==  10e6)
+      samp = AIRSPY_SAMPLERATE_10MSPS;
+    else
+    {
+      AIRSPY_THROW_ON_ERROR( -9999, AIRSPY_FUNC_STR( "airspy_set_samplerate", rate ) )
+    }
+
+    ret = airspy_set_samplerate( _dev, samp );
     if ( AIRSPY_SUCCESS == ret ) {
-      //_sample_rate = rate;
-      _sample_rate = get_sample_rates().start();
+      _sample_rate = rate;
     } else {
-      AIRSPY_THROW_ON_ERROR( ret, AIRSPY_FUNC_STR( "airspy_set_sample_rate", rate ) )
+      AIRSPY_THROW_ON_ERROR( ret, AIRSPY_FUNC_STR( "airspy_set_samplerate", rate ) )
     }
   }
 
@@ -484,7 +495,7 @@ double airspy_source_c::set_gain( double gain, size_t chan )
     if ( AIRSPY_SUCCESS == ret ) {
       _lna_gain = clip_gain;
     } else {
-//      AIRSPY_THROW_ON_ERROR( ret, AIRSPY_FUNC_STR( "airspy_set_lna_gain", value ) )
+      AIRSPY_THROW_ON_ERROR( ret, AIRSPY_FUNC_STR( "airspy_set_lna_gain", value ) )
     }
   }
 
@@ -543,7 +554,7 @@ double airspy_source_c::set_mix_gain(double gain, size_t chan)
     if ( AIRSPY_SUCCESS == ret ) {
       _mix_gain = clip_gain;
     } else {
-//      AIRSPY_THROW_ON_ERROR( ret, AIRSPY_FUNC_STR( "airspy_set_mixer_gain", value ) )
+      AIRSPY_THROW_ON_ERROR( ret, AIRSPY_FUNC_STR( "airspy_set_mixer_gain", value ) )
     }
   }
 
@@ -563,7 +574,7 @@ double airspy_source_c::set_if_gain(double gain, size_t chan)
     if ( AIRSPY_SUCCESS == ret ) {
       _vga_gain = clip_gain;
     } else {
-//      AIRSPY_THROW_ON_ERROR( ret, AIRSPY_FUNC_STR( "airspy_set_vga_gain", value ) )
+      AIRSPY_THROW_ON_ERROR( ret, AIRSPY_FUNC_STR( "airspy_set_vga_gain", value ) )
     }
   }
 
