@@ -100,7 +100,7 @@ airspy_source_c::airspy_source_c (const std::string &args)
   ret = airspy_board_id_read( _dev, &board_id );
   AIRSPY_THROW_ON_ERROR(ret, "Failed to get AirSpy board id")
 
-  char version[40];
+  char version[128];
   memset(version, 0, sizeof(version));
   ret = airspy_version_string_read( _dev, version, sizeof(version));
   AIRSPY_THROW_ON_ERROR(ret, "Failed to read version string")
