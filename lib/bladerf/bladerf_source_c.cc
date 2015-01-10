@@ -110,7 +110,6 @@ bladerf_source_c::bladerf_source_c (const std::string &args)
   /* Set the range of VGA2 VGA2GAIN[4:0], not recommended to be used above 30dB */
   _vga2_range = osmosdr::gain_range_t( 0, 30, 3 );
 
-
   /* Warn user about using an old FPGA version, as we no longer strip off the
    * markers that were pressent in the pre-v0.0.1 FPGA */
   if (bladerf_fpga_version( _dev.get(), &fpga_version ) != 0) {
@@ -397,11 +396,26 @@ double bladerf_source_c::get_gain( const std::string & name, size_t chan )
 
 double bladerf_source_c::set_bb_gain( double gain, size_t chan )
 {
-  /* TODO: for RX, we should combine VGA1 & VGA2 which both are in BB path */
-  osmosdr::gain_range_t bb_gains = get_gain_range( "VGA2", chan );
+  osmosdr::gain_range_t vga1_gains = get_gain_range( "VGA1", chan );
+  osmosdr::gain_range_t vga2_gains = get_gain_range( "VGA2", chan );
 
-  double clip_gain = bb_gains.clip( gain, true );
-  gain = set_gain( clip_gain, "VGA2", chan );
+  // Gain partitioning from:
+  // http://www.limemicro.com/download/FAQ_v1.0r10.pdf part 5.18
+
+  // So: first maximize VGA1 gain, then VGA2
+
+  if ( gain > vga1_gains.stop() + vga2_gains.start() )
+  {
+    double clip_gain = vga2_gains.clip( gain - vga1_gains.stop(), true );
+
+    gain = set_gain(vga1_gains.stop(), "VGA1", chan) + set_gain(clip_gain, "VGA2", chan);
+  }
+  else
+  {
+    double clip_gain = vga1_gains.clip( gain - vga2_gains.start(), true );
+
+    gain = set_gain(clip_gain , "VGA1", chan) + set_gain(vga2_gains.start(), "VGA2", chan);
+  }
 
   return gain;
 }
