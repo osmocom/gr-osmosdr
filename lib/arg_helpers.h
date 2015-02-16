@@ -34,6 +34,17 @@
 typedef std::map< std::string, std::string > dict_t;
 typedef std::pair< std::string, std::string > pair_t;
 
+inline std::string dict_to_args_string( const dict_t &d )
+{
+    std::string out;
+    BOOST_FOREACH(const pair_t pair, d)
+    {
+        if (not out.empty()) out += ", ";
+        out += pair.first + "='" + pair.second + "'";
+    }
+    return out;
+}
+
 inline std::vector< std::string > args_to_vector( const std::string &args )
 {
   std::vector< std::string > result;

@@ -29,6 +29,12 @@
 
 class soapy_source_c;
 
+namespace SoapySDR
+{
+    class Device;
+    class Stream;
+}
+
 /*
  * We use boost::shared_ptr's instead of raw pointers for all access
  * to gr_blocks (and many other data structures).  The shared_ptr gets
@@ -61,6 +67,8 @@ private:
   friend soapy_source_c_sptr make_soapy_source_c (const std::string & args);
 
   soapy_source_c (const std::string & args);  	// private constructor
+
+  ~soapy_source_c(void);
 
 public:
   bool start();
@@ -122,6 +130,10 @@ void set_time_now(const ::osmosdr::time_spec_t &time_spec,
                             size_t mboard);
 void set_time_next_pps(const ::osmosdr::time_spec_t &time_spec);
 void set_time_unknown_pps(const ::osmosdr::time_spec_t &time_spec);
+
+private:
+    SoapySDR::Device *_device;
+    SoapySDR::Stream *_stream;
 };
 
 #endif /* INCLUDED_SOAPY_SOURCE_C_H */
