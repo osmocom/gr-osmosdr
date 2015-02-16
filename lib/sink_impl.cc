@@ -42,6 +42,10 @@
 #include "bladerf_sink_c.h"
 #endif
 
+#ifdef ENABLE_SOAPY
+#include <soapy_sink_c.h>
+#endif
+
 #include "arg_helpers.h"
 #include "sink_impl.h"
 
@@ -84,6 +88,9 @@ sink_impl::sink_impl( const std::string &args )
 #ifdef ENABLE_BLADERF
   dev_types.push_back("bladerf");
 #endif
+#ifdef ENABLE_SOAPY
+  dev_types.push_back("soapy");
+#endif
   std::cerr << "gr-osmosdr "
             << GR_OSMOSDR_VERSION << " (" << GR_OSMOSDR_LIBVER << ") "
             << "gnuradio " << gr::version() << std::endl;
@@ -116,6 +123,10 @@ sink_impl::sink_impl( const std::string &args )
 #endif
 #ifdef ENABLE_HACKRF
     BOOST_FOREACH( std::string dev, hackrf_sink_c::get_devices() )
+      dev_list.push_back( dev );
+#endif
+#ifdef ENABLE_SOAPY
+    BOOST_FOREACH( std::string dev, soapy_sink_c::get_devices() )
       dev_list.push_back( dev );
 #endif
 
@@ -156,6 +167,13 @@ sink_impl::sink_impl( const std::string &args )
     if ( dict.count("bladerf") ) {
       bladerf_sink_c_sptr sink = make_bladerf_sink_c( arg );
       block = sink; iface = sink.get();
+    }
+#endif
+
+#ifdef ENABLE_SOAPY
+    if ( dict.count("soapy") ) {
+      soapy_sink_c_sptr src = make_soapy_sink_c( arg );
+      block = src; iface = src.get();
     }
 #endif
 

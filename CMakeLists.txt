@@ -160,6 +160,7 @@ find_package(LibMiriSDR)
 find_package(LibHackRF)
 find_package(LibAIRSPY)
 find_package(LibbladeRF)
+find_package(SoapySDR CONFIG)
 find_package(Doxygen)
 
 if(NOT GNURADIO_RUNTIME_FOUND)

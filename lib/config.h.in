@@ -15,5 +15,6 @@
 #cmakedefine ENABLE_BLADERF
 #cmakedefine ENABLE_RFSPACE
 #cmakedefine ENABLE_AIRSPY
+#cmakedefine ENABLE_SOAPY
 
 #endif // CONFIG_H_IN

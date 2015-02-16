@@ -76,6 +76,10 @@
 #include <airspy_source_c.h>
 #endif
 
+#ifdef ENABLE_SOAPY
+#include <soapy_source_c.h>
+#endif
+
 #include "arg_helpers.h"
 #include "source_impl.h"
 
@@ -142,6 +146,9 @@ source_impl::source_impl( const std::string &args )
 #ifdef ENABLE_AIRSPY
   dev_types.push_back("airspy");
 #endif
+#ifdef ENABLE_SOAPY
+  dev_types.push_back("soapy");
+#endif
   std::cerr << "gr-osmosdr "
             << GR_OSMOSDR_VERSION << " (" << GR_OSMOSDR_LIBVER << ") "
             << "gnuradio " << gr::version() << std::endl;
@@ -204,6 +211,10 @@ source_impl::source_impl( const std::string &args )
 #endif
 #ifdef ENABLE_AIRSPY
     BOOST_FOREACH( std::string dev, airspy_source_c::get_devices() )
+      dev_list.push_back( dev );
+#endif
+#ifdef ENABLE_SOAPY
+    BOOST_FOREACH( std::string dev, soapy_source_c::get_devices() )
       dev_list.push_back( dev );
 #endif
 
@@ -304,6 +315,13 @@ source_impl::source_impl( const std::string &args )
 #ifdef ENABLE_AIRSPY
     if ( dict.count("airspy") ) {
       airspy_source_c_sptr src = make_airspy_source_c( arg );
+      block = src; iface = src.get();
+    }
+#endif
+
+#ifdef ENABLE_SOAPY
+    if ( dict.count("soapy") ) {
+      soapy_source_c_sptr src = make_soapy_source_c( arg );
       block = src; iface = src.get();
     }
 #endif

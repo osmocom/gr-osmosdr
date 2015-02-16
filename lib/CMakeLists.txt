@@ -215,6 +215,14 @@ GR_INCLUDE_SUBDIRECTORY(airspy)
 endif(ENABLE_AIRSPY)
 
 ########################################################################
+# Setup SoapySDR component
+########################################################################
+GR_REGISTER_COMPONENT("SoapySDR support" ENABLE_SOAPY SoapySDR_FOUND)
+if(ENABLE_SOAPY)
+GR_INCLUDE_SUBDIRECTORY(soapy)
+endif(ENABLE_SOAPY)
+
+########################################################################
 # Setup configuration file
 ########################################################################
 ADD_DEFINITIONS(-DHAVE_CONFIG_H=1)
