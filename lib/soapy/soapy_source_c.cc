@@ -38,6 +38,7 @@
 
 #include "arg_helpers.h"
 #include "soapy_source_c.h"
+#include "osmosdr/source.h"
 #include <SoapySDR/Device.hpp>
 
 using namespace boost::assign;
@@ -278,7 +279,19 @@ std::string soapy_source_c::get_antenna( size_t chan )
 
 void soapy_source_c::set_dc_offset_mode( int mode, size_t chan )
 {
-    _device->setDCOffsetMode(SOAPY_SDR_RX, chan, mode);
+    switch (mode)
+    {
+    case osmosdr::source::DCOffsetOff:
+        _device->setDCOffsetMode(SOAPY_SDR_RX, chan, false);
+        this->set_dc_offset(0.0, chan); //reset
+        break;
+    case osmosdr::source::DCOffsetManual:
+        _device->setDCOffsetMode(SOAPY_SDR_RX, chan, false);
+        break;
+    case osmosdr::source::DCOffsetAutomatic:
+        _device->setDCOffsetMode(SOAPY_SDR_RX, chan, true);
+        break;
+    }
 }
 
 void soapy_source_c::set_dc_offset( const std::complex<double> &offset, size_t chan )
