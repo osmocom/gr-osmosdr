@@ -172,8 +172,8 @@ sink_impl::sink_impl( const std::string &args )
 
 #ifdef ENABLE_SOAPY
     if ( dict.count("soapy") ) {
-      soapy_sink_c_sptr src = make_soapy_sink_c( arg );
-      block = src; iface = src.get();
+      soapy_sink_c_sptr sink = make_soapy_sink_c( arg );
+      block = sink; iface = sink.get();
     }
 #endif
 

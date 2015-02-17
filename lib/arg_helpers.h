@@ -39,7 +39,7 @@ inline std::string dict_to_args_string( const dict_t &d )
     std::string out;
     BOOST_FOREACH(const pair_t pair, d)
     {
-        if (not out.empty()) out += ", ";
+        if (not out.empty()) out += ",";
         out += pair.first + "='" + pair.second + "'";
     }
     return out;

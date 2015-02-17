@@ -69,9 +69,9 @@ soapy_sink_c::soapy_sink_c (const std::string &args)
         boost::mutex::scoped_lock l(get_soapy_maker_mutex());
         _device = SoapySDR::Device::make(params_to_dict(args));
     }
-    size_t num_chan = std::max(1, args_to_io_signature(args)->max_streams());
+    _nchan = std::max(1, args_to_io_signature(args)->max_streams());
     std::vector<size_t> channels;
-    for (size_t i = 0; i < num_chan; i++) channels.push_back(i);
+    for (size_t i = 0; i < _nchan; i++) channels.push_back(i);
     _stream = _device->setupStream(SOAPY_SDR_TX, "CF32", channels);
 }
 
@@ -127,8 +127,10 @@ int soapy_sink_c::work( int noutput_items,
 std::vector<std::string> soapy_sink_c::get_devices()
 {
     std::vector<std::string> result;
-    BOOST_FOREACH(const SoapySDR::Kwargs &kw, SoapySDR::Device::enumerate())
+    int i = 0;
+    BOOST_FOREACH(SoapySDR::Kwargs kw, SoapySDR::Device::enumerate())
     {
+        kw["soapy"] = boost::lexical_cast<std::string>(i++);
         result.push_back(dict_to_args_string(kw));
     }
     return result;
@@ -136,7 +138,7 @@ std::vector<std::string> soapy_sink_c::get_devices()
 
 size_t soapy_sink_c::get_num_channels( void )
 {
-    return _device->getNumChannels(SOAPY_SDR_TX);
+    return _nchan;
 }
 
 osmosdr::meta_range_t soapy_sink_c::get_sample_rates( void )

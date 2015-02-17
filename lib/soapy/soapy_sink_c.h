@@ -132,6 +132,7 @@ void set_time_unknown_pps(const ::osmosdr::time_spec_t &time_spec);
 private:
     SoapySDR::Device *_device;
     SoapySDR::Stream *_stream;
+    size_t _nchan;
 };
 
 #endif /* INCLUDED_SOAPY_SINK_C_H */
