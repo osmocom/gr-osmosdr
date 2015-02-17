@@ -84,30 +84,12 @@ soapy_sink_c::~soapy_sink_c(void)
 
 bool soapy_sink_c::start()
 {
-    try
-    {
-        _device->activateStream(_stream);
-    }
-    catch (const std::exception &ex)
-    {
-        std::cerr << "soapy_sink_c::start(): " << ex.what() << std::endl;
-        return false;
-    }
-    return true;
+    return _device->activateStream(_stream) == 0;
 }
 
 bool soapy_sink_c::stop()
 {
-    try
-    {
-        _device->deactivateStream(_stream);
-    }
-    catch (const std::exception &ex)
-    {
-        std::cerr << "soapy_sink_c::stop(): " << ex.what() << std::endl;
-        return false;
-    }
-    return true;
+    return _device->deactivateStream(_stream) == 0;
 }
 
 int soapy_sink_c::work( int noutput_items,

@@ -81,30 +81,12 @@ soapy_source_c::~soapy_source_c(void)
 
 bool soapy_source_c::start()
 {
-    try
-    {
-        _device->activateStream(_stream);
-    }
-    catch (const std::exception &ex)
-    {
-        std::cerr << "soapy_source_c::start(): " << ex.what() << std::endl;
-        return false;
-    }
-    return true;
+    return _device->activateStream(_stream) == 0;
 }
 
 bool soapy_source_c::stop()
 {
-    try
-    {
-        _device->deactivateStream(_stream);
-    }
-    catch (const std::exception &ex)
-    {
-        std::cerr << "soapy_source_c::stop(): " << ex.what() << std::endl;
-        return false;
-    }
-    return true;
+    return _device->deactivateStream(_stream) == 0;
 }
 
 int soapy_source_c::work( int noutput_items,
