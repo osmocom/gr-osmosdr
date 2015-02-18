@@ -233,15 +233,15 @@ double soapy_sink_c::get_gain( const std::string & name, size_t chan)
 
 double soapy_sink_c::set_if_gain( double gain, size_t chan)
 {
-    //assumes if gain is the last one listed
-    const std::string name = this->get_gain_names(chan).back();
+    //docs specify RF gain is the first element
+    const std::string name = this->get_gain_names(chan).front();
     return this->set_gain(gain, name, chan);
 }
 
 double soapy_sink_c::set_bb_gain( double gain, size_t chan)
 {
-    //assumes bb gain is the first one listed
-    const std::string name = this->get_gain_names(chan).front();
+    //docs specify baseband gain is the last element
+    const std::string name = this->get_gain_names(chan).back();
     return this->set_gain(gain, name, chan);
 }
 
