@@ -382,17 +382,18 @@ std::vector<std::string> hackrf_source_c::get_devices()
   hackrf_device_list_t *list = hackrf_device_list();
   
   for (unsigned int i = 0; i < list->devicecount; i++) {
+    label = "HackRF ";
+    label += hackrf_usb_board_id_name( list->usb_board_ids[i] );
+    
     std::string args;
     if (list->serial_numbers[i]) {
       std::string serial = boost::lexical_cast< std::string >( list->serial_numbers[i] );
-      if (serial.length() > 16)
-        serial = serial.substr(serial.length() - 16, 16);
+      if (serial.length() > 6)
+        serial = serial.substr(serial.length() - 6, 6);
       args = "hackrf=" + serial;
+      label += " " + serial;
     } else
       args = "hackrf"; /* will pick the first one, serial number is required for choosing a specific one */
-
-    label = "HackRF ";
-    label += hackrf_usb_board_id_name( list->usb_board_ids[i] );
 
     boost::algorithm::trim(label);
 
