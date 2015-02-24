@@ -368,21 +368,7 @@ std::vector<std::string> hackrf_source_c::get_devices()
 {
   std::vector<std::string> devices;
   std::string label;
-#if 0
-  for (unsigned int i = 0; i < 1 /* TODO: missing libhackrf api */; i++) {
-    std::string args = "hackrf=" + boost::lexical_cast< std::string >( i );
-
-    label.clear();
-
-    label = "HackRF Jawbreaker"; /* TODO: missing libhackrf api */
-
-    boost::algorithm::trim(label);
-
-    args += ",label='" + label + "'";
-    devices.push_back( args );
-  }
-#else
-
+  
   {
     boost::mutex::scoped_lock lock( _usage_mutex );
 
@@ -391,6 +377,28 @@ std::vector<std::string> hackrf_source_c::get_devices()
 
     _usage++;
   }
+
+#if 1
+  hackrf_device_list_t *list = hackrf_device_list();
+  
+  for (unsigned int i = 0; i < list->devicecount; i++) {
+    std::string args;
+    if (list->serial_numbers[i])
+      args = "hackrf=" + boost::lexical_cast< std::string >( list->serial_numbers[i] );
+    else
+      args = "hackrf=" + boost::lexical_cast< std::string >( i );
+
+    label = "HackRF ";
+    label += hackrf_board_id_name(hackrf_board_id( list->product_ids[i] ));
+
+    boost::algorithm::trim(label);
+
+    args += ",label='" + label + "'";
+    devices.push_back( args );
+  }
+  
+  hackrf_device_list_free(list);
+#else
 
   int ret;
   hackrf_device *dev = NULL;
@@ -414,6 +422,8 @@ std::vector<std::string> hackrf_source_c::get_devices()
     ret = hackrf_close(dev);
   }
 
+#endif
+
   {
     boost::mutex::scoped_lock lock( _usage_mutex );
 
@@ -423,7 +433,6 @@ std::vector<std::string> hackrf_source_c::get_devices()
       hackrf_exit(); /* call only once after last close */
   }
 
-#endif
   return devices;
 }
 
