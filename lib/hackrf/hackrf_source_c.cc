@@ -146,8 +146,8 @@ hackrf_source_c::hackrf_source_c (const std::string &args)
   }
 
   _dev = NULL;
-  if (hackrf_serial)
-    ret = hackrf_open_by_serial(hackrf_serial->c_str(), &_dev);
+  if ( hackrf_serial )
+    ret = hackrf_open_by_serial( hackrf_serial->c_str(), &_dev );
   else
     ret = hackrf_open( &_dev );
   HACKRF_THROW_ON_ERROR(ret, "Failed to open HackRF device")
