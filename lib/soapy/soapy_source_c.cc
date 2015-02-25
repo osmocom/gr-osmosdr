@@ -164,9 +164,7 @@ double soapy_source_c::get_center_freq( size_t chan )
 
 double soapy_source_c::set_freq_corr( double ppm, size_t chan )
 {
-    SoapySDR::Kwargs kw;
-    kw["CORR"] = boost::lexical_cast<std::string>(ppm);
-    _device->setFrequency(SOAPY_SDR_RX, chan, this->get_center_freq(chan), kw);
+    _device->setFrequency(SOAPY_SDR_RX, chan, "CORR", ppm);
     return this->get_freq_corr(chan);
 }
 
