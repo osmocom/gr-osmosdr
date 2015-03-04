@@ -183,6 +183,14 @@ GR_INCLUDE_SUBDIRECTORY(miri)
 endif(ENABLE_MIRI)
 
 ########################################################################
+# Setup SDRplay component
+########################################################################
+GR_REGISTER_COMPONENT("SDRplay RSP" ENABLE_SDRPLAY LIBSDRPLAY_FOUND)
+if(ENABLE_SDRPLAY)
+GR_INCLUDE_SUBDIRECTORY(sdrplay)
+endif(ENABLE_SDRPLAY)
+
+########################################################################
 # Setup HackRF component
 ########################################################################
 GR_REGISTER_COMPONENT("HackRF Jawbreaker" ENABLE_HACKRF LIBHACKRF_FOUND)

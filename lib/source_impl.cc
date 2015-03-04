@@ -60,6 +60,10 @@
 #include <miri_source_c.h>
 #endif
 
+#ifdef ENABLE_SDRPLAY
+#include <sdrplay_source_c.h>
+#endif
+
 #ifdef ENABLE_HACKRF
 #include <hackrf_source_c.h>
 #endif
@@ -134,6 +138,9 @@ source_impl::source_impl( const std::string &args )
 #ifdef ENABLE_MIRI
   dev_types.push_back("miri");
 #endif
+#ifdef ENABLE_SDRPLAY
+  dev_types.push_back("sdrplay");
+#endif
 #ifdef ENABLE_HACKRF
   dev_types.push_back("hackrf");
 #endif
@@ -195,6 +202,10 @@ source_impl::source_impl( const std::string &args )
 #endif
 #ifdef ENABLE_MIRI
     BOOST_FOREACH( std::string dev, miri_source_c::get_devices() )
+      dev_list.push_back( dev );
+#endif
+#ifdef ENABLE_SDRPLAY
+    BOOST_FOREACH( std::string dev, sdrplay_source_c::get_devices() )
       dev_list.push_back( dev );
 #endif
 #ifdef ENABLE_BLADERF
@@ -284,6 +295,13 @@ source_impl::source_impl( const std::string &args )
 #ifdef ENABLE_MIRI
     if ( dict.count("miri") ) {
       miri_source_c_sptr src = make_miri_source_c( arg );
+      block = src; iface = src.get();
+    }
+#endif
+
+#ifdef ENABLE_SDRPLAY
+    if ( dict.count("sdrplay") ) {
+      sdrplay_source_c_sptr src = make_sdrplay_source_c( arg );
       block = src; iface = src.get();
     }
 #endif
