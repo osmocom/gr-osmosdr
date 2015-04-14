@@ -30,6 +30,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/tokenizer.hpp>
 #include <boost/foreach.hpp>
+#include <ciso646>
 
 typedef std::map< std::string, std::string > dict_t;
 typedef std::pair< std::string, std::string > pair_t;

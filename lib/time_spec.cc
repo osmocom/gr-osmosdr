@@ -16,6 +16,7 @@
 //
 
 #include <osmosdr/time_spec.h>
+#include <ciso646>
 
 using namespace osmosdr;
 
