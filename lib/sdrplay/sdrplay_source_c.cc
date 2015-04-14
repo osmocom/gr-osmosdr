@@ -76,6 +76,8 @@ using namespace boost::assign;
 #define SDRPLAY_L_MIN     1450e6
 #define SDRPLAY_L_MAX     1675e6
 
+#define SDRPLAY_MAX_BUF_SIZE 504
+
 /*
  * Create a new instance of sdrplay_source_c and return
  * a boost shared_ptr.  This is effectively the public constructor.
@@ -125,10 +127,12 @@ sdrplay_source_c::sdrplay_source_c (const std::string &args)
    _dev->gRdB = 60;
    set_gain_limits(_dev->rfHz);
    _dev->gain_dB = _dev->maxGain - _dev->gRdB;
+   
+   _bufi.reserve(SDRPLAY_MAX_BUF_SIZE);
+   _bufq.reserve(SDRPLAY_MAX_BUF_SIZE);   
 
    _buf_mutex.lock();
    _buf_offset = 0;
-//   _buf_remaining = 0;
    _buf_mutex.unlock();
 }
 
@@ -240,7 +244,7 @@ int sdrplay_source_c::work( int noutput_items,
 
    while ((cnt - _dev->samplesPerPacket) >= 0)
    {
-      mir_sdr_ReadPacket(&_bufi[0], &_bufq[0], &sampNum, &grChanged, &rfChanged, &fsChanged);
+      mir_sdr_ReadPacket(_bufi.data(), _bufq.data(), &sampNum, &grChanged, &rfChanged, &fsChanged);
       for (int i = 0; i < _dev->samplesPerPacket; i++)
       {
          *out++ = gr_complex( float(_bufi[i]) * (1.0f/32768.0f), float(_bufq[i]) * (1.0f/32768.0f) );
@@ -251,7 +255,7 @@ int sdrplay_source_c::work( int noutput_items,
    _buf_offset = 0;
    if (cnt)
    {
-      mir_sdr_ReadPacket(&_bufi[0], &_bufq[0], &sampNum, &grChanged, &rfChanged, &fsChanged);
+      mir_sdr_ReadPacket(_bufi.data(), _bufq.data(), &sampNum, &grChanged, &rfChanged, &fsChanged);
       for (int i = 0; i < cnt; i++)
       {
          *out++ = gr_complex( float(_bufi[i]) * (1.0f/4096.0f), float(_bufq[i]) * (1.0f/4096.0f) );
