@@ -122,8 +122,8 @@ private:
 
    sdrplay_dev_t *_dev;
 
-   short _bufi[504];
-   short _bufq[504];
+   std::vector< short > _bufi;
+   std::vector< short > _bufq;
    int _buf_offset;
    boost::mutex _buf_mutex;
 
