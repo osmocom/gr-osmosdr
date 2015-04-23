@@ -31,6 +31,7 @@
 #include <boost/assign.hpp>
 #include <boost/format.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/weak_ptr.hpp>
 
 #include <gnuradio/thread/thread.h>
 #include <gnuradio/gr_complex.h>
@@ -39,6 +40,11 @@
 
 #include "osmosdr/ranges.h"
 #include "arg_helpers.h"
+
+#ifdef _MSC_VER
+#include <cstddef>
+typedef ptrdiff_t ssize_t;
+#endif //_MSC_VER
 
 typedef boost::shared_ptr<struct bladerf> bladerf_sptr;
 
