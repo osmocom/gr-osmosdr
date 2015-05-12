@@ -7,6 +7,7 @@ as well supports:
  * RTL2832U based DVB-T dongles through librtlsdr
  * RTL-TCP spectrum server (see librtlsdr project)
  * MSi2500 based DVB-T dongles through libmirisdr
+ * SDRplay RSP through SDRplay API library
  * gnuradio .cfile input through libgnuradio-blocks
  * RFSPACE SDR-IQ, SDR-IP, NetSDR (incl. X2 option)
  * AirSpy Wideband Receiver through libairspy
@@ -14,7 +15,6 @@ as well supports:
  * Nuand LLC bladeRF through libbladeRF library
  * Ettus USRP Devices through Ettus UHD library
  * Fairwaves UmTRX through Fairwaves' fork of UHD
- * SDRplay RSP through SDRplay API library
 
 By using the OsmoSDR block you can take advantage of a common software api in
 your application(s) independent of the underlying radio hardware.
