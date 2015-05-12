@@ -130,6 +130,7 @@ private:
   boost::mutex _fifo_lock;
   boost::condition_variable _samp_avail;
 
+  std::vector< std::pair<double, uint32_t> > _sample_rates;
   double _sample_rate;
   double _center_freq;
   double _freq_corr;

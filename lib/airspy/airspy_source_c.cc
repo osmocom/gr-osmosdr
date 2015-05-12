@@ -29,6 +29,7 @@
 
 #include <stdexcept>
 #include <iostream>
+#include <algorithm>
 
 #include <boost/assign.hpp>
 #include <boost/format.hpp>
@@ -109,9 +110,25 @@ airspy_source_c::airspy_source_c (const std::string &args)
   ret = airspy_board_partid_serialno_read( _dev, &serial_number );
   AIRSPY_THROW_ON_ERROR(ret, "Failed to read serial number")
 #endif
-  std::cerr << "Using " << airspy_board_id_name(airspy_board_id(board_id)) << " "
-            << "with firmware " << version << " "
-            << std::endl;
+
+  uint32_t num_rates;
+  airspy_get_samplerates(_dev, &num_rates, 0);
+  uint32_t *samplerates = (uint32_t *) malloc(num_rates * sizeof(uint32_t));
+  airspy_get_samplerates(_dev, samplerates, num_rates);
+  for (size_t i = 0; i < num_rates; i++)
+    _sample_rates.push_back( std::pair<double, uint32_t>( samplerates[i], i ) );
+  free(samplerates);
+
+  /* since they may (and will) give us an unsorted array we have to sort it here
+   * to play nice with the monotonic requirement of meta-range later on */
+  std::sort(_sample_rates.begin(), _sample_rates.end());
+
+  std::cerr << "Using " << version << ", " << "samplerates: ";
+
+  for (size_t i = 0; i < _sample_rates.size(); i++)
+    std::cerr << boost::format("%gM ") % (_sample_rates[i].first / 1e6);
+
+  std::cerr << std::endl;
 
   set_center_freq( (get_freq_range().start() + get_freq_range().stop()) / 2.0 );
   set_sample_rate( get_sample_rates().start() );
@@ -320,8 +337,8 @@ osmosdr::meta_range_t airspy_source_c::get_sample_rates()
 {
   osmosdr::meta_range_t range;
 
-  range += osmosdr::range_t( 2.5e6 );
-  range += osmosdr::range_t( 10e6 );
+  for (size_t i = 0; i < _sample_rates.size(); i++)
+    range += osmosdr::range_t( _sample_rates[i].first );
 
   return range;
 }
@@ -331,18 +348,26 @@ double airspy_source_c::set_sample_rate( double rate )
   int ret = AIRSPY_SUCCESS;
 
   if (_dev) {
-    airspy_samplerate_t samp = AIRSPY_SAMPLERATE_10MSPS;
+    bool found_supported_rate = false;
+    uint32_t samp_rate_index = 0;
 
-    if ( rate ==  2.5e6)
-      samp = AIRSPY_SAMPLERATE_2_5MSPS;
-    else if ( rate ==  10e6)
-      samp = AIRSPY_SAMPLERATE_10MSPS;
-    else
+    for( unsigned int i = 0; i < _sample_rates.size(); i++ )
     {
-      AIRSPY_THROW_ON_ERROR( -9999, AIRSPY_FUNC_STR( "airspy_set_samplerate", rate ) )
+      if( _sample_rates[i].first == rate )
+      {
+        samp_rate_index = _sample_rates[i].second;
+
+        found_supported_rate = true;
+      }
     }
 
-    ret = airspy_set_samplerate( _dev, samp );
+    if ( ! found_supported_rate )
+    {
+      throw std::runtime_error(
+        boost::str( boost::format("Unsupported samplerate: %gM") % (rate/1e6) ) );
+    }
+
+    ret = airspy_set_samplerate( _dev, samp_rate_index );
     if ( AIRSPY_SUCCESS == ret ) {
       _sample_rate = rate;
     } else {
