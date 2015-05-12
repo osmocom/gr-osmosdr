@@ -33,6 +33,8 @@ if(NOT CMAKE_BUILD_TYPE)
 endif(NOT CMAKE_BUILD_TYPE)
 set(CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE} CACHE STRING "")
 
+set(ENABLE_NONFREE FALSE CACHE BOOL "Enable or disable nonfree components.")
+
 # Set the version information here
 set(VERSION_INFO_MAJOR_VERSION 0)
 set(VERSION_INFO_API_COMPAT    1)
@@ -157,7 +159,9 @@ find_package(GnuradioFCDPP)
 find_package(LibOsmoSDR)
 find_package(LibRTLSDR)
 find_package(LibMiriSDR)
+if(ENABLE_NONFREE)
 find_package(LibSDRplay)
+endif(ENABLE_NONFREE)
 find_package(LibHackRF)
 find_package(LibAIRSPY)
 find_package(LibbladeRF)
@@ -274,5 +278,13 @@ INSTALL(
 # Print Summary
 ########################################################################
 GR_PRINT_COMPONENT_SUMMARY()
+if(ENABLE_NONFREE)
+MESSAGE(STATUS
+  "NONFREE components have been enabled. The resulting
+   binaries cannot be distributed under GPL terms.
+  "
+)
+endif(ENABLE_NONFREE)
+
 MESSAGE(STATUS "Building for version: ${VERSION} / ${LIBVER}")
 MESSAGE(STATUS "Using install prefix: ${CMAKE_INSTALL_PREFIX}")

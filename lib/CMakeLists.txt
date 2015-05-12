@@ -185,10 +185,12 @@ endif(ENABLE_MIRI)
 ########################################################################
 # Setup SDRplay component
 ########################################################################
-GR_REGISTER_COMPONENT("SDRplay RSP" ENABLE_SDRPLAY LIBSDRPLAY_FOUND)
+if(ENABLE_NONFREE)
+GR_REGISTER_COMPONENT("SDRplay RSP (NONFREE)" ENABLE_SDRPLAY LIBSDRPLAY_FOUND)
 if(ENABLE_SDRPLAY)
 GR_INCLUDE_SUBDIRECTORY(sdrplay)
 endif(ENABLE_SDRPLAY)
+endif(ENABLE_NONFREE)
 
 ########################################################################
 # Setup HackRF component
