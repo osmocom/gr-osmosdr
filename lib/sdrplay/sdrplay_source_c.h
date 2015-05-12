@@ -1,5 +1,6 @@
 /* -*- c++ -*- */
 /*
+ * Copyright 2015 SDRplay Ltd <support@sdrplay.com>
  * Copyright 2012 Dimitri Stolnikov <horiz0n@gmx.net>
  *
  * GNU Radio is free software; you can redistribute it and/or modify
