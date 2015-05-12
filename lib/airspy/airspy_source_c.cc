@@ -448,6 +448,8 @@ osmosdr::gain_range_t airspy_source_c::get_gain_range( size_t chan )
 
 osmosdr::gain_range_t airspy_source_c::get_gain_range( const std::string & name, size_t chan )
 {
+  /* They don't spec any gain values in dB so we simply use gain stage indices for now. */
+
   if ( "LNA" == name ) {
     return osmosdr::gain_range_t( 0, 15, 1 );
   }
