@@ -1,5 +1,5 @@
 title: gr-osmosdr
-brief: GNU Radio block for interfacing with radio hardware
+brief: GNU Radio block for interfacing with various radio hardware
 tags:
     - rtlsdr
     - bladerf
@@ -18,7 +18,7 @@ license: GPLv3
 repo: git://git.osmocom.org/gr-osmosdr
 website: http://sdr.osmocom.org/trac/wiki/GrOsmoSDR
 ---
-GNU Radio block for RTSA-like spectrum visualization using OpenCL and OpenGL acceleration
+GNU Radio block for interfacing with various radio hardware
 
 ![FFT](http://sdr.osmocom.org/trac/raw-attachment/wiki/GrOsmoSDR/fft-lte.png "osmocom_fft")
 ![SIG](http://sdr.osmocom.org/trac/raw-attachment/wiki/GrOsmoSDR/siggen-gsm.png "osmocom_siggen")
