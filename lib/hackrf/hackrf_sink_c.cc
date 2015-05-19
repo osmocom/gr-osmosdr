@@ -218,7 +218,7 @@ hackrf_sink_c::hackrf_sink_c (const std::string &args)
 
   set_if_gain( 16 ); /* preset to a reasonable default (non-GRC use case) */
 
-  _buf = (char *) malloc( BUF_LEN );
+  _buf = (int8_t *) malloc( BUF_LEN );
 
   cb_init( &_cbuf, _buf_num, BUF_LEN );
 
@@ -326,7 +326,7 @@ bool hackrf_sink_c::stop()
 }
 
 #ifdef USE_AVX
-void convert_avx(const float* inbuf, char* outbuf,const unsigned int count)
+void convert_avx(const float* inbuf, int8_t* outbuf,const unsigned int count)
 {
   __m256 mulme = _mm256_set_ps(127.0f, 127.0f, 127.0f, 127.0f, 127.0f, 127.0f, 127.0f, 127.0f);
   for(unsigned int i=0; i<count;i++){
@@ -349,7 +349,7 @@ void convert_avx(const float* inbuf, char* outbuf,const unsigned int count)
 }
 
 #elif USE_SSE2
-void convert_sse2(const float* inbuf, char* outbuf,const unsigned int count)
+void convert_sse2(const float* inbuf, int8_t* outbuf,const unsigned int count)
 {
   const register __m128 mulme = _mm_set_ps( 127.0f, 127.0f, 127.0f, 127.0f );
   __m128 itmp1,itmp2,itmp3,itmp4;
@@ -380,7 +380,7 @@ void convert_sse2(const float* inbuf, char* outbuf,const unsigned int count)
 }
 #endif
 
-void convert_default(float* inbuf, char* outbuf,const unsigned int count)
+void convert_default(float* inbuf, int8_t* outbuf,const unsigned int count)
 {
   for(unsigned int i=0; i<count;i++){
     outbuf[i]= inbuf[i]*127;
@@ -400,7 +400,7 @@ int hackrf_sink_c::work( int noutput_items,
       _buf_cond.wait( lock );
   }
 
-  char *buf = _buf + _buf_used;
+  int8_t *buf = _buf + _buf_used;
   unsigned int prev_buf_used = _buf_used;
 
   unsigned int remaining = (BUF_LEN-_buf_used)/2; //complex

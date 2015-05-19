@@ -134,7 +134,7 @@ private:
 //  gr::thread::thread _thread;
 
   circular_buffer_t _cbuf;
-  char *_buf;
+  int8_t *_buf;
   unsigned int _buf_num;
   unsigned int _buf_used;
   boost::mutex _buf_mutex;
