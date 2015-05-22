@@ -165,7 +165,7 @@ endif(ENABLE_NONFREE)
 find_package(LibHackRF)
 find_package(LibAIRSPY)
 find_package(LibbladeRF)
-find_package(SoapySDR CONFIG)
+find_package(SoapySDR NO_MODULE)
 find_package(Doxygen)
 
 if(NOT GNURADIO_RUNTIME_FOUND)
