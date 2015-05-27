@@ -49,6 +49,10 @@ using namespace boost::assign;
 
 #define BYTES_PER_SAMPLE  2 /* HackRF device produces 8 bit unsigned IQ data */
 
+#define HACKRF_FORMAT_ERROR(ret) \
+  boost::str( boost::format("(%d) %s") \
+    % ret % hackrf_error_name((enum hackrf_error)ret) ) \
+
 #define HACKRF_THROW_ON_ERROR(ret, msg) \
   if ( ret != HACKRF_SUCCESS )  \
   throw std::runtime_error( boost::str( boost::format(msg " (%d) %s") \
@@ -173,6 +177,20 @@ hackrf_source_c::hackrf_source_c (const std::string &args)
   set_if_gain( 16 ); /* preset to a reasonable default (non-GRC use case) */
 
   set_bb_gain( 20 ); /* preset to a reasonable default (non-GRC use case) */
+
+  // Check device args to find out if bias/phantom power is desired.
+  if ( dict.count("bias") ) {
+    bool bias = boost::lexical_cast<bool>( dict["bias"] );
+    ret = hackrf_set_antenna_enable(_dev, static_cast<uint8_t>(bias));
+    if ( ret != HACKRF_SUCCESS )
+    {
+      std::cerr << "Failed to apply antenna bias voltage state: " << bias << " " << HACKRF_FORMAT_ERROR(ret) << std::endl;
+    }
+    else
+    {
+      std::cerr << (bias ? "Enabled" : "Disabled") << " antenna bias voltage" << std::endl;
+    }
+  }
 
   _buf = (unsigned short **) malloc(_buf_num * sizeof(unsigned short *));
 
