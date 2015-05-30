@@ -155,7 +155,7 @@ hackrf_source_c::hackrf_source_c (const std::string &args)
           dev_index = boost::lexical_cast< unsigned int >( hackrf_serial );
         } catch ( std::exception &ex ) {
           throw std::runtime_error(
-                "Failed to use '" + hackrf_serial + "' as HackRF device index: " + ex.what());
+                "Failed to use '" + hackrf_serial + "' as HackRF device index number: " + ex.what());
         }
         
         hackrf_device_list_t *list = hackrf_device_list();
