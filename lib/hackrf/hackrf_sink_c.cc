@@ -193,9 +193,11 @@ hackrf_sink_c::hackrf_sink_c (const std::string &args)
   }
 
   _dev = NULL;
+#ifdef LIBHACKRF_HAVE_DEVICE_LIST
   if ( hackrf_serial )
     ret = hackrf_open_by_serial( hackrf_serial->c_str(), &_dev );
   else
+#endif  
     ret = hackrf_open( &_dev );
   HACKRF_THROW_ON_ERROR(ret, "Failed to open HackRF device")
 
@@ -484,7 +486,7 @@ std::vector<std::string> hackrf_sink_c::get_devices()
     _usage++;
   }
 
-#if 1
+#ifdef LIBHACKRF_HAVE_DEVICE_LIST
   hackrf_device_list_t *list = hackrf_device_list();
   
   for (unsigned int i = 0; i < list->devicecount; i++) {

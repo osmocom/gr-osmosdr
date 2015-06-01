@@ -144,6 +144,7 @@ hackrf_source_c::hackrf_source_c (const std::string &args)
 
   _dev = NULL;
   
+#ifdef LIBHACKRF_HAVE_DEVICE_LIST
   if (dict.count("hackrf") && dict["hackrf"].length() > 0) {
     hackrf_serial = dict["hackrf"];
     
@@ -169,6 +170,7 @@ hackrf_source_c::hackrf_source_c (const std::string &args)
         hackrf_device_list_free(list);
     }
   } else
+#endif
     ret = hackrf_open( &_dev );
     
   HACKRF_THROW_ON_ERROR(ret, "Failed to open HackRF device")
@@ -399,7 +401,7 @@ std::vector<std::string> hackrf_source_c::get_devices()
     _usage++;
   }
 
-#if 1
+#if LIBHACKRF_HAVE_DEVICE_LIST
   hackrf_device_list_t *list = hackrf_device_list();
   
   for (unsigned int i = 0; i < list->devicecount; i++) {
