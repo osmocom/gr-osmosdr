@@ -401,7 +401,7 @@ std::vector<std::string> hackrf_source_c::get_devices()
     _usage++;
   }
 
-#if LIBHACKRF_HAVE_DEVICE_LIST
+#ifdef LIBHACKRF_HAVE_DEVICE_LIST
   hackrf_device_list_t *list = hackrf_device_list();
   
   for (unsigned int i = 0; i < list->devicecount; i++) {
