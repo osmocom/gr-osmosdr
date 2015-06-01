@@ -29,5 +29,6 @@ CHECK_FUNCTION_EXISTS(hackrf_device_list LIBHACKRF_HAVE_DEVICE_LIST)
 
 if(LIBHACKRF_HAVE_DEVICE_LIST)
     message(STATUS "HackRF multiple device support enabled")
+    add_definitions(-DLIBHACKRF_HAVE_DEVICE_LIST)
 endif(LIBHACKRF_HAVE_DEVICE_LIST)
 
