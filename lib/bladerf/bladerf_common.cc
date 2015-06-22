@@ -190,8 +190,15 @@ void bladerf_common::set_verbosity(const std::string &verbosity)
 bool bladerf_common::start(bladerf_module module)
 {
   int ret;
+  bladerf_format format;
 
-  ret = bladerf_sync_config(_dev.get(), module, BLADERF_FORMAT_SC16_Q11,
+  if (_use_metadata) {
+      format = BLADERF_FORMAT_SC16_Q11_META;
+  } else {
+      format = BLADERF_FORMAT_SC16_Q11;
+  }
+
+  ret = bladerf_sync_config(_dev.get(), module, format,
                             _num_buffers, _samples_per_buffer,
                             _num_transfers, _stream_timeout_ms);
 
@@ -382,6 +389,8 @@ void bladerf_common::init(dict_t &dict, bladerf_module module)
       _stream_timeout_ms = boost::lexical_cast< unsigned int >(dict["stream_timeout_ms"] );
   }
 
+  _use_metadata = dict.count("enable_metadata") != 0;
+
   /* Require value to be >= 2 so we can ensure we have twice as many
    * buffers as transfers */
   if (_num_buffers <= 1) {
@@ -429,7 +438,7 @@ void bladerf_common::init(dict_t &dict, bladerf_module module)
 osmosdr::freq_range_t bladerf_common::freq_range()
 {
   /* assuming the same for RX & TX */
-  return osmosdr::freq_range_t( _xb_200_attached ? 0 : 300e6, 3.8e9 );
+  return osmosdr::freq_range_t( _xb_200_attached ? 0 : 280e6,  BLADERF_FREQUENCY_MAX );
 }
 
 osmosdr::meta_range_t bladerf_common::sample_rates()

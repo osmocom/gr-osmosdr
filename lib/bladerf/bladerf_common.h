@@ -83,6 +83,8 @@ protected:
   int16_t *_conv_buf;
   int _conv_buf_size; /* In units of samples */
 
+  bool _use_metadata;
+
   osmosdr::gain_range_t _vga1_range;
   osmosdr::gain_range_t _vga2_range;
 

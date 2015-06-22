@@ -65,6 +65,14 @@ private:
 
   bladerf_sink_c (const std::string & args);  	// private constructor
 
+  // Transmit converted samples stored in _conv_buf, applying SOB and EOB
+  // based upon the provided tags
+  //
+  // Returns bladeRF error code
+  int transmit_with_tags(int noutput_items);
+
+  bool _in_burst;
+
 public:
   bool start();
   bool stop();
