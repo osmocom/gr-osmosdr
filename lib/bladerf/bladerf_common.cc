@@ -1,6 +1,6 @@
 /* -*- c++ -*- */
 /*
- * Copyright 2013 Nuand LLC
+ * Copyright 2013-2015 Nuand LLC
  * Copyright 2013 Dimitri Stolnikov <horiz0n@gmx.net>
  *
  * GNU Radio is free software; you can redistribute it and/or modify
@@ -233,11 +233,27 @@ bool bladerf_common::stop(bladerf_module module)
   return true;
 }
 
+static bool version_greater_or_equal(const struct bladerf_version *version,
+                                    unsigned int major, unsigned int minor,
+                                    unsigned int patch)
+{
+    if (version->major > major) {
+        return true;
+    } else if ( (version->major == major) && (version->minor > minor) ) {
+        return true;
+    } else if ((version->major == major) &&
+               (version->minor == minor) &&
+               (version->patch >= patch) ) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
 void bladerf_common::init(dict_t &dict, bladerf_module module)
 {
   int ret;
-  unsigned int device_number = 0;
-  std::string device_name;
+  std::string device_name("");
   struct bladerf_version ver;
   char serial[BLADERF_SERIAL_LENGTH];
   const char *type = (module == BLADERF_MODULE_TX ? "sink" : "source");
@@ -249,21 +265,52 @@ void bladerf_common::init(dict_t &dict, bladerf_module module)
 
   if (dict.count("bladerf"))
   {
-    std::string value = dict["bladerf"];
-    if ( value.length() )
+    const std::string value = dict["bladerf"];
+    if ( value.length() > 0)
     {
-      try {
-        device_number = boost::lexical_cast< unsigned int >( value );
-      } catch ( std::exception &ex ) {
-        throw std::runtime_error( _pfx + "Failed to use '" + value +
-                                  "' as device number: " + ex.what());
+
+      if ( value.length() <= 2 )
+      {
+        /* If the value is two digits or less, we'll assume the user is
+         * providing an instance number */
+        unsigned int device_number = 0;
+
+        try {
+          device_number = boost::lexical_cast< unsigned int >( value );
+          device_name = boost::str(boost::format( "*:instance=%d" ) % device_number);
+        } catch ( std::exception &ex ) {
+          throw std::runtime_error( _pfx + "Failed to use '" + value +
+                                   "' as device number: " + ex.what());
+        }
+
+      } else {
+        /* Otherwise, we'll assume it's a serial number. libbladeRF v1.4.1
+         * supports matching a subset of a serial number. For earlier versions,
+         * we require the entire serial number.
+         *
+         * libbladeRF is responsible for rejecting bad serial numbers, so we
+         * may just pass whatever the user has provided.
+         */
+        bladerf_version(&ver);
+        if ( version_greater_or_equal(&ver, 1, 4, 1) ||
+             value.length() == (BLADERF_SERIAL_LENGTH - 1) )
+        {
+          device_name = std::string("*:serial=") + value;
+        } else {
+          throw std::runtime_error( _pfx + "A full serial number must be " +
+                                    "supplied with libbladeRF " +
+                                    std::string(ver.describe) +
+                                    ". libbladeRF >= v1.4.1 supports opening " +
+                                    "a device via a subset of its serial #.");
+        }
       }
     }
   }
 
-  device_name = boost::str(boost::format( "libusb:instance=%d" ) % device_number);
-
   try {
+    std::cerr << "Opening nuand bladeRF with device identifier string: \""
+              << device_name << "\"" << std::endl;
+
     _dev = open(device_name);
   } catch(...) {
     throw std::runtime_error( _pfx + "Failed to open bladeRF device " +
@@ -348,7 +395,6 @@ void bladerf_common::init(dict_t &dict, bladerf_module module)
   }
 
   /* Show some info about the device we've opened */
-  std::cerr << _pfx << "Using nuand LLC bladeRF #" << device_number;
 
   if ( bladerf_get_serial( _dev.get(), serial ) == 0 )
   {
@@ -357,7 +403,7 @@ void bladerf_common::init(dict_t &dict, bladerf_module module)
     if ( strser.length() == 32 )
       strser.replace( 4, 24, "..." );
 
-    std::cerr << " SN " << strser;
+    std::cerr << " Serial # " << strser << std::endl;
   }
 
   if ( bladerf_fw_version( _dev.get(), &ver ) == 0 )
