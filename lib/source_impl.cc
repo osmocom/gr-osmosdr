@@ -168,6 +168,7 @@ source_impl::source_impl( const std::string &args )
   dev_types.push_back("sdr-iq"); /* additional aliases for rfspace backend */
   dev_types.push_back("sdr-ip");
   dev_types.push_back("netsdr");
+  dev_types.push_back("cloudiq");
 #endif
 
   BOOST_FOREACH(std::string arg, arg_list) {
@@ -324,7 +325,8 @@ source_impl::source_impl( const std::string &args )
     if ( dict.count("rfspace") ||
          dict.count("sdr-iq") ||
          dict.count("sdr-ip") ||
-         dict.count("netsdr") ) {
+         dict.count("netsdr") ||
+         dict.count("cloudiq") ) {
       rfspace_source_c_sptr src = make_rfspace_source_c( arg );
       block = src; iface = src.get();
     }

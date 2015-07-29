@@ -136,7 +136,8 @@ private: /* members */
     RADIO_UNKNOWN = 0,
     RFSPACE_SDR_IQ,
     RFSPACE_SDR_IP,
-    RFSPACE_NETSDR
+    RFSPACE_NETSDR,
+    RFSPACE_CLOUDIQ
   };
 
   radio_type _radio;
