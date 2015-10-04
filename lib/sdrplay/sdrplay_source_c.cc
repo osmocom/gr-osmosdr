@@ -142,11 +142,8 @@ sdrplay_source_c::sdrplay_source_c (const std::string &args)
  */
 sdrplay_source_c::~sdrplay_source_c ()
 {
-   if (_dev != NULL)
-   {
-      free(_dev);
-      _dev = NULL;
-   }
+   free(_dev);
+   _dev = NULL;
    _buf_mutex.lock();
    if (_running)
    {

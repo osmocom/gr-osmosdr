@@ -260,8 +260,7 @@ hackrf_source_c::~hackrf_source_c ()
 
   if (_buf) {
     for(unsigned int i = 0; i < _buf_num; ++i) {
-      if (_buf[i])
-        free(_buf[i]);
+      free(_buf[i]);
     }
 
     free(_buf);

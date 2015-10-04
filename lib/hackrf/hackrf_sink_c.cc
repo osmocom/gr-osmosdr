@@ -84,10 +84,8 @@ static inline bool cb_init(circular_buffer_t *cb, size_t capacity, size_t sz)
 
 static inline void cb_free(circular_buffer_t *cb)
 {
-  if (cb->buffer) {
-    free(cb->buffer);
-    cb->buffer = NULL;
-  }
+  free(cb->buffer);
+  cb->buffer = NULL;
   // clear out other fields too, just to be safe
   cb->buffer_end = 0;
   cb->capacity = 0;
@@ -278,10 +276,8 @@ hackrf_sink_c::~hackrf_sink_c ()
     }
   }
 
-  if (_buf) {
-    free(_buf);
-    _buf = NULL;
-  }
+  free(_buf);
+  _buf = NULL;
 
   cb_free( &_cbuf );
 }
