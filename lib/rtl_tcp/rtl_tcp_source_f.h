@@ -42,7 +42,10 @@ typedef char* optval_t;
 typedef void* optval_t;
 #endif
 
-#define ssize_t int
+#ifdef _MSC_VER
+#include <cstddef>
+typedef ptrdiff_t ssize_t;
+#endif //_MSC_VER
 
 /* copied from rtl sdr */
 enum rtlsdr_tuner {
