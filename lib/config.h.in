@@ -18,4 +18,10 @@
 #cmakedefine ENABLE_AIRSPY
 #cmakedefine ENABLE_SOAPY
 
+//provide NAN define for MSVC older than VC12
+#if defined(_MSC_VER) && (_MSC_VER < 1800)
+#include <limits>
+#define NAN std::numeric_limits<double>::quiet_NaN()
+#endif
+
 #endif // CONFIG_H_IN
