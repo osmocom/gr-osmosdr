@@ -489,7 +489,7 @@ std::vector<std::string> hackrf_sink_c::get_devices()
 #ifdef LIBHACKRF_HAVE_DEVICE_LIST
   hackrf_device_list_t *list = hackrf_device_list();
   
-  for (unsigned int i = 0; i < list->devicecount; i++) {
+  for (int i = 0; i < list->devicecount; i++) {
     label = "HackRF ";
     label += hackrf_usb_board_id_name( list->usb_board_ids[i] );
     

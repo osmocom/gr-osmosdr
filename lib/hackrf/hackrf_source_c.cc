@@ -151,14 +151,14 @@ hackrf_source_c::hackrf_source_c (const std::string &args)
     if (hackrf_serial.length() > 1) {
       ret = hackrf_open_by_serial( hackrf_serial.c_str(), &_dev );
     } else {
-        unsigned int dev_index = 0;
+        int dev_index = 0;
         try {
-          dev_index = boost::lexical_cast< unsigned int >( hackrf_serial );
+          dev_index = boost::lexical_cast< int >( hackrf_serial );
         } catch ( std::exception &ex ) {
           throw std::runtime_error(
                 "Failed to use '" + hackrf_serial + "' as HackRF device index number: " + ex.what());
         }
-        
+
         hackrf_device_list_t *list = hackrf_device_list();
         if (dev_index < list->devicecount) {
           ret = hackrf_device_list_open(list, dev_index, &_dev);
@@ -404,7 +404,7 @@ std::vector<std::string> hackrf_source_c::get_devices()
 #ifdef LIBHACKRF_HAVE_DEVICE_LIST
   hackrf_device_list_t *list = hackrf_device_list();
   
-  for (unsigned int i = 0; i < list->devicecount; i++) {
+  for (int i = 0; i < list->devicecount; i++) {
     label = "HackRF ";
     label += hackrf_usb_board_id_name( list->usb_board_ids[i] );
     
