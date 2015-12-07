@@ -281,6 +281,7 @@ void soapy_source_c::set_dc_offset( const std::complex<double> &offset, size_t c
 
 void soapy_source_c::set_iq_balance_mode( int mode, size_t chan )
 {
+    if (mode == osmosdr::source::IQBalanceOff) return; //no error on disable
     throw std::runtime_error("soapy_source_c::set_iq_balance_mode() not supported");
 }
 
