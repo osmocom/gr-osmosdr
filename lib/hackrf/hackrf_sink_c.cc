@@ -73,7 +73,7 @@ static inline bool cb_init(circular_buffer_t *cb, size_t capacity, size_t sz)
   cb->buffer = malloc(capacity * sz);
   if(cb->buffer == NULL)
     return false; // handle error
-  cb->buffer_end = (char *)cb->buffer + capacity * sz;
+  cb->buffer_end = (int8_t *)cb->buffer + capacity * sz;
   cb->capacity = capacity;
   cb->count = 0;
   cb->sz = sz;
@@ -109,7 +109,7 @@ static inline bool cb_push_back(circular_buffer_t *cb, const void *item)
   if(cb->count == cb->capacity)
     return false; // handle error
   memcpy(cb->head, item, cb->sz);
-  cb->head = (char *)cb->head + cb->sz;
+  cb->head = (int8_t *)cb->head + cb->sz;
   if(cb->head == cb->buffer_end)
     cb->head = cb->buffer;
   cb->count++;
@@ -121,7 +121,7 @@ static inline bool cb_pop_front(circular_buffer_t *cb, void *item)
   if(cb->count == 0)
     return false; // handle error
   memcpy(item, cb->tail, cb->sz);
-  cb->tail = (char *)cb->tail + cb->sz;
+  cb->tail = (int8_t *)cb->tail + cb->sz;
   if(cb->tail == cb->buffer_end)
     cb->tail = cb->buffer;
   cb->count--;
@@ -245,7 +245,7 @@ hackrf_sink_c::hackrf_sink_c (const std::string &args)
     }
   }
 
-  _buf = (char *) malloc( BUF_LEN );
+  _buf = (int8_t *) malloc( BUF_LEN );
 
   cb_init( &_cbuf, _buf_num, BUF_LEN );
 
@@ -353,7 +353,7 @@ bool hackrf_sink_c::stop()
 }
 
 #ifdef USE_AVX
-void convert_avx(const float* inbuf, char* outbuf,const unsigned int count)
+void convert_avx(const float* inbuf, int8_t* outbuf,const unsigned int count)
 {
   __m256 mulme = _mm256_set_ps(127.0f, 127.0f, 127.0f, 127.0f, 127.0f, 127.0f, 127.0f, 127.0f);
   for(unsigned int i=0; i<count;i++){
@@ -376,7 +376,7 @@ void convert_avx(const float* inbuf, char* outbuf,const unsigned int count)
 }
 
 #elif USE_SSE2
-void convert_sse2(const float* inbuf, char* outbuf,const unsigned int count)
+void convert_sse2(const float* inbuf, int8_t* outbuf,const unsigned int count)
 {
   const register __m128 mulme = _mm_set_ps( 127.0f, 127.0f, 127.0f, 127.0f );
   __m128 itmp1,itmp2,itmp3,itmp4;
@@ -407,7 +407,7 @@ void convert_sse2(const float* inbuf, char* outbuf,const unsigned int count)
 }
 #endif
 
-void convert_default(float* inbuf, char* outbuf,const unsigned int count)
+void convert_default(float* inbuf, int8_t* outbuf,const unsigned int count)
 {
   for(unsigned int i=0; i<count;i++){
     outbuf[i]= inbuf[i]*127;
@@ -427,7 +427,7 @@ int hackrf_sink_c::work( int noutput_items,
       _buf_cond.wait( lock );
   }
 
-  char *buf = _buf + _buf_used;
+  int8_t *buf = _buf + _buf_used;
   unsigned int prev_buf_used = _buf_used;
 
   unsigned int remaining = (BUF_LEN-_buf_used)/2; //complex
