@@ -233,6 +233,14 @@ GR_INCLUDE_SUBDIRECTORY(soapy)
 endif(ENABLE_SOAPY)
 
 ########################################################################
+# Setup Red Pitaya component
+########################################################################
+GR_REGISTER_COMPONENT("Red Pitaya support" ENABLE_REDPITAYA)
+if(ENABLE_REDPITAYA)
+GR_INCLUDE_SUBDIRECTORY(redpitaya)
+endif(ENABLE_REDPITAYA)
+
+########################################################################
 # Setup configuration file
 ########################################################################
 ADD_DEFINITIONS(-DHAVE_CONFIG_H=1)

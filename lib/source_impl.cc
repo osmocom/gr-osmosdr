@@ -84,6 +84,10 @@
 #include <soapy_source_c.h>
 #endif
 
+#ifdef ENABLE_REDPITAYA
+#include <redpitaya_source_c.h>
+#endif
+
 #include "arg_helpers.h"
 #include "source_impl.h"
 
@@ -156,6 +160,9 @@ source_impl::source_impl( const std::string &args )
 #ifdef ENABLE_SOAPY
   dev_types.push_back("soapy");
 #endif
+#ifdef ENABLE_REDPITAYA
+  dev_types.push_back("redpitaya");
+#endif
   std::cerr << "gr-osmosdr "
             << GR_OSMOSDR_VERSION << " (" << GR_OSMOSDR_LIBVER << ") "
             << "gnuradio " << gr::version() << std::endl;
@@ -227,6 +234,10 @@ source_impl::source_impl( const std::string &args )
 #endif
 #ifdef ENABLE_SOAPY
     BOOST_FOREACH( std::string dev, soapy_source_c::get_devices() )
+      dev_list.push_back( dev );
+#endif
+#ifdef ENABLE_REDPITAYA
+    BOOST_FOREACH( std::string dev, redpitaya_source_c::get_devices() )
       dev_list.push_back( dev );
 #endif
 
@@ -342,6 +353,13 @@ source_impl::source_impl( const std::string &args )
 #ifdef ENABLE_SOAPY
     if ( dict.count("soapy") ) {
       soapy_source_c_sptr src = make_soapy_source_c( arg );
+      block = src; iface = src.get();
+    }
+#endif
+
+#ifdef ENABLE_REDPITAYA
+    if ( dict.count("redpitaya") ) {
+      redpitaya_source_c_sptr src = make_redpitaya_source_c( arg );
       block = src; iface = src.get();
     }
 #endif
