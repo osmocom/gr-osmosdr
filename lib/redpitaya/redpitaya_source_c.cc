@@ -24,7 +24,7 @@
 #include <sstream>
 #include <stdexcept>
 
-#ifdef _WIN32
+#if defined(_WIN32)
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <windows.h>
@@ -54,9 +54,9 @@ redpitaya_source_c_sptr make_redpitaya_source_c(const std::string &args)
 }
 
 redpitaya_source_c::redpitaya_source_c(const std::string &args) :
-  gr::hier_block2("redpitaya_source_c",
-                  gr::io_signature::make(0, 0, 0),
-                  gr::io_signature::make(1, 1, sizeof(gr_complex)))
+  gr::sync_block("redpitaya_source_c",
+                 gr::io_signature::make(0, 0, 0),
+                 gr::io_signature::make(1, 1, sizeof(gr_complex)))
 {
   std::string host = "192.168.1.100";
   std::stringstream message;
@@ -64,7 +64,7 @@ redpitaya_source_c::redpitaya_source_c(const std::string &args) :
   struct sockaddr_in addr;
   uint32_t command;
 
-#ifdef _WIN32
+#if defined(_WIN32)
   WSADATA wsaData;
   WSAStartup( MAKEWORD(2, 2), &wsaData );
 #endif
@@ -96,9 +96,7 @@ redpitaya_source_c::redpitaya_source_c(const std::string &args) :
   for ( size_t i = 0; i < 2; ++i )
   {
     if ( ( _sockets[i] = socket( AF_INET, SOCK_STREAM, 0 ) ) < 0 )
-    {
       throw std::runtime_error( "Could not create TCP socket." );
-    }
 
     memset( &addr, 0, sizeof(addr) );
     addr.sin_family = AF_INET;
@@ -114,20 +112,38 @@ redpitaya_source_c::redpitaya_source_c(const std::string &args) :
     command = i;
     redpitaya_send_command( _sockets[i], command );
   }
-
-  _source = gr::blocks::file_descriptor_source::make( sizeof(gr_complex), _sockets[1] );
-
-  connect( _source, 0, self(), 0 );
 }
 
 redpitaya_source_c::~redpitaya_source_c()
 {
-  close( _sockets[1] );
-  close( _sockets[0] );
-
-#ifdef _WIN32
+#if defined(_WIN32)
+  ::closesocket( _sockets[1] );
+  ::closesocket( _sockets[0] );
   WSACleanup();
+#else
+  ::close( _sockets[1] );
+  ::close( _sockets[0] );
 #endif
+}
+
+int redpitaya_source_c::work( int noutput_items,
+                              gr_vector_const_void_star &input_items,
+                              gr_vector_void_star &output_items )
+{
+  ssize_t size;
+  ssize_t total = sizeof(gr_complex) * noutput_items;
+  gr_complex *out = (gr_complex *)output_items[0];
+
+#if defined(_WIN32)
+  size = ::recv( _sockets[1], (char *)out, total, MSG_WAITALL );
+#else
+  size = ::recv( _sockets[1], out, total, MSG_WAITALL );
+#endif
+
+  if ( size != total )
+    throw std::runtime_error( "Receiving samples failed." );
+
+  return noutput_items;
 }
 
 std::string redpitaya_source_c::name()

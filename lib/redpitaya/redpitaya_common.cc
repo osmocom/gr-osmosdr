@@ -37,12 +37,22 @@
 
 #include "redpitaya_common.h"
 
+#if defined(__APPLE__) || defined(__MACH__)
+#ifndef MSG_NOSIGNAL
+#define MSG_NOSIGNAL SO_NOSIGPIPE
+#endif
+#endif
+
 void redpitaya_send_command( int socket, uint32_t command )
 {
   ssize_t size;
   std::stringstream message;
 
-  size = send( socket, &command, sizeof(command), MSG_NOSIGNAL );
+#if defined(_WIN32)
+  size = ::send( socket, (char *)&command, sizeof(command), 0 );
+#else
+  size = ::send( socket, &command, sizeof(command), MSG_NOSIGNAL );
+#endif
 
   if ( size != sizeof(command) )
   {

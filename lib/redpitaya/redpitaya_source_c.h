@@ -21,8 +21,7 @@
 #ifndef REDPITAYA_SOURCE_C_H
 #define REDPITAYA_SOURCE_C_H
 
-#include <gnuradio/hier_block2.h>
-#include <gnuradio/blocks/file_descriptor_source.h>
+#include <gnuradio/sync_block.h>
 
 #include "source_iface.h"
 
@@ -33,7 +32,7 @@ typedef boost::shared_ptr< redpitaya_source_c > redpitaya_source_c_sptr;
 redpitaya_source_c_sptr make_redpitaya_source_c( const std::string & args = "" );
 
 class redpitaya_source_c :
-    public gr::hier_block2,
+    public gr::sync_block,
     public source_iface
 {
 private:
@@ -43,6 +42,10 @@ private:
 
 public:
   ~redpitaya_source_c();
+
+  int work( int noutput_items,
+            gr_vector_const_void_star &input_items,
+            gr_vector_void_star &output_items );
 
   std::string name();
 
@@ -73,7 +76,6 @@ public:
   std::string get_antenna( size_t chan = 0 );
 
 private:
-  gr::blocks::file_descriptor_source::sptr _source;
   double _freq, _rate, _corr;
   int _sockets[2];
 };

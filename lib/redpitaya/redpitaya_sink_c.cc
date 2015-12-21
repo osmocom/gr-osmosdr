@@ -24,7 +24,7 @@
 #include <sstream>
 #include <stdexcept>
 
-#ifdef _WIN32
+#if defined(_WIN32)
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <windows.h>
@@ -54,9 +54,9 @@ redpitaya_sink_c_sptr make_redpitaya_sink_c(const std::string &args)
 }
 
 redpitaya_sink_c::redpitaya_sink_c(const std::string &args) :
-  gr::hier_block2("redpitaya_sink_c",
-                  gr::io_signature::make(1, 1, sizeof(gr_complex)),
-                  gr::io_signature::make(0, 0, 0))
+  gr::sync_block("redpitaya_sink_c",
+                 gr::io_signature::make(1, 1, sizeof(gr_complex)),
+                 gr::io_signature::make(0, 0, 0))
 {
   std::string host = "192.168.1.100";
   std::stringstream message;
@@ -64,7 +64,7 @@ redpitaya_sink_c::redpitaya_sink_c(const std::string &args) :
   struct sockaddr_in addr;
   uint32_t command;
 
-#ifdef _WIN32
+#if defined(_WIN32)
   WSADATA wsaData;
   WSAStartup( MAKEWORD(2, 2), &wsaData );
 #endif
@@ -120,20 +120,40 @@ redpitaya_sink_c::redpitaya_sink_c(const std::string &args) :
 
   command = ptt ? 2<<28 : 3<<28;
   redpitaya_send_command( _sockets[0], command );
-
-  _sink = gr::blocks::file_descriptor_sink::make( sizeof(gr_complex), _sockets[1] );
-
-  connect( self(), 0, _sink, 0 );
 }
 
 redpitaya_sink_c::~redpitaya_sink_c()
 {
-  close( _sockets[1] );
-  close( _sockets[0] );
-
-#ifdef _WIN32
+#if defined(_WIN32)
+  ::closesocket( _sockets[1] );
+  ::closesocket( _sockets[0] );
   WSACleanup();
+#else
+  ::close( _sockets[1] );
+  ::close( _sockets[0] );
 #endif
+}
+
+int redpitaya_sink_c::work( int noutput_items,
+                            gr_vector_const_void_star &input_items,
+                            gr_vector_void_star &output_items )
+{
+  ssize_t size;
+  ssize_t total = sizeof(gr_complex) * noutput_items;
+  const gr_complex *in = (const gr_complex *)input_items[0];
+
+#if defined(_WIN32)
+  size = ::send( _sockets[1], (char *)in, total, 0 );
+#else
+  size = ::send( _sockets[1], in, total, MSG_NOSIGNAL );
+#endif
+
+  if ( size != total )
+    throw std::runtime_error( "Sending samples failed." );
+
+  consume(0, noutput_items);
+
+  return 0;
 }
 
 std::string redpitaya_sink_c::name()
