@@ -164,16 +164,19 @@ class app_gui(pubsub):
         )
         freq_hbox.AddSpacer(5)
 
-        forms.slider(
-            parent=self.panel, sizer=freq_hbox,
-            proportion=2,
-            ps=self.tb,
-            key=osmocom_siggen.TX_FREQ_KEY,
-            minimum=self.tb[osmocom_siggen.FREQ_RANGE_KEY].start(),
-            maximum=self.tb[osmocom_siggen.FREQ_RANGE_KEY].stop(),
-            num_steps=101,
-        )
-        freq_hbox.AddSpacer(3)
+        try:
+            forms.slider(
+                parent=self.panel, sizer=freq_hbox,
+                proportion=2,
+                ps=self.tb,
+                key=osmocom_siggen.TX_FREQ_KEY,
+                minimum=self.tb[osmocom_siggen.FREQ_RANGE_KEY].start(),
+                maximum=self.tb[osmocom_siggen.FREQ_RANGE_KEY].stop(),
+                num_steps=101,
+            )
+            freq_hbox.AddSpacer(3)
+        except:
+            pass
 
         corr_hbox.AddSpacer(3)
         forms.text_box(

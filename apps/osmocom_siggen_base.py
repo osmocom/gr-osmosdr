@@ -218,22 +218,40 @@ class top_block(gr.top_block, pubsub):
             print 'Supported sample rates %d-%d step %d.' % (rates.start(), rates.stop(), rates.step())
 
         # Set the antenna
+        if self._verbose:
+            print "setting antenna..."
         if(options.antenna):
             ant = self._sink.set_antenna(options.antenna, 0)
             if self._verbose:
                 print "Set antenna to:", ant
+        try:
+            self.publish(FREQ_RANGE_KEY, self._sink.get_freq_range)
+        except:
+            print "Couldn't publish %s" % FREQ_RANGE_KEY
 
-        self.publish(FREQ_RANGE_KEY, self._sink.get_freq_range)
+        try:
+            for name in self.get_gain_names():
+                self.publish(GAIN_RANGE_KEY(name), (lambda self=self,name=name: self._sink.get_gain_range(name)))
+        except:
+            print "Couldn't publish %s" % FREQ_RANGE_KEY
 
-        for name in self.get_gain_names():
-            self.publish(GAIN_RANGE_KEY(name), (lambda self=self,name=name: self._sink.get_gain_range(name)))
+        try:
+            self.publish(BWIDTH_RANGE_KEY, self._sink.get_bandwidth_range)
+        except:
+            if self._verbose:
+                print "Couldn't publish %s" % BWIDTH_RANGE_KEY
 
-        self.publish(BWIDTH_RANGE_KEY, self._sink.get_bandwidth_range)
-
-        for name in self.get_gain_names():
-            self.publish(GAIN_KEY(name), (lambda self=self,name=name: self._sink.get_gain(name)))
-
-        self.publish(BWIDTH_KEY, self._sink.get_bandwidth)
+        try:
+            for name in self.get_gain_names():
+                self.publish(GAIN_KEY(name), (lambda self=self,name=name: self._sink.get_gain(name)))
+        except:
+            if self._verbose:
+                print "Couldn't publish GAIN_KEYs"
+        try:
+            self.publish(BWIDTH_KEY, self._sink.get_bandwidth)
+        except:
+            if self._verbose:
+                print "Couldn't publish %s" % BWIDTH_KEY
 
     def get_gain_names(self):
         return self._sink.get_gain_names()
@@ -273,7 +291,13 @@ class top_block(gr.top_block, pubsub):
             print "Set " + name + " gain to:", gain
 
     def set_bandwidth(self, bw):
-        clipped_bw = self[BWIDTH_RANGE_KEY].clip(bw)
+        try:
+            clipped_bw = self[BWIDTH_RANGE_KEY].clip(bw)
+        except:
+            if self._verbose:
+                print "couldn't clip bandwidth"
+            return
+
         if self._sink.get_bandwidth() != clipped_bw:
             bw = self._sink.set_bandwidth(clipped_bw)
 
