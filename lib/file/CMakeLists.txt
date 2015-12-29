@@ -27,6 +27,7 @@ include_directories(
 
 set(file_srcs
     ${CMAKE_CURRENT_SOURCE_DIR}/file_source_c.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/file_sink_c.cc
 )
 
 ########################################################################

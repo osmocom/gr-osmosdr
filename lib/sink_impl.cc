@@ -41,13 +41,14 @@
 #ifdef ENABLE_BLADERF
 #include "bladerf_sink_c.h"
 #endif
-
 #ifdef ENABLE_SOAPY
-#include <soapy_sink_c.h>
+#include "soapy_sink_c.h"
 #endif
-
 #ifdef ENABLE_REDPITAYA
-#include <redpitaya_sink_c.h>
+#include "redpitaya_sink_c.h"
+#endif
+#ifdef ENABLE_FILE
+#include "file_sink_c.h"
 #endif
 
 #include "arg_helpers.h"
@@ -98,6 +99,10 @@ sink_impl::sink_impl( const std::string &args )
 #ifdef ENABLE_REDPITAYA
   dev_types.push_back("redpitaya");
 #endif
+#ifdef ENABLE_FILE
+  dev_types.push_back("file");
+#endif
+
   std::cerr << "gr-osmosdr "
             << GR_OSMOSDR_VERSION << " (" << GR_OSMOSDR_LIBVER << ") "
             << "gnuradio " << gr::version() << std::endl;
@@ -140,6 +145,10 @@ sink_impl::sink_impl( const std::string &args )
     BOOST_FOREACH( std::string dev, redpitaya_sink_c::get_devices() )
       dev_list.push_back( dev );
 #endif
+#ifdef ENABLE_FILE
+    BOOST_FOREACH( std::string dev, file_sink_c::get_devices() )
+      dev_list.push_back( dev );
+#endif
 
 //    std::cerr << std::endl;
 //    BOOST_FOREACH( std::string dev, dev_list )
@@ -180,17 +189,21 @@ sink_impl::sink_impl( const std::string &args )
       block = sink; iface = sink.get();
     }
 #endif
-
 #ifdef ENABLE_SOAPY
     if ( dict.count("soapy") ) {
       soapy_sink_c_sptr sink = make_soapy_sink_c( arg );
       block = sink; iface = sink.get();
     }
 #endif
-
 #ifdef ENABLE_REDPITAYA
     if ( dict.count("redpitaya") ) {
       redpitaya_sink_c_sptr sink = make_redpitaya_sink_c( arg );
+      block = sink; iface = sink.get();
+    }
+#endif
+#ifdef ENABLE_FILE
+    if ( dict.count("file") ) {
+      file_sink_c_sptr sink = make_file_sink_c( arg );
       block = sink; iface = sink.get();
     }
 #endif
