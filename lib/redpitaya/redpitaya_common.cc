@@ -24,37 +24,23 @@
 #include <sstream>
 #include <stdexcept>
 
-#ifdef _WIN32
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#include <windows.h>
-#else
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#endif
-
 #include "redpitaya_common.h"
 
-#if defined(__APPLE__) || defined(__MACH__)
-#ifndef MSG_NOSIGNAL
-#define MSG_NOSIGNAL SO_NOSIGPIPE
-#endif
-#endif
-
-void redpitaya_send_command( int socket, uint32_t command )
+void redpitaya_send_command( SOCKET socket, uint32_t command )
 {
-  ssize_t size;
   std::stringstream message;
 
 #if defined(_WIN32)
+  int total = sizeof(command);
+  int size;
   size = ::send( socket, (char *)&command, sizeof(command), 0 );
 #else
+  ssize_t total = sizeof(command);
+  ssize_t size;
   size = ::send( socket, &command, sizeof(command), MSG_NOSIGNAL );
 #endif
 
-  if ( size != sizeof(command) )
+  if ( size != total )
   {
     message << "Sending command failed: " << std::hex << command;
     throw std::runtime_error( message.str() );

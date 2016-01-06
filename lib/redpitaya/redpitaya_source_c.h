@@ -25,6 +25,8 @@
 
 #include "source_iface.h"
 
+#include "redpitaya_common.h"
+
 class redpitaya_source_c;
 
 typedef boost::shared_ptr< redpitaya_source_c > redpitaya_source_c_sptr;
@@ -77,7 +79,7 @@ public:
 
 private:
   double _freq, _rate, _corr;
-  int _sockets[2];
+  SOCKET _sockets[2];
 };
 
 #endif // REDPITAYA_SOURCE_C_H

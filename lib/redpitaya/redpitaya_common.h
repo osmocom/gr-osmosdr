@@ -21,6 +21,35 @@
 #ifndef REDPITAYA_COMMON_H
 #define REDPITAYA_COMMON_H
 
-void redpitaya_send_command( int socket, uint32_t command );
+#include <stdint.h>
+
+#if defined(_WIN32)
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#pragma comment(lib, "ws2_32.lib")
+#include <windows.h>
+#define INVSOC INVALID_SOCKET
+#else
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/types.h>
+#include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <sys/select.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#ifndef SOCKET
+#define SOCKET int
+#define INVSOC (-1)
+#endif
+#endif
+
+#if defined(__APPLE__) || defined(__MACH__)
+#ifndef MSG_NOSIGNAL
+#define MSG_NOSIGNAL SO_NOSIGPIPE
+#endif
+#endif
+
+void redpitaya_send_command( SOCKET socket, uint32_t command );
 
 #endif // REDPITAYA_COMMON_H

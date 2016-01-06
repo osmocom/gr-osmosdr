@@ -24,27 +24,15 @@
 #include <sstream>
 #include <stdexcept>
 
-#if defined(_WIN32)
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#include <windows.h>
-#else
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#endif
-
 #include <boost/assign.hpp>
 #include <boost/format.hpp>
 #include <boost/algorithm/string.hpp>
 
 #include <gnuradio/io_signature.h>
 
-#include "redpitaya_common.h"
-#include "redpitaya_sink_c.h"
-
 #include "arg_helpers.h"
+
+#include "redpitaya_sink_c.h"
 
 using namespace boost::assign;
 
@@ -105,7 +93,7 @@ redpitaya_sink_c::redpitaya_sink_c(const std::string &args) :
 
     memset( &addr, 0, sizeof(addr) );
     addr.sin_family = AF_INET;
-    addr.sin_addr.s_addr = inet_addr( host.c_str() );
+    inet_pton( AF_INET, host.c_str(), &addr.sin_addr );
     addr.sin_port = htons( port );
 
     if ( ::connect( _sockets[i], (struct sockaddr *)&addr, sizeof(addr) ) < 0 )
@@ -138,13 +126,15 @@ int redpitaya_sink_c::work( int noutput_items,
                             gr_vector_const_void_star &input_items,
                             gr_vector_void_star &output_items )
 {
-  ssize_t size;
-  ssize_t total = sizeof(gr_complex) * noutput_items;
   const gr_complex *in = (const gr_complex *)input_items[0];
 
 #if defined(_WIN32)
+  int size;
+  int total = sizeof(gr_complex) * noutput_items;
   size = ::send( _sockets[1], (char *)in, total, 0 );
 #else
+  ssize_t size;
+  ssize_t total = sizeof(gr_complex) * noutput_items;
   size = ::send( _sockets[1], in, total, MSG_NOSIGNAL );
 #endif
 
