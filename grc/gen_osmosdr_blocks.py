@@ -219,6 +219,9 @@ While primarily being developed for the OsmoSDR hardware, this block as well sup
  * RFSPACE SDR-IQ, SDR-IP, NetSDR (incl. X2 option)
  * AirSpy Wideband Receiver through libairspy
 #end if
+#if $sourk == 'sink':
+ * gnuradio .cfile output through libgnuradio-blocks
+#end if
  * CCCamp 2015 rad1o Badge through libhackrf
  * Great Scott Gadgets HackRF through libhackrf
  * Nuand LLC bladeRF through libbladeRF library
@@ -252,8 +255,12 @@ Lines ending with ... mean it's possible to bind devices together by specifying 
   file='/path/to/your file',rate=1e6[,freq=100e6][,repeat=true][,throttle=true] ...
   netsdr=127.0.0.1[:50000][,nchan=2]
   sdr-ip=127.0.0.1[:50000]
+  cloudiq=127.0.0.1[:50000]
   sdr-iq=/dev/ttyUSB0
-  airspy=0[,bias=0|1]
+  airspy=0[,bias=0|1][,linearity][,sensitivity]
+#end if
+#if $sourk == 'sink':
+  file='/path/to/your file',rate=1e6[,freq=100e6][,append=true][,throttle=true] ...
 #end if
   redpitaya=192.168.1.100[:1001]
   hackrf=0[,buffers=32][,bias=0|1][,bias_tx=0|1]
