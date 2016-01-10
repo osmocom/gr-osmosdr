@@ -145,7 +145,7 @@ endif(ENABLE_FCD OR ENABLE_FCDPP)
 ########################################################################
 # Setup File component
 ########################################################################
-GR_REGISTER_COMPONENT("IQ File Source" ENABLE_FILE GNURADIO_BLOCKS_FOUND)
+GR_REGISTER_COMPONENT("IQ File Source & Sink" ENABLE_FILE GNURADIO_BLOCKS_FOUND)
 if(ENABLE_FILE)
 GR_INCLUDE_SUBDIRECTORY(file)
 endif(ENABLE_FILE)
