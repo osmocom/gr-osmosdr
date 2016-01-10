@@ -84,6 +84,7 @@ airspy_source_c::airspy_source_c (const std::string &args)
     _center_freq(0),
     _freq_corr(0),
     _auto_gain(false),
+    _gain_policy(linearity),
     _lna_gain(0),
     _mix_gain(0),
     _vga_gain(0),
@@ -106,11 +107,10 @@ airspy_source_c::airspy_source_c (const std::string &args)
   ret = airspy_version_string_read( _dev, version, sizeof(version));
   AIRSPY_THROW_ON_ERROR(ret, "Failed to read version string")
 #if 0
-  read_partid_serialno_t serial_number;
-  ret = airspy_board_partid_serialno_read( _dev, &serial_number );
+  airspy_read_partid_serialno_t part_serial;
+  ret = airspy_board_partid_serialno_read( _dev, &part_serial );
   AIRSPY_THROW_ON_ERROR(ret, "Failed to read serial number")
 #endif
-
   uint32_t num_rates;
   airspy_get_samplerates(_dev, &num_rates, 0);
   uint32_t *samplerates = (uint32_t *) malloc(num_rates * sizeof(uint32_t));
@@ -123,7 +123,7 @@ airspy_source_c::airspy_source_c (const std::string &args)
    * to play nice with the monotonic requirement of meta-range later on */
   std::sort(_sample_rates.begin(), _sample_rates.end());
 
-  std::cerr << "Using " << version << ", " << "samplerates: ";
+  std::cerr << "Using " << version << ", samplerates: ";
 
   for (size_t i = 0; i < _sample_rates.size(); i++)
     std::cerr << boost::format("%gM ") % (_sample_rates[i].first / 1e6);
@@ -134,11 +134,17 @@ airspy_source_c::airspy_source_c (const std::string &args)
   set_sample_rate( get_sample_rates().start() );
   set_bandwidth( 0 );
 
-  set_gain( 8 ); /* preset to a reasonable default (non-GRC use case) */
+  if ( dict.count( "linearity" ) )
+    _gain_policy = linearity;
+
+  if ( dict.count( "sensitivity" ) )
+    _gain_policy = sensitivity;
+
+  set_lna_gain( 8 ); /* preset to a reasonable default (non-GRC use case) */
 
   set_mix_gain( 5 ); /* preset to a reasonable default (non-GRC use case) */
 
-  set_if_gain( 0 ); /* preset to a reasonable default (non-GRC use case) */
+  set_if_gain( 5 ); /* preset to a reasonable default (non-GRC use case) */
 
   if ( dict.count( "bias" ) )
   {
@@ -287,20 +293,6 @@ std::vector<std::string> airspy_source_c::get_devices()
 {
   std::vector<std::string> devices;
   std::string label;
-#if 0
-  for (unsigned int i = 0; i < 1 /* TODO: missing libairspy api */; i++) {
-    std::string args = "airspy=" + boost::lexical_cast< std::string >( i );
-
-    label.clear();
-
-    label = "AirSpy"; /* TODO: missing libairspy api */
-
-    boost::algorithm::trim(label);
-
-    args += ",label='" + label + "'";
-    devices.push_back( args );
-  }
-#else
 
   int ret;
   airspy_device *dev = NULL;
@@ -324,7 +316,6 @@ std::vector<std::string> airspy_source_c::get_devices()
     ret = airspy_close(dev);
   }
 
-#endif
   return devices;
 }
 
@@ -443,7 +434,7 @@ std::vector<std::string> airspy_source_c::get_gain_names( size_t chan )
 
 osmosdr::gain_range_t airspy_source_c::get_gain_range( size_t chan )
 {
-  return get_gain_range( "LNA", chan );
+  return osmosdr::gain_range_t( 0, 21, 1 );
 }
 
 osmosdr::gain_range_t airspy_source_c::get_gain_range( const std::string & name, size_t chan )
@@ -467,6 +458,17 @@ osmosdr::gain_range_t airspy_source_c::get_gain_range( const std::string & name,
 
 bool airspy_source_c::set_gain_mode( bool automatic, size_t chan )
 {
+  if ( automatic ) {
+      airspy_set_lna_agc( _dev, 1 );
+      airspy_set_mixer_agc( _dev, 1 );
+  } else {
+      airspy_set_lna_agc( _dev, 0 );
+      airspy_set_mixer_agc( _dev, 0 );
+
+      set_lna_gain( _lna_gain );
+      set_mix_gain( _mix_gain );
+  }
+
   _auto_gain = automatic;
 
   return get_gain_mode(chan);
@@ -478,6 +480,74 @@ bool airspy_source_c::get_gain_mode( size_t chan )
 }
 
 double airspy_source_c::set_gain( double gain, size_t chan )
+{
+  int ret = AIRSPY_SUCCESS;
+  osmosdr::gain_range_t gains = get_gain_range( chan );
+
+  if (_dev) {
+    double clip_gain = gains.clip( gain, true );
+    uint8_t value = clip_gain;
+
+    if ( _gain_policy == linearity ) {
+        ret = airspy_set_linearity_gain( _dev, value );
+        if ( AIRSPY_SUCCESS == ret ) {
+          _gain = clip_gain;
+        } else {
+          AIRSPY_THROW_ON_ERROR( ret, AIRSPY_FUNC_STR( "airspy_set_linearity_gain", value ) )
+        }
+    } else if ( _gain_policy == sensitivity ) {
+        ret = airspy_set_sensitivity_gain( _dev, value );
+        if ( AIRSPY_SUCCESS == ret ) {
+          _gain = clip_gain;
+        } else {
+          AIRSPY_THROW_ON_ERROR( ret, AIRSPY_FUNC_STR( "airspy_set_sensitivity_gain", value ) )
+        }
+    }
+  }
+
+  return _gain;
+}
+
+double airspy_source_c::set_gain( double gain, const std::string & name, size_t chan)
+{
+  if ( "LNA" == name ) {
+    return set_lna_gain( gain, chan );
+  }
+
+  if ( "MIX" == name ) {
+    return set_mix_gain( gain, chan );
+  }
+
+  if ( "IF" == name ) {
+    return set_if_gain( gain, chan );
+  }
+
+  return set_gain( gain, chan );
+}
+
+double airspy_source_c::get_gain( size_t chan )
+{
+  return _gain;
+}
+
+double airspy_source_c::get_gain( const std::string & name, size_t chan )
+{
+  if ( "LNA" == name ) {
+    return _lna_gain;
+  }
+
+  if ( "MIX" == name ) {
+    return _mix_gain;
+  }
+
+  if ( "IF" == name ) {
+    return _vga_gain;
+  }
+
+  return get_gain( chan );
+}
+
+double airspy_source_c::set_lna_gain( double gain, size_t chan )
 {
   int ret = AIRSPY_SUCCESS;
   osmosdr::gain_range_t gains = get_gain_range( "LNA", chan );
@@ -495,45 +565,6 @@ double airspy_source_c::set_gain( double gain, size_t chan )
   }
 
   return _lna_gain;
-}
-
-double airspy_source_c::set_gain( double gain, const std::string & name, size_t chan)
-{
-  if ( "LNA" == name ) {
-    return set_gain( gain, chan );
-  }
-
-  if ( "MIX" == name ) {
-    return set_mix_gain( gain, chan );
-  }
-
-  if ( "IF" == name ) {
-    return set_if_gain( gain, chan );
-  }
-
-  return set_gain( gain, chan );
-}
-
-double airspy_source_c::get_gain( size_t chan )
-{
-  return _lna_gain;
-}
-
-double airspy_source_c::get_gain( const std::string & name, size_t chan )
-{
-  if ( "LNA" == name ) {
-    return get_gain( chan );
-  }
-
-  if ( "MIX" == name ) {
-    return _mix_gain;
-  }
-
-  if ( "IF" == name ) {
-    return _vga_gain;
-  }
-
-  return get_gain( chan );
 }
 
 double airspy_source_c::set_mix_gain(double gain, size_t chan)

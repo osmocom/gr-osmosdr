@@ -109,6 +109,7 @@ public:
   double get_gain( size_t chan = 0 );
   double get_gain( const std::string & name, size_t chan = 0 );
 
+  double set_lna_gain( double gain, size_t chan = 0 );
   double set_mix_gain(double gain, size_t chan = 0 );
   double set_if_gain( double gain, size_t chan = 0 );
 
@@ -135,6 +136,13 @@ private:
   double _center_freq;
   double _freq_corr;
   bool _auto_gain;
+  double _gain;
+  enum gain_policy
+  {
+      linearity,
+      sensitivity
+  };
+  enum gain_policy _gain_policy;
   double _lna_gain;
   double _mix_gain;
   double _vga_gain;
