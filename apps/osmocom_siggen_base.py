@@ -189,6 +189,10 @@ class top_block(gr.top_block, pubsub):
             print "Sink has no sample rates (wrong device arguments?)."
             sys.exit(1)
 
+        # Set the clock source:
+        if options.clock_source is not None:
+            self.src.set_clock_source(options.clock_source)
+
         if options.samp_rate is None:
             options.samp_rate = self._sink.get_sample_rates().start()
 
@@ -473,6 +477,8 @@ def get_options():
                       help="Device args, [default=%default]")
     parser.add_option("-A", "--antenna", type="string", default=None,
                       help="Select Rx Antenna where appropriate")
+    parser.add_option("", "--clock-source",
+                      help="Set the clock source; typically 'internal', 'external', 'external_1pps', 'mimo' or 'gpsdo'")
     parser.add_option("-s", "--samp-rate", type="eng_float", default=None,
                       help="Set sample rate (bandwidth), minimum by default")
     parser.add_option("-g", "--gain", type="eng_float", default=None,
