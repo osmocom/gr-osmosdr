@@ -117,6 +117,10 @@ public:
   double set_bandwidth( double bandwidth, size_t chan = 0 );
   double get_bandwidth( size_t chan = 0 );
   osmosdr::freq_range_t get_bandwidth_range( size_t chan = 0 );
+
+  void set_clock_source(const std::string &source, const size_t mboard = 0);
+  std::string get_clock_source(const size_t mboard);
+  std::vector<std::string> get_clock_sources(const size_t mboard);
 };
 
 #endif /* INCLUDED_BLADERF_SINK_C_H */

@@ -67,6 +67,13 @@ protected:
   int set_dc_offset(bladerf_module module, const std::complex<double> &offset, size_t chan);
   int set_iq_balance(bladerf_module module, const std::complex<double> &balance, size_t chan);
 
+  void set_clock_source(const std::string &source, const size_t mboard = 0);
+  std::string get_clock_source(const size_t mboard = 0);
+  std::vector<std::string> get_clock_sources(const size_t mboard = 0);
+
+  void set_smb_frequency(double frequency);
+  double get_smb_frequency();
+
   osmosdr::freq_range_t freq_range();
   osmosdr::meta_range_t sample_rates();
   osmosdr::freq_range_t filter_bandwidths();

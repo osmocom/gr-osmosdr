@@ -150,6 +150,7 @@ self.\$(id).set_bandwidth(\$bw$(n), $n)
     <option><name>Default</name><key></key></option>
     <option><name>Internal</name><key>internal</key></option>
     <option><name>External</name><key>external</key></option>
+    <option><name>External 1PPS</name><key>external_1pps</key></option>
     <option><name>MIMO Cable</name><key>mimo</key></option>
     <option><name>O/B GPSDO</name><key>gpsdo</key></option>
   </param>
@@ -264,7 +265,7 @@ Lines ending with ... mean it's possible to bind devices together by specifying 
 #end if
   redpitaya=192.168.1.100[:1001]
   hackrf=0[,buffers=32][,bias=0|1][,bias_tx=0|1]
-  bladerf=0[,fpga='/path/to/the/bitstream.rbf']
+  bladerf=0[,tamer=internal|external|external_1pps][,smb=25e6]
   uhd[,serial=...][,lo_offset=0][,mcr=52e6][,nchan=2][,subdev='\\\\'B:0 A:0\\\\''] ...
 
 Num Channels:

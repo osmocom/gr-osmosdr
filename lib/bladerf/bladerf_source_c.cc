@@ -537,3 +537,18 @@ osmosdr::freq_range_t bladerf_source_c::get_bandwidth_range( size_t chan )
 {
   return filter_bandwidths();
 }
+
+void bladerf_source_c::set_clock_source(const std::string &source, const size_t mboard)
+{
+  bladerf_common::set_clock_source(source, mboard);
+}
+
+std::string bladerf_source_c::get_clock_source(const size_t mboard)
+{
+  return bladerf_common::get_clock_source(mboard);
+}
+
+std::vector<std::string> bladerf_source_c::get_clock_sources(const size_t mboard)
+{
+  return bladerf_common::get_clock_sources(mboard);
+}

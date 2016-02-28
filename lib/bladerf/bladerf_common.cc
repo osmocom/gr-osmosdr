@@ -414,6 +414,16 @@ void bladerf_common::init(dict_t &dict, bladerf_module module)
 
   std::cerr << std::endl;
 
+  if (dict.count("tamer")) {
+    set_clock_source( dict["tamer"] );
+    std::cerr << _pfx << "Tamer mode set to '" << get_clock_source() << "'";
+  }
+
+  if (dict.count("smb")) {
+    set_smb_frequency( boost::lexical_cast< double >( dict["smb"] ) );
+    std::cerr << _pfx << "SMB frequency set to " << get_smb_frequency() << " Hz";
+  }
+
   /* Initialize buffer and sample configuration */
   _num_buffers = 0;
   if (dict.count("buffers")) {
@@ -617,4 +627,75 @@ int bladerf_common::set_iq_balance(bladerf_module module, const std::complex<dou
     ret |= bladerf_set_correction(_dev.get(), module, BLADERF_CORR_FPGA_PHASE, val_phase);
 
     return ret;
+}
+
+void bladerf_common::set_clock_source(const std::string &source, const size_t mboard)
+{
+  bladerf_vctcxo_tamer_mode tamer_mode = BLADERF_VCTCXO_TAMER_DISABLED;
+
+  std::vector<std::string> clock_sources = get_clock_sources(mboard);
+
+  int index = std::find(clock_sources.begin(), clock_sources.end(), source) - clock_sources.begin();
+
+  if ( index < int(clock_sources.size()) ) {
+    tamer_mode = static_cast<bladerf_vctcxo_tamer_mode>(index);
+  }
+
+  int status = bladerf_set_vctcxo_tamer_mode( _dev.get(), tamer_mode );
+  if ( status != 0 )
+    throw std::runtime_error(_pfx + "Failed to set VCTCXO tamer mode: " +
+                             bladerf_strerror(status));
+}
+
+std::string bladerf_common::get_clock_source(const size_t mboard)
+{
+  bladerf_vctcxo_tamer_mode tamer_mode = BLADERF_VCTCXO_TAMER_INVALID;
+
+  int status = bladerf_get_vctcxo_tamer_mode( _dev.get(), &tamer_mode );
+  if ( status != 0 )
+    throw std::runtime_error(_pfx + "Failed to get VCTCXO tamer mode: " +
+                             bladerf_strerror(status));
+
+  std::vector<std::string> clock_sources = get_clock_sources(mboard);
+
+  return clock_sources.at(tamer_mode);
+}
+
+std::vector<std::string> bladerf_common::get_clock_sources(const size_t mboard)
+{
+  std::vector<std::string> sources;
+
+  // assumes zero-based 1:1 mapping
+  sources.push_back("internal");      // BLADERF_VCTCXO_TAMER_DISABLED
+  sources.push_back("external_1pps"); // BLADERF_VCTCXO_TAMER_1_PPS
+  sources.push_back("external");      // BLADERF_VCTCXO_TAMER_10_MHZ
+
+  return sources;
+}
+
+void bladerf_common::set_smb_frequency(double frequency)
+{
+  uint32_t actual_frequency = frequency;
+
+  int status = bladerf_set_smb_frequency( _dev.get(), uint32_t(frequency), &actual_frequency );
+  if ( status != 0 )
+    throw std::runtime_error(_pfx + "Failed to set SMB frequency: " +
+                             bladerf_strerror(status));
+
+  if ( uint32_t(frequency) != actual_frequency )
+    std::cerr << _pfx << "Wanted SMB frequency is " << frequency
+              << ", actual is " << actual_frequency
+              << std::endl;
+}
+
+double bladerf_common::get_smb_frequency()
+{
+  unsigned int actual_frequency;
+
+  int status = bladerf_get_smb_frequency( _dev.get(), &actual_frequency );
+  if ( status != 0 )
+    throw std::runtime_error(_pfx + "Failed to get SMB frequency: " +
+                             bladerf_strerror(status));
+
+  return actual_frequency;
 }
