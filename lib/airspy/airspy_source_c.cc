@@ -153,6 +153,16 @@ airspy_source_c::airspy_source_c (const std::string &args)
     AIRSPY_THROW_ON_ERROR(ret, "Failed to enable DC bias")
   }
 
+/* pack 4 sets of 12 bits into 3 sets 16 bits for the data transfer across the
+ * USB bus. The default is is unpacked, to transfer 12 bits across the USB bus
+ * in 16 bit words. libairspy transparently unpacks if packing is enabled */
+  if ( dict.count( "pack" ) )
+  {
+    bool pack = boost::lexical_cast<bool>( dict["pack"] );
+    int ret = airspy_set_packing(_dev, (uint8_t)pack);
+    AIRSPY_THROW_ON_ERROR(ret, "Failed to set USB bit packing")
+  }
+
   _fifo = new boost::circular_buffer<gr_complex>(5000000);
   if (!_fifo) {
     throw std::runtime_error( std::string(__FUNCTION__) + " " +
