@@ -93,6 +93,8 @@ class app_top_block(stdgui2.std_top_block, pubsub):
                           help="Set fftsink averaging factor, default=[%default]")
         parser.add_option("", "--averaging", action="store_true", default=False,
                           help="Enable fftsink averaging, default=[%default]")
+        parser.add_option("", "--peak-hold", action="store_true", default=False,
+                          help="Enable fftsink peak hold, default=[%default]")
         parser.add_option("", "--ref-scale", type="eng_float", default=1.0,
                           help="Set dBFS=0dB input value, default=[%default]")
         parser.add_option("", "--fft-size", type="int", default=1024,
@@ -248,6 +250,7 @@ class app_top_block(stdgui2.std_top_block, pubsub):
                                               ref_level=20.0,
                                               y_divs = 12,
                                               average=options.averaging,
+                                              peak_hold=options.peak_hold,
                                               avg_alpha=options.avg_alpha,
                                               fft_rate=options.fft_rate)
 
