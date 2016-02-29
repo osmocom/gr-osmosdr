@@ -1,5 +1,5 @@
 While primarily being developed for the OsmoSDR hardware, this block
-as well supports:
+also supports:
 
  * FUNcube Dongle through libgnuradio-fcd
  * FUNcube Dongle Pro+ through gr-fcdproplus
