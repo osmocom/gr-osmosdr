@@ -191,12 +191,8 @@ hackrf_sink_c::hackrf_sink_c (const std::string &args)
   }
 
   _dev = NULL;
-#ifdef LIBHACKRF_HAVE_DEVICE_LIST
-  if ( hackrf_serial )
-    ret = hackrf_open_by_serial( hackrf_serial->c_str(), &_dev );
-  else
-#endif  
-    ret = hackrf_open( &_dev );
+  ret = hackrf_device_open(hackrf_serial, &_dev);
+
   HACKRF_THROW_ON_ERROR(ret, "Failed to open HackRF device")
 
   uint8_t board_id;

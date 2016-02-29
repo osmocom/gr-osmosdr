@@ -29,6 +29,7 @@
 #include <libhackrf/hackrf.h>
 
 #include "sink_iface.h"
+#include "hackrf_open.h"
 
 class hackrf_sink_c;
 
