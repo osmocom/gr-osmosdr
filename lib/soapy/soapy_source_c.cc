@@ -181,14 +181,14 @@ std::vector<std::string> soapy_source_c::get_gain_names( size_t chan )
 osmosdr::gain_range_t soapy_source_c::get_gain_range( size_t chan )
 {
     SoapySDR::Range r = _device->getGainRange(SOAPY_SDR_RX, chan);
-    return osmosdr::gain_range_t(r.minimum(), r.maximum());
+    return osmosdr::gain_range_t(r.minimum(), r.maximum(), 1.0);
 }
 
 osmosdr::gain_range_t soapy_source_c::get_gain_range( const std::string & name,
                                                 size_t chan )
 {
     SoapySDR::Range r = _device->getGainRange(SOAPY_SDR_RX, chan, name);
-    return osmosdr::gain_range_t(r.minimum(), r.maximum());
+    return osmosdr::gain_range_t(r.minimum(), r.maximum(), 1.0);
 }
 
 bool soapy_source_c::set_gain_mode( bool automatic, size_t chan )
