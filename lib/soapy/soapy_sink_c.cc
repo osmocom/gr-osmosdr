@@ -1,6 +1,6 @@
 /* -*- c++ -*- */
 /*
- * Copyright 2015 Josh Blum <josh@joshknows.com>
+ * Copyright 2015-2016 Josh Blum <josh@joshknows.com>
  * Copyright 2013 Dimitri Stolnikov <horiz0n@gmx.net>
  *
  * GNU Radio is free software; you can redistribute it and/or modify
@@ -272,6 +272,9 @@ void soapy_sink_c::set_iq_balance( const std::complex<double> &balance, size_t c
 
 double soapy_sink_c::set_bandwidth( double bandwidth, size_t chan)
 {
+    if ( bandwidth == 0.0 ) /* bandwidth of 0 means automatic filter selection */
+        set_bandwidth(get_sample_rate() * 0.75, chan); /* select narrower filters to prevent aliasing */
+
     _device->setBandwidth(SOAPY_SDR_TX, chan, bandwidth);
     return this->get_bandwidth(chan);
 }
