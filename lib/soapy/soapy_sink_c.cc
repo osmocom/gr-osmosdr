@@ -39,6 +39,7 @@
 #include "arg_helpers.h"
 #include "soapy_sink_c.h"
 #include <SoapySDR/Device.hpp>
+#include <SoapySDR/Version.hpp>
 
 using namespace boost::assign;
 
@@ -287,10 +288,17 @@ double soapy_sink_c::get_bandwidth( size_t chan)
 osmosdr::freq_range_t soapy_sink_c::get_bandwidth_range( size_t chan)
 {
     osmosdr::meta_range_t result;
+    #ifdef SOAPY_SDR_API_HAS_GET_BANDWIDTH_RANGE
+    BOOST_FOREACH(const SoapySDR::Range &r, _device->getBandwidthRange(SOAPY_SDR_TX, 0))
+    {
+        result.push_back(osmosdr::range_t(r.minimum(), r.maximum()));
+    }
+    #else
     BOOST_FOREACH(const double bw, _device->listBandwidths(SOAPY_SDR_TX, 0))
     {
         result.push_back(osmosdr::range_t(bw));
     }
+    #endif
     return result;
 }
 
