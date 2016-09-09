@@ -52,6 +52,7 @@ bladerf_common::bladerf_common() :
   _conv_buf(NULL),
   _conv_buf_size(4096),
   _xb_200_attached(false),
+  _xb_300_attached(false),
   _consecutive_failures(0)
 {
 
@@ -364,6 +365,7 @@ void bladerf_common::init(dict_t &dict, bladerf_module module)
                 << std::endl;
   }
 
+  /* Attach an XB-200 */
   if ( dict.count("xb200") ) {
     if (bladerf_expansion_attach(_dev.get(), BLADERF_XB_200)) {
       std::cerr << _pfx << "Could not attach XB-200" << std::endl;
@@ -391,6 +393,74 @@ void bladerf_common::init(dict_t &dict, bladerf_module module)
       if (bladerf_xb200_set_filterbank(_dev.get(), module, filter)) {
           std::cerr << _pfx << "Could not set XB-200 filter" << std::endl;
       }
+    }
+  }
+
+  /* Attach an XB-300 */
+  if ( dict.count("xb300") ) {
+    if ( dict["xb300"] == "1" ) {
+      if (bladerf_expansion_attach(_dev.get(), BLADERF_XB_300)) {
+        std::cerr << _pfx << "Could not attach XB-300" << std::endl;
+      } else {
+        _xb_300_attached = true;
+        bladerf_xb300_amplifier amp_lna = BLADERF_XB300_AMP_LNA;
+        bladerf_xb300_amplifier amp_pa  = BLADERF_XB300_AMP_PA;
+
+        /* Default configuration: LNA on, PA on */
+        bool amp_lna_status = true;
+        bool amp_pa_status = true;
+
+        /* Allow the XB-300 LNA to be explicitly enabled/disabled */
+        if ( dict.count("xb300_lna") ) {
+          if ( dict["xb300_lna"] == "0" ) {
+            amp_lna_status = false;
+          } else if ( dict["xb300_lna"] == "1" ) {
+            amp_lna_status = true;
+          } else {
+            std::cerr << _pfx << "xb300_lna option not recognized (1=on, 0=off)" << std::endl;
+          }
+        }
+
+        /* Configure XB-300 LNA */
+        if (bladerf_xb300_set_amplifier_enable(_dev.get(), amp_lna, amp_lna_status)) {
+          std::cerr << _pfx << "Could not configure XB-300 LNA" << std::endl;
+        }
+
+        /* Allow the XB-300 PA to be explicitly enabled/disabled */
+        if ( dict.count("xb300_pa") ) {
+          if ( dict["xb300_pa"] == "0" ) {
+            amp_pa_status = false;
+          } else if ( dict["xb300_pa"] == "1" ) {
+            amp_pa_status = true;
+          } else {
+            std::cerr << _pfx << "xb300_pa option not recognized (1=on, 0=off)" << std::endl;
+          }
+        }
+
+        /* Configure XB-300 PA */
+        if (bladerf_xb300_set_amplifier_enable(_dev.get(), amp_pa, amp_pa_status)) {
+          std::cerr << _pfx << "Could not configure XB-300 PA" << std::endl;
+        }
+
+        /* Allow TRX switch to be configured */
+        if ( dict.count("xb300_trx") ) {
+          if ( dict["xb300_trx"] == "rx" ) {
+            if ( bladerf_xb300_set_trx(_dev.get(), BLADERF_XB300_TRX_RX) ) {
+              std::cerr << _pfx << "Could not configure XB-300 TRX switch" << std::endl;
+            }
+          } else if ( dict["xb300_trx"] == "tx" ) {
+            if ( bladerf_xb300_set_trx(_dev.get(), BLADERF_XB300_TRX_TX) ) {
+              std::cerr << _pfx << "Could not configure XB-300 TRX switch" << std::endl;
+            }
+          } else {
+            std::cerr << _pfx << "xb300_trx option not recognized (tx, rx)" << std::endl;
+          }
+        }
+      }
+    } else if ( dict["xb300"] == "0" ) {
+      /* As of libbladeRF v1.7.0, no call exists to explicitly disable an XB300 */
+    } else {
+      std::cerr << _pfx << "xb300 option not recognized (1=enabled, 0=disabled)" << std::endl;
     }
   }
 
