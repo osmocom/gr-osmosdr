@@ -40,6 +40,7 @@
 #include <gnuradio/io_signature.h>
 
 #include "airspy_source_c.h"
+#include "airspy_fir_kernels.h"
 
 #include "arg_helpers.h"
 
@@ -638,12 +639,58 @@ std::string airspy_source_c::get_antenna( size_t chan )
 
 double airspy_source_c::set_bandwidth( double bandwidth, size_t chan )
 {
+  if (bandwidth == 0.f)
+    return get_bandwidth( chan );
+
+  {
+    int     ret;
+    int     decim;
+    int     size;
+    const float  *kernel;
+
+    decim = (int)(_sample_rate / bandwidth);
+//    if (decim < 2)
+//    {
+//      kernel = 0;
+//      size = 0;
+//    }
+//    else
+    if (decim < 4)
+    {
+      kernel = KERNEL_2_80;
+      size = KERNEL_2_80_LEN;
+    }
+    else if (decim < 8)
+    {
+      kernel = KERNEL_4_90;
+      size = KERNEL_4_90_LEN;
+    }
+    else if (decim < 16)
+    {
+      kernel = KERNEL_8_100;
+      size = KERNEL_8_100_LEN;
+    }
+    else
+    {
+      kernel = KERNEL_16_110;
+      size = KERNEL_16_110_LEN;
+    }
+
+    if (size)
+    {
+      std::cout << "  Airspy decim:" << decim
+                << "  kernel size:" << size << std::endl;
+      ret = airspy_set_conversion_filter_float32(_dev, kernel, size);
+      AIRSPY_THROW_ON_ERROR(ret, "Failed to set IQ conversion filter")
+    }
+  }
+
   return get_bandwidth( chan );
 }
 
 double airspy_source_c::get_bandwidth( size_t chan )
 {
-  return 10e6;
+  return _sample_rate;
 }
 
 osmosdr::freq_range_t airspy_source_c::get_bandwidth_range( size_t chan )
