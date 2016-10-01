@@ -344,6 +344,7 @@ rfspace_source_c::rfspace_source_c (const std::string &args)
   }
 
   /* request & print device information */
+  usleep(10000);
 
   std::vector< unsigned char > response;
 
