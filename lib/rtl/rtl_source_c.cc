@@ -661,7 +661,7 @@ double rtl_source_c::set_if_gain(double gain, size_t chan)
           sum += gains[ j + 1 ];
       }
 
-      double err = abs(gain - sum);
+      double err = std::abs(gain - sum);
       if (err < error) {
         error = err;
         gains[ i + 1 ] = g;
