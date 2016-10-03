@@ -475,6 +475,16 @@ rfspace_source_c::rfspace_source_c (const std::string &args)
     set_sample_rate( 240000 );
     set_bandwidth( 0 );
   }
+
+  /* start TCP keepalive thread */
+  if ( RFSPACE_NETSDR == _radio ||
+       RFSPACE_SDR_IP == _radio ||
+       RFSPACE_CLOUDIQ == _radio )
+  {
+    _run_tcp_keepalive_task = true;
+    _thread = gr::thread::thread( boost::bind(&rfspace_source_c::tcp_keepalive_task, this) );
+  }
+
 #if 0
   std::cerr << "sample_rates: " << get_sample_rates().to_pp_string() << std::endl;
   std::cerr << "sample rate: " << (uint32_t)get_sample_rate() << std::endl;
@@ -503,6 +513,12 @@ rfspace_source_c::~rfspace_source_c ()
   {
     _run_usb_read_task = false;
 
+    _thread.join();
+  }
+  else
+  {
+    _run_tcp_keepalive_task = false;
+    _thread.interrupt();
     _thread.join();
   }
 
@@ -580,6 +596,8 @@ bool rfspace_source_c::transaction( const unsigned char *cmd, size_t size,
   }
   else
   {
+    boost::mutex::scoped_lock lock(_tcp_lock);
+
 #ifdef USE_ASIO
     _t.write_some( boost::asio::buffer(cmd, size) );
 
@@ -727,6 +745,22 @@ void rfspace_source_c::usb_read_task()
 
       _resp_avail.notify_one();
     }
+  }
+}
+
+/* send periodic status requests to keep TCP connection alive */
+void rfspace_source_c::tcp_keepalive_task()
+{
+  std::vector< unsigned char > response;
+  unsigned char status_pkt[] = { 0x04, 0x20, 0x05, 0x00 };
+
+  if ( -1 == _tcp )
+    return;
+
+  while ( _run_tcp_keepalive_task )
+  {
+    boost::this_thread::sleep_for(boost::chrono::seconds(60));
+    transaction( status_pkt, sizeof(status_pkt), response );
   }
 }
 

@@ -129,6 +129,7 @@ private: /* functions */
                     std::vector< unsigned char > &response );
 
   void usb_read_task();
+  void tcp_keepalive_task();
 
 private: /* members */
   enum radio_type
@@ -162,6 +163,8 @@ private: /* members */
 
   gr::thread::thread _thread;
   bool _run_usb_read_task;
+  bool _run_tcp_keepalive_task;
+  boost::mutex _tcp_lock;
 
   boost::circular_buffer<gr_complex> *_fifo;
   boost::mutex _fifo_lock;
