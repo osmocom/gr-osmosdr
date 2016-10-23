@@ -38,6 +38,8 @@
 #include <gnuradio/tags.h>
 #include <gnuradio/sync_block.h>
 
+#include <volk/volk.h>
+
 #include "arg_helpers.h"
 #include "bladerf_sink_c.h"
 
@@ -259,10 +261,7 @@ int bladerf_sink_c::work( int noutput_items,
   }
 
   /* Convert floating point samples into fixed point */
-  for (int i = 0; i < 2 * noutput_items;) {
-    _conv_buf[i++] = (int16_t)(scaling * real(*in));
-    _conv_buf[i++] = (int16_t)(scaling * imag(*in++));
-  }
+  volk_32f_s32f_convert_16i(_conv_buf, (float*)in, scaling, 2 * noutput_items);
 
   if (_use_metadata) {
     ret = transmit_with_tags(noutput_items);

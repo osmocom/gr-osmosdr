@@ -36,6 +36,8 @@
 
 #include <gnuradio/io_signature.h>
 
+#include <volk/volk.h>
+
 #include "arg_helpers.h"
 #include "bladerf_source_c.h"
 #include "osmosdr/source.h"
@@ -139,8 +141,7 @@ int bladerf_source_c::work( int noutput_items,
                             gr_vector_void_star &output_items )
 {
   int ret;
-  int16_t *current;
-  const float scaling = 1.0f / 2048.0f;
+  const float scaling = 2048.0f;
   gr_complex *out = static_cast<gr_complex *>(output_items[0]);
   struct bladerf_metadata meta;
   struct bladerf_metadata *meta_ptr = NULL;
@@ -183,20 +184,8 @@ int bladerf_source_c::work( int noutput_items,
       _consecutive_failures = 0;
   }
 
-  current = _conv_buf;
-
   /* Convert them from fixed to floating point */
-  for (int i = 0; i < noutput_items; ++i) {
-    float x, y;
-
-    x = scaling * *current;
-    current++;
-
-    y = scaling * *current;
-    current++;
-
-    out[i] = gr_complex(x, y) ;
-  }
+  volk_16i_s32f_convert_32f((float*)out, _conv_buf, scaling, 2*noutput_items);
 
   return noutput_items;
 }
