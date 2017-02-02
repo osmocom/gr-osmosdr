@@ -27,6 +27,7 @@ include_directories(
 )
 
 set(soapy_srcs
+    ${CMAKE_CURRENT_SOURCE_DIR}/soapy_common.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/soapy_source_c.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/soapy_sink_c.cc
 )

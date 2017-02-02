@@ -1,6 +1,6 @@
 /* -*- c++ -*- */
 /*
- * Copyright 2015-2016 Josh Blum <josh@joshknows.com>
+ * Copyright 2015-2017 Josh Blum <josh@joshknows.com>
  * Copyright 2013 Dimitri Stolnikov <horiz0n@gmx.net>
  *
  * GNU Radio is free software; you can redistribute it and/or modify
@@ -38,13 +38,12 @@
 
 #include "arg_helpers.h"
 #include "soapy_source_c.h"
+#include "soapy_common.h"
 #include "osmosdr/source.h"
 #include <SoapySDR/Device.hpp>
 #include <SoapySDR/Version.hpp>
 
 using namespace boost::assign;
-
-boost::mutex &get_soapy_maker_mutex(void);
 
 /*
  * Create a new instance of soapy_source_c and return
@@ -182,14 +181,14 @@ std::vector<std::string> soapy_source_c::get_gain_names( size_t chan )
 osmosdr::gain_range_t soapy_source_c::get_gain_range( size_t chan )
 {
     SoapySDR::Range r = _device->getGainRange(SOAPY_SDR_RX, chan);
-    return osmosdr::gain_range_t(r.minimum(), r.maximum(), 1.0);
+    return soapy_range_to_gain_range(r);
 }
 
 osmosdr::gain_range_t soapy_source_c::get_gain_range( const std::string & name,
                                                 size_t chan )
 {
     SoapySDR::Range r = _device->getGainRange(SOAPY_SDR_RX, chan, name);
-    return osmosdr::gain_range_t(r.minimum(), r.maximum(), 1.0);
+    return soapy_range_to_gain_range(r);
 }
 
 bool soapy_source_c::set_gain_mode( bool automatic, size_t chan )
