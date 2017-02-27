@@ -56,17 +56,18 @@ using namespace boost::assign;
 
 #define BYTES_PER_SAMPLE  2 /* HackRF device consumes 8 bit unsigned IQ data */
 
-#define HACKRF_FORMAT_ERROR(ret) \
-  boost::str( boost::format("(%d) %s") \
-    % ret % hackrf_error_name((enum hackrf_error)ret) ) \
+#define HACKRF_FORMAT_ERROR(ret, msg) \
+  boost::str( boost::format(msg " (%1%) %2%") \
+    % ret % hackrf_error_name((enum hackrf_error)ret) )
 
 #define HACKRF_THROW_ON_ERROR(ret, msg) \
-  if ( ret != HACKRF_SUCCESS )  \
-  throw std::runtime_error( boost::str( boost::format(msg " (%d) %s") \
-      % ret % hackrf_error_name((enum hackrf_error)ret) ) );
+  if ( ret != HACKRF_SUCCESS ) \
+  { \
+    throw std::runtime_error( HACKRF_FORMAT_ERROR(ret, msg) ); \
+  }
 
 #define HACKRF_FUNC_STR(func, arg) \
-  boost::str(boost::format(func "(%d)") % arg) + " has failed"
+  boost::str(boost::format(func "(%1%)") % arg) + " has failed"
 
 static inline bool cb_init(circular_buffer_t *cb, size_t capacity, size_t sz)
 {
@@ -235,7 +236,7 @@ hackrf_sink_c::hackrf_sink_c (const std::string &args)
     ret = hackrf_set_antenna_enable(_dev, static_cast<uint8_t>(bias));
     if ( ret != HACKRF_SUCCESS )
     {
-      std::cerr << "Failed to apply antenna bias voltage state: " << bias << " " << HACKRF_FORMAT_ERROR(ret) << std::endl;
+      std::cerr << "Failed to apply antenna bias voltage state: " << bias << HACKRF_FORMAT_ERROR(ret, "") << std::endl;
     }
     else
     {
@@ -261,9 +262,15 @@ hackrf_sink_c::~hackrf_sink_c ()
   if (_dev) {
 //    _thread.join();
     int ret = hackrf_stop_tx( _dev );
-    HACKRF_THROW_ON_ERROR(ret, "Failed to stop TX streaming")
+    if ( ret != HACKRF_SUCCESS )
+    {
+      std::cerr << HACKRF_FORMAT_ERROR(ret, "Failed to stop TX streaming") << std::endl;
+    }
     ret = hackrf_close( _dev );
-    HACKRF_THROW_ON_ERROR(ret, "Failed to close HackRF")
+    if ( ret != HACKRF_SUCCESS )
+    {
+      std::cerr << HACKRF_FORMAT_ERROR(ret, "Failed to close HackRF") << std::endl;
+    }
     _dev = NULL;
 
     {
