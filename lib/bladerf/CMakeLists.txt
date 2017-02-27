@@ -24,6 +24,7 @@
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${LIBBLADERF_INCLUDE_DIRS}
+    ${VOLK_INCLUDE_DIRS}
 )
 
 set(bladerf_srcs
@@ -36,4 +37,4 @@ set(bladerf_srcs
 # Append gnuradio-osmosdr library sources
 ########################################################################
 list(APPEND gr_osmosdr_srcs ${bladerf_srcs})
-list(APPEND gr_osmosdr_libs ${LIBBLADERF_LIBRARIES})
+list(APPEND gr_osmosdr_libs ${LIBBLADERF_LIBRARIES} ${VOLK_LIBRARIES})
