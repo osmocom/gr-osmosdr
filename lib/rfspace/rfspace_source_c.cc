@@ -343,8 +343,10 @@ rfspace_source_c::rfspace_source_c (const std::string &args)
 
   }
 
+  /* Wait 10 ms before sending queries to device (required for networked radios). */
+  boost::this_thread::sleep_for(boost::chrono::milliseconds(10));
+
   /* request & print device information */
-  usleep(10000);
 
   std::vector< unsigned char > response;
 
