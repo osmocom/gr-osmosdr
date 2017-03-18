@@ -172,15 +172,8 @@ rtl_source_c::rtl_source_c (const std::string &args)
   _samp_avail = _buf_len / BYTES_PER_SAMPLE;
 
   // create a lookup table for gr_complex values
-  for (unsigned int i = 0; i <= 0xffff; i++) {
-#ifdef BOOST_LITTLE_ENDIAN
-    _lut.push_back( gr_complex( (float(i & 0xff) - 127.4f) * (1.0f/128.0f),
-                                (float(i >> 8) - 127.4f) * (1.0f/128.0f) ) );
-#else // BOOST_BIG_ENDIAN
-    _lut.push_back( gr_complex( (float(i >> 8) - 127.4f) * (1.0f/128.0f),
-                                (float(i & 0xff) - 127.4f) * (1.0f/128.0f) ) );
-#endif
-  }
+  for (unsigned int i = 0; i < 0x100; i++)
+    _lut.push_back((i - 127.4f) / 128.0f);
 
   _dev = NULL;
   ret = rtlsdr_open( &_dev, dev_index );
@@ -230,11 +223,11 @@ rtl_source_c::rtl_source_c (const std::string &args)
 
   set_if_gain( 24 ); /* preset to a reasonable default (non-GRC use case) */
 
-  _buf = (unsigned short **) malloc(_buf_num * sizeof(unsigned short *));
+  _buf = (unsigned char **)malloc(_buf_num * sizeof(unsigned char *));
 
   if (_buf) {
     for(unsigned int i = 0; i < _buf_num; ++i)
-      _buf[i] = (unsigned short *) malloc(_buf_len);
+      _buf[i] = (unsigned char *)malloc(_buf_len);
   }
 }
 
@@ -348,10 +341,10 @@ int rtl_source_c::work( int noutput_items,
 
   while (noutput_items && _buf_used) {
     const int nout = std::min(noutput_items, _samp_avail);
-    const unsigned short *buf = _buf[_buf_head] + _buf_offset;
+    const unsigned char *buf = _buf[_buf_head] + _buf_offset * 2;
 
     for (int i = 0; i < nout; ++i)
-      *out++ = _lut[ *(buf + i) ];
+      *out++ = gr_complex(_lut[buf[i * 2]], _lut[buf[i * 2 + 1]]);
 
     noutput_items -= nout;
     _samp_avail -= nout;

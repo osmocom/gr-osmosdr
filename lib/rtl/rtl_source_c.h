@@ -122,11 +122,11 @@ private:
   static void _rtlsdr_wait(rtl_source_c *obj);
   void rtlsdr_wait();
 
-  std::vector<gr_complex> _lut;
+  std::vector<float> _lut;
 
   rtlsdr_dev_t *_dev;
   gr::thread::thread _thread;
-  unsigned short **_buf;
+  unsigned char **_buf;
   unsigned int _buf_num;
   unsigned int _buf_len;
   unsigned int _buf_head;
