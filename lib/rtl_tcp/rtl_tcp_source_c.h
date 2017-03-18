@@ -1,4 +1,4 @@
-/* -*- c++ -*- */
+/* -*- mode: c++; c-basic-offset: 2 -*- */
 /*
  * Copyright 2012 Dimitri Stolnikov <horiz0n@gmx.net>
  *
@@ -20,11 +20,9 @@
 #ifndef RTL_TCP_SOURCE_C_H
 #define RTL_TCP_SOURCE_C_H
 
-#include <gnuradio/hier_block2.h>
+#include <gnuradio/sync_block.h>
 
 #include "source_iface.h"
-
-#include "rtl_tcp_source_f.h"
 
 class rtl_tcp_source_c;
 
@@ -33,16 +31,32 @@ typedef boost::shared_ptr< rtl_tcp_source_c > rtl_tcp_source_c_sptr;
 rtl_tcp_source_c_sptr make_rtl_tcp_source_c( const std::string & args = "" );
 
 class rtl_tcp_source_c :
-    public gr::hier_block2,
+    public gr::sync_block,
     public source_iface
 {
 private:
+  /* copied from rtl sdr */
+  enum rtlsdr_tuner {
+    RTLSDR_TUNER_UNKNOWN = 0,
+    RTLSDR_TUNER_E4000,
+    RTLSDR_TUNER_FC0012,
+    RTLSDR_TUNER_FC0013,
+    RTLSDR_TUNER_FC2580,
+    RTLSDR_TUNER_R820T,
+    RTLSDR_TUNER_R828D
+  };
+
   friend rtl_tcp_source_c_sptr make_rtl_tcp_source_c(const std::string &args);
 
   rtl_tcp_source_c(const std::string &args);
+  const char * get_tuner_name(void);
 
 public:
   ~rtl_tcp_source_c();
+
+  int work(int noutput_items,
+	   gr_vector_const_void_star &input_items,
+	   gr_vector_void_star &output_items);
 
   std::string name();
 
@@ -77,11 +91,17 @@ public:
   std::string get_antenna( size_t chan = 0 );
 
 private:
+  int d_socket;		  // handle to socket
   double _freq, _rate, _gain, _corr;
   bool _no_tuner;
   bool _auto_gain;
   double _if_gain;
-  rtl_tcp_source_f_sptr _src;
+
+  enum rtlsdr_tuner d_tuner_type;
+  unsigned int d_tuner_gain_count;
+  unsigned int d_tuner_if_gain_count;
+  unsigned char *d_temp_buff; // hold buffer between calls
+  float *d_LUT;
 };
 
 #endif // RTL_TCP_SOURCE_C_H

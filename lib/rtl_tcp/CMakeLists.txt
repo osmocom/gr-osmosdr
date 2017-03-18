@@ -26,7 +26,6 @@ include_directories(
 )
 
 set(rtl_tcp_srcs
-    ${CMAKE_CURRENT_SOURCE_DIR}/rtl_tcp_source_f.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/rtl_tcp_source_c.cc
 )
 
