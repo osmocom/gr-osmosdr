@@ -47,6 +47,9 @@
 #ifdef ENABLE_REDPITAYA
 #include "redpitaya_sink_c.h"
 #endif
+#ifdef ENABLE_FREESRP
+#include <freesrp_sink_c.h>
+#endif
 #ifdef ENABLE_FILE
 #include "file_sink_c.h"
 #endif
@@ -99,6 +102,9 @@ sink_impl::sink_impl( const std::string &args )
 #ifdef ENABLE_REDPITAYA
   dev_types.push_back("redpitaya");
 #endif
+#ifdef ENABLE_FREESRP
+  dev_types.push_back("freesrp");
+#endif
 #ifdef ENABLE_FILE
   dev_types.push_back("file");
 #endif
@@ -143,6 +149,10 @@ sink_impl::sink_impl( const std::string &args )
 #endif
 #ifdef ENABLE_REDPITAYA
     BOOST_FOREACH( std::string dev, redpitaya_sink_c::get_devices() )
+      dev_list.push_back( dev );
+#endif
+#ifdef ENABLE_FREESRP
+    BOOST_FOREACH( std::string dev, freesrp_sink_c::get_devices() )
       dev_list.push_back( dev );
 #endif
 #ifdef ENABLE_FILE
@@ -198,6 +208,12 @@ sink_impl::sink_impl( const std::string &args )
 #ifdef ENABLE_REDPITAYA
     if ( dict.count("redpitaya") ) {
       redpitaya_sink_c_sptr sink = make_redpitaya_sink_c( arg );
+      block = sink; iface = sink.get();
+    }
+#endif
+#ifdef ENABLE_FREESRP
+    if ( dict.count("freesrp") ) {
+      freesrp_sink_c_sptr sink = make_freesrp_sink_c( arg );
       block = sink; iface = sink.get();
     }
 #endif
