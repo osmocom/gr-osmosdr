@@ -172,22 +172,30 @@ double soapy_source_c::get_center_freq( size_t chan )
 
 double soapy_source_c::set_freq_corr( double ppm, size_t chan )
 {
+    #ifdef SOAPY_SDR_API_HAS_FREQUENCY_CORRECTION_API
+    _device->setFrequencyCorrection(SOAPY_SDR_RX, chan, ppm);
+    #else
     std::vector<std::string> components = _device->listFrequencies(SOAPY_SDR_RX, chan);
     if (std::find(components.begin(), components.end(), "COOR") != components.end())
     {
         _device->setFrequency(SOAPY_SDR_RX, chan, "CORR", ppm);
     }
+    #endif
     return this->get_freq_corr(chan);
 }
 
 double soapy_source_c::get_freq_corr( size_t chan )
 {
+    #ifdef SOAPY_SDR_API_HAS_FREQUENCY_CORRECTION_API
+    return _device->getFrequencyCorrection(SOAPY_SDR_RX, chan);
+    #else
     std::vector<std::string> components = _device->listFrequencies(SOAPY_SDR_RX, chan);
     if (std::find(components.begin(), components.end(), "COOR") != components.end())
     {
         return _device->getFrequency(SOAPY_SDR_RX, chan, "CORR");
     }
     return 0.0;
+    #endif
 }
 
 std::vector<std::string> soapy_source_c::get_gain_names( size_t chan )
