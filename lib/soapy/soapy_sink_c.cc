@@ -123,10 +123,17 @@ size_t soapy_sink_c::get_num_channels( void )
 osmosdr::meta_range_t soapy_sink_c::get_sample_rates( void )
 {
     osmosdr::meta_range_t result;
+    #ifdef SOAPY_SDR_API_HAS_GET_SAMPLE_RATE_RANGE
+    BOOST_FOREACH(const SoapySDR::Range &r, _device->getSampleRateRange(SOAPY_SDR_TX, 0))
+    {
+        result.push_back(osmosdr::range_t(r.minimum(), r.maximum()));
+    }
+    #else
     BOOST_FOREACH(const double rate, _device->listSampleRates(SOAPY_SDR_TX, 0))
     {
         result.push_back(osmosdr::range_t(rate));
     }
+    #endif
     return result;
 }
 
