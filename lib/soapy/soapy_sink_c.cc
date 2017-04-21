@@ -175,7 +175,7 @@ double soapy_sink_c::set_freq_corr( double ppm, size_t chan)
     _device->setFrequencyCorrection(SOAPY_SDR_TX, chan, ppm);
     #else
     std::vector<std::string> components = _device->listFrequencies(SOAPY_SDR_TX, chan);
-    if (std::find(components.begin(), components.end(), "COOR") != components.end())
+    if (std::find(components.begin(), components.end(), "CORR") != components.end())
     {
         _device->setFrequency(SOAPY_SDR_TX, chan, "CORR", ppm);
     }
@@ -189,7 +189,7 @@ double soapy_sink_c::get_freq_corr( size_t chan)
     return _device->getFrequencyCorrection(SOAPY_SDR_TX, chan);
     #else
     std::vector<std::string> components = _device->listFrequencies(SOAPY_SDR_TX, chan);
-    if (std::find(components.begin(), components.end(), "COOR") != components.end())
+    if (std::find(components.begin(), components.end(), "CORR") != components.end())
     {
         return _device->getFrequency(SOAPY_SDR_TX, chan, "CORR");
     }
