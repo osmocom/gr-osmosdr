@@ -116,18 +116,18 @@ vector<string> freesrp_common::get_devices()
 {
     vector<string> devices;
 
-    try
-    {
-        ::FreeSRP::FreeSRP srp;
+    vector<string> serial_numbers = ::FreeSRP::FreeSRP::list_connected();
 
-        string str;
-        str = "freesrp=0,label='FreeSRP'";
+    int index = 0;
 
-        devices.push_back(str);
-    }
-    catch(const ConnectionError &err)
+    for(string &serial : serial_numbers)
     {
-        // No FreeSRP found.
+	index++;
+
+	string str;
+	str = "freesrp=" + serial + ",label='FreeSRP " + to_string(index) + "'";
+
+	devices.push_back(str);
     }
 
     return devices;
