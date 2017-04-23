@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<block>
+	<name>WX Osmocom Sink/Source Gain Panel</name>
+	<key>osmosdr_wx_gain_panel</key>
+	<import>import osmosdr</import>
+	<make>#set $parent = $notebook() and 'self.%s.GetPage(%s)'%$notebook() or 'self'
+#set $win = '_%s_gain_panel'%$id
+$win = osmosdr.wx_gain_panel($(parent).GetWin(), self.$osmoobj)
+#if not $grid_pos()
+$(parent).Add($win)
+#else
+$(parent).GridAdd($win, $(', '.join(map(str, $grid_pos()))))
+#end if</make>
+	<param>
+		<name>Osmocom Sink/Source object</name>
+		<key>osmoobj</key>
+		<type>id</type>
+	</param>
+	<param>
+		<name>Grid Position</name>
+		<key>grid_pos</key>
+		<value></value>
+		<type>grid_pos</type>
+	</param>
+	<param>
+		<name>Notebook</name>
+		<key>notebook</key>
+		<value></value>
+		<type>notebook</type>
+	</param>
+	<doc>
+WRITE DOC !
+	</doc>
+</block>

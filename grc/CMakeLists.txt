@@ -40,6 +40,7 @@ add_custom_target(osmosdr_grc_xml_blocks ALL DEPENDS ${xml_blocks})
 
 install(FILES
     ${xml_blocks}
+    wx_gain_panel.xml
 #    DESTINATION ${GRC_BLOCKS_DIR}
     DESTINATION share/gnuradio/grc/blocks
 )

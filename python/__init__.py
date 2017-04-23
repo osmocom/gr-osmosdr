@@ -25,5 +25,5 @@ This is the GNU Radio OsmoSDR module.
 # import swig generated symbols into the osmosdr namespace
 from osmosdr_swig import *
 
-# import any pure python here
-#
+# import pure python here
+from .wx_gain_panel import wx_gain_panel
