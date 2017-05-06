@@ -1,5 +1,5 @@
 While primarily being developed for the OsmoSDR hardware, this block
-as well supports:
+also supports:
 
  * FUNcube Dongle through libgnuradio-fcd
  * FUNcube Dongle Pro+ through gr-fcdproplus
@@ -30,7 +30,7 @@ For the impatient :) a short excerpt:
 The Gnu Radio block requires a recent gnuradio (>= v3.7) to be installed.
 
 Before building the block you have to make sure that all the dependencies
-(see list of supported devices above) you are intend to work with are
+(see list of supported devices above) you intend to work with are
 properly installed. The build system of gr-osmosdr will recognize them and
 enable specific source/sink components thereafter.
 

@@ -32,6 +32,8 @@
 
 #include "source_iface.h"
 
+#include "hackrf_open.h"
+
 class hackrf_source_c;
 
 /*
