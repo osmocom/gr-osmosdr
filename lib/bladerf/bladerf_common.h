@@ -98,6 +98,7 @@ protected:
   std::string _pfx;
 
   bool _xb_200_attached;
+  bool _xb_300_attached;
   unsigned int _consecutive_failures;
 
   /* BladeRF IQ correction parameters */
