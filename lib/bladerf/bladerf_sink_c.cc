@@ -67,11 +67,11 @@ bladerf_sink_c_sptr make_bladerf_sink_c (const std::string &args)
  * (2nd & 3rd args to gr_block's constructor).  The input and
  * output signatures are used by the runtime system to
  * check that a valid number and type of inputs and outputs
- * are connected to this block.  In this case, we accept
- * only 0 input and 1 output.
+ * are connected to this block.  In this case, we accept either
+ * 1 or 2 inputs.
  */
 static const int MIN_IN = 1;   // mininum number of input streams
-static const int MAX_IN = 1;   // maximum number of input streams
+static const int MAX_IN = 2;   // maximum number of input streams
 static const int MIN_OUT = 0;  // minimum number of output streams
 static const int MAX_OUT = 0;  // maximum number of output streams
 
@@ -87,13 +87,6 @@ bladerf_sink_c::bladerf_sink_c (const std::string &args)
 
   /* Perform src/sink agnostic initializations */
   init(dict, BLADERF_MODULE_TX);
-
-  /* Set the range of VGA1, VGA1GAINT[7:0] */
-  _vga1_range = osmosdr::gain_range_t( -35, -4, 1 );
-
-  /* Set the range of VGA2, VGA2GAIN[4:0] */
-  _vga2_range = osmosdr::gain_range_t( 0, 25, 1 );
-
 }
 
 bool bladerf_sink_c::start()
@@ -297,8 +290,7 @@ std::vector<std::string> bladerf_sink_c::get_devices()
 
 size_t bladerf_sink_c::get_num_channels()
 {
-  /* We only support a single channel for each bladeRF */
-  return 1;
+  return bladerf_common::get_num_channels(BLADERF_MODULE_RX);
 }
 
 osmosdr::meta_range_t bladerf_sink_c::get_sample_rates()
@@ -316,45 +308,19 @@ double bladerf_sink_c::get_sample_rate()
   return bladerf_common::get_sample_rate(BLADERF_MODULE_TX);
 }
 
-osmosdr::freq_range_t bladerf_sink_c::get_freq_range( size_t chan )
+osmosdr::freq_range_t bladerf_sink_c::get_freq_range(size_t chan)
 {
-  return freq_range();
+  return bladerf_common::get_freq_range(chan);
 }
 
-double bladerf_sink_c::set_center_freq( double freq, size_t chan )
+double bladerf_sink_c::set_center_freq(double freq, size_t chan)
 {
-  int ret;
-
-  /* Check frequency range */
-  if( freq < get_freq_range( chan ).start() ||
-      freq > get_freq_range( chan ).stop() ) {
-    std::cerr << "Failed to set out of bound frequency: " << freq << std::endl;
-  } else {
-    ret = bladerf_set_frequency( _dev.get(), BLADERF_MODULE_TX, (uint32_t)freq );
-    if( ret ) {
-      throw std::runtime_error( std::string(__FUNCTION__) + " " +
-                                "Failed to set center frequency " +
-                                boost::lexical_cast<std::string>(freq) +
-                                ":" + std::string(bladerf_strerror(ret)));
-    }
-  }
-
-  return get_center_freq( chan );
+  return bladerf_common::set_center_freq(freq, chan);
 }
 
-double bladerf_sink_c::get_center_freq( size_t chan )
+double bladerf_sink_c::get_center_freq(size_t chan)
 {
-  uint32_t freq;
-  int ret;
-
-  ret = bladerf_get_frequency( _dev.get(), BLADERF_MODULE_TX, &freq );
-  if( ret ) {
-    throw std::runtime_error( std::string(__FUNCTION__) + " " +
-                              "Failed to get center frequency:" +
-                              std::string(bladerf_strerror(ret)));
-  }
-
-  return (double)freq;
+  return bladerf_common::get_center_freq(chan);
 }
 
 double bladerf_sink_c::set_freq_corr( double ppm, size_t chan )
@@ -371,114 +337,52 @@ double bladerf_sink_c::get_freq_corr( size_t chan )
 
 std::vector<std::string> bladerf_sink_c::get_gain_names( size_t chan )
 {
-  std::vector< std::string > names;
-
-  names += "VGA1", "VGA2";
-
-  return names;
+  return bladerf_common::get_gain_names(chan);
 }
 
 osmosdr::gain_range_t bladerf_sink_c::get_gain_range( size_t chan )
 {
-  /* TODO: This is an overall system gain range. Given the VGA1 and VGA2
-  how much total gain can we have in the system */
-  return get_gain_range( "VGA2", chan ); /* we use only VGA2 here for now */
+  return bladerf_common::get_gain_range(chan);
 }
 
 osmosdr::gain_range_t bladerf_sink_c::get_gain_range( const std::string & name, size_t chan )
 {
-  osmosdr::gain_range_t range;
-
-  if( name == "VGA1" ) {
-    range = _vga1_range;
-  } else if( name == "VGA2" ) {
-    range = _vga2_range;
-  } else {
-    throw std::runtime_error( std::string(__FUNCTION__) + " " +
-                              "Requested an invalid gain element " + name );
-  }
-
-  return range;
+  return bladerf_common::get_gain_range(name, chan);
 }
 
 bool bladerf_sink_c::set_gain_mode( bool automatic, size_t chan )
 {
-  return false;
+  return bladerf_common::set_gain_mode(automatic, chan);
 }
 
 bool bladerf_sink_c::get_gain_mode( size_t chan )
 {
-  return false;
+  return bladerf_common::get_gain_mode(chan);
 }
 
 double bladerf_sink_c::set_gain( double gain, size_t chan )
 {
-  return set_gain( gain, "VGA2", chan ); /* we use only VGA2 here for now */
+  return bladerf_common::set_gain(gain, chan);
 }
 
 double bladerf_sink_c::set_gain( double gain, const std::string & name, size_t chan)
 {
-  int ret = 0;
-
-  if( name == "VGA1" ) {
-    ret = bladerf_set_txvga1( _dev.get(), (int)gain );
-  } else if( name == "VGA2" ) {
-    ret = bladerf_set_txvga2( _dev.get(), (int)gain );
-  } else {
-    throw std::runtime_error( std::string(__FUNCTION__) + " " +
-                              "Requested to set the gain " +
-                              "of an unknown gain element " + name );
-  }
-
-  /* Check for errors */
-  if( ret ) {
-    throw std::runtime_error(std::string(__FUNCTION__) + " " +
-                             "Could not set " + name + " gain, error " +
-                             std::string(bladerf_strerror(ret)));
-  }
-
-  return get_gain( name, chan );
+  return bladerf_common::set_gain(gain, name, chan);
 }
 
 double bladerf_sink_c::get_gain( size_t chan )
 {
-  return get_gain( "VGA2", chan ); /* we use only VGA2 here for now */
+  return bladerf_common::get_gain(chan);
 }
 
 double bladerf_sink_c::get_gain( const std::string & name, size_t chan )
 {
-  int g;
-  int ret = 0;
-
-  if( name == "VGA1" ) {
-    ret = bladerf_get_txvga1( _dev.get(), &g );
-  } else if( name == "VGA2" ) {
-    ret = bladerf_get_txvga2( _dev.get(), &g );
-  } else {
-    throw std::runtime_error( std::string(__FUNCTION__) + " " +
-                              "Requested to get the gain " +
-                              "of an unknown gain element " + name );
-  }
-
-  /* Check for errors */
-  if( ret ) {
-    throw std::runtime_error( std::string(__FUNCTION__) + " " +
-                              "Could not get " + name + " gain, error " +
-                              std::string(bladerf_strerror(ret)));
-  }
-
-  return (double)g;
+  return bladerf_common::get_gain(name, chan);
 }
 
 double bladerf_sink_c::set_bb_gain( double gain, size_t chan )
 {
-  /* for TX, only VGA1 is in the BB path */
-  osmosdr::gain_range_t bb_gains = get_gain_range( "VGA1", chan );
-
-  double clip_gain = bb_gains.clip( gain, true );
-  gain = set_gain( clip_gain, "VGA1", chan );
-
-  return gain;
+  return bladerf_common::set_bb_gain(gain, chan);
 }
 
 std::vector< std::string > bladerf_sink_c::get_antennas( size_t chan )

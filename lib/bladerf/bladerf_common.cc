@@ -48,6 +48,10 @@ using namespace boost::assign;
 boost::mutex bladerf_common::_devs_mutex;
 std::list<boost::weak_ptr<struct bladerf> > bladerf_common::_devs;
 
+// name of system-wide gain
+//(internal only, doesn't match any libbladeRF gain stage)
+static const char* SYSTEM_GAIN_NAME = "System";
+
 bladerf_common::bladerf_common() :
   _conv_buf(NULL),
   _conv_buf_size(4096),
@@ -105,6 +109,7 @@ bladerf_sptr bladerf_common::open(const std::string &device_name)
   int rv;
   struct bladerf *raw_dev;
   struct bladerf_devinfo devinfo;
+  std::string boardname;
 
   boost::unique_lock<boost::mutex> lock(_devs_mutex);
 
@@ -127,6 +132,18 @@ bladerf_sptr bladerf_common::open(const std::string &device_name)
 
   _devs.push_back(boost::weak_ptr<struct bladerf>(dev));
 
+  // TODO: This does NOT get called if early cached_dev return occurs
+  boardname = std::string(bladerf_get_board_name(raw_dev));
+
+  if( "bladerf1" == boardname ) {
+    _boardtype = BLADERF_REV_1;
+  } else if( "bladerf2" == boardname ) {
+    _boardtype = BLADERF_REV_2;
+  } else {
+    std::cerr << "board name \"" << boardname << "\" unknown" << std::endl;
+    _boardtype = BLADERF_REV_INVALID;
+  };
+
   return dev;
 }
 
@@ -135,6 +152,7 @@ void bladerf_common::set_loopback_mode(const std::string &loopback)
     bladerf_loopback mode;
     int status;
 
+    // TODO: update for bladeRF 2
     if (loopback == "bb_txlpf_rxvga2") {
         mode = BLADERF_LB_BB_TXLPF_RXVGA2;
     } else if (loopback == "bb_txlpf_rxlpf") {
@@ -191,14 +209,30 @@ bool bladerf_common::start(bladerf_module module)
 {
   int ret;
   bladerf_format format;
+  bladerf_channel_layout layout;
+  bladerf_direction direction;
 
   if (_use_metadata) {
-      format = BLADERF_FORMAT_SC16_Q11_META;
+    format = BLADERF_FORMAT_SC16_Q11_META;
   } else {
-      format = BLADERF_FORMAT_SC16_Q11;
+    format = BLADERF_FORMAT_SC16_Q11;
   }
 
-  ret = bladerf_sync_config(_dev.get(), module, format,
+  // TODO: DRY
+  // TODO: MIMO
+  if (BLADERF_MODULE_RX == module) {
+    layout = BLADERF_RX_X1;
+    direction = BLADERF_RX;
+  } else if (BLADERF_MODULE_TX == module) {
+    layout = BLADERF_TX_X1;
+    direction = BLADERF_TX;
+  } else {
+    std::cerr << _pfx << "invalid module: "
+              << module << std::endl;
+    return false;
+  }
+
+  ret = bladerf_sync_config(_dev.get(), layout, format,
                             _num_buffers, _samples_per_buffer,
                             _num_transfers, _stream_timeout_ms);
 
@@ -208,7 +242,7 @@ bool bladerf_common::start(bladerf_module module)
     return false;
   }
 
-  ret = bladerf_enable_module(_dev.get(), module, true);
+  ret = bladerf_enable_module(_dev.get(), direction, true);
   if ( ret != 0 ) {
     std::cerr << _pfx << "bladerf_enable_module failed: "
               << bladerf_strerror(ret) << std::endl;
@@ -221,8 +255,21 @@ bool bladerf_common::start(bladerf_module module)
 bool bladerf_common::stop(bladerf_module module)
 {
   int ret;
+  bladerf_direction direction;
 
-  ret = bladerf_enable_module(_dev.get(), module, false);
+  // TODO: DRY
+  // TODO: MIMO
+  if (BLADERF_MODULE_RX == module) {
+    direction = BLADERF_RX;
+  } else if (BLADERF_MODULE_TX == module) {
+    direction = BLADERF_TX;
+  } else {
+    std::cerr << _pfx << "invalid module: "
+              << module << std::endl;
+    return false;
+  }
+
+  ret = bladerf_enable_module(_dev.get(), direction, false);
 
   if ( ret != 0 ) {
     std::cerr << _pfx << "bladerf_enable_modue failed: "
@@ -491,20 +538,40 @@ void bladerf_common::init(dict_t &dict, bladerf_module module)
   }
 }
 
-osmosdr::freq_range_t bladerf_common::freq_range()
+osmosdr::freq_range_t bladerf_common::freq_range(bladerf_channel chan)
 {
-  /* assuming the same for RX & TX */
-  return osmosdr::freq_range_t( _xb_200_attached ? 0 : 280e6,  BLADERF_FREQUENCY_MAX );
+  struct bladerf_range brf_range;
+  int ret;
+
+  ret = bladerf_get_frequency_range( _dev.get(), chan, &brf_range );
+
+  if( ret ) {
+    throw std::runtime_error( std::string(__FUNCTION__) + " " +
+                              "bladerf_get_frequency_range returned " +
+                              boost::lexical_cast<std::string>(ret) );
+  } else {
+    return osmosdr::freq_range_t((double)brf_range.min, (double)brf_range.max, (double)brf_range.step);
+  };
 }
 
 osmosdr::meta_range_t bladerf_common::sample_rates()
 {
   osmosdr::meta_range_t sample_rates;
+  bladerf_range brf_sample_rates;
+  int ret;
 
   /* assuming the same for RX & TX */
-  sample_rates += osmosdr::range_t( 160e3, 200e3, 40e3 );
-  sample_rates += osmosdr::range_t( 300e3, 900e3, 100e3 );
-  sample_rates += osmosdr::range_t( 1e6, 40e6, 1e6 );
+  ret = bladerf_get_sample_rate_range( _dev.get(), BLADERF_CHANNEL_RX(0), &brf_sample_rates );
+
+  if( ret ) {
+    throw std::runtime_error( std::string(__FUNCTION__) + " " +
+                              "bladerf_get_sample_rate_range returned " +
+                              boost::lexical_cast<std::string>(ret) );
+  }
+
+  sample_rates += osmosdr::range_t( brf_sample_rates.min, brf_sample_rates.max/4.0, brf_sample_rates.max/16.0 );
+  sample_rates += osmosdr::range_t( brf_sample_rates.max/4.0, brf_sample_rates.max/2.0, brf_sample_rates.max/8.0 );
+  sample_rates += osmosdr::range_t( brf_sample_rates.max/2.0, brf_sample_rates.max, brf_sample_rates.max/4.0 );
 
   return sample_rates;
 }
@@ -513,14 +580,18 @@ osmosdr::freq_range_t bladerf_common::filter_bandwidths()
 {
   /* the same for RX & TX according to the datasheet */
   osmosdr::freq_range_t bandwidths;
+  bladerf_range brf_range;
+  int ret;
 
-  std::vector<double> half_bandwidths; /* in MHz */
-  half_bandwidths += \
-      0.75, 0.875, 1.25, 1.375, 1.5, 1.92, 2.5,
-      2.75, 3, 3.5, 4.375, 5, 6, 7, 10, 14;
+  ret = bladerf_get_bandwidth_range( _dev.get(), BLADERF_CHANNEL_RX(0), &brf_range );
 
-  BOOST_FOREACH( double half_bw, half_bandwidths )
-    bandwidths += osmosdr::range_t( half_bw * 2e6 );
+  if( ret ) {
+    throw std::runtime_error( std::string(__FUNCTION__) + " " +
+                              "bladerf_get_bandwidth_range returned " +
+                              boost::lexical_cast<std::string>(ret) );
+  }
+
+  bandwidths += osmosdr::range_t(brf_range.min, brf_range.max, brf_range.step);
 
   return bandwidths;
 }
@@ -558,6 +629,15 @@ std::vector< std::string > bladerf_common::devices()
   }
 
   return ret;
+}
+
+size_t bladerf_common::get_num_channels(bladerf_module module)
+{
+  if (BLADERF_REV_2 == _boardtype) {
+    return 1; // TODO: should be 2 but it ain't working yet
+  } else {
+    return 1;
+  }
 }
 
 double bladerf_common::set_sample_rate( bladerf_module module, double rate )
@@ -599,6 +679,177 @@ double bladerf_common::get_sample_rate( bladerf_module module )
   }
 
   return ret;
+}
+
+osmosdr::freq_range_t bladerf_common::get_freq_range( size_t chan )
+{
+  return freq_range((bladerf_channel)chan);
+}
+
+double bladerf_common::set_center_freq( double freq, size_t chan )
+{
+  int ret;
+
+  /* Check frequency range */
+  if( freq < get_freq_range( chan ).start() ||
+      freq > get_freq_range( chan ).stop() ) {
+    std::cerr << "Failed to set out of bound frequency: " << freq << std::endl;
+  } else {
+    ret = bladerf_set_frequency( _dev.get(), (bladerf_channel)chan, (uint64_t)freq );
+    if( ret ) {
+      throw std::runtime_error( std::string(__FUNCTION__) + " " +
+                                "failed to set center frequency " +
+                                boost::lexical_cast<std::string>(freq) + ": " +
+                                std::string(bladerf_strerror(ret)) );
+    }
+  }
+
+  return get_center_freq( chan );
+}
+
+double bladerf_common::get_center_freq( size_t chan )
+{
+  uint64_t freq;
+  int ret;
+
+  ret = bladerf_get_frequency( _dev.get(), (bladerf_channel)chan, &freq );
+  if( ret ) {
+    throw std::runtime_error( std::string(__FUNCTION__) + " " +
+                              "failed to get center frequency: " +
+                              std::string(bladerf_strerror(ret)) );
+  }
+
+  return (double)freq;
+}
+
+std::vector<std::string> bladerf_common::get_gain_names( size_t chan )
+{
+  const size_t max_count = 16;
+  std::vector< std::string > names;
+  char *gain_names[max_count];
+  int ret;
+
+  memset(&gain_names, 0, sizeof(gain_names));
+
+  names += SYSTEM_GAIN_NAME;
+
+  ret = bladerf_get_gain_stages( _dev.get(), (bladerf_channel)chan, (const char**)&gain_names, max_count);
+
+  if(ret < 0) {
+     throw std::runtime_error( std::string(__FUNCTION__) + " " +
+                              "failed to get gain stages: " +
+                              std::string(bladerf_strerror(ret)) );
+  }
+
+  for(char **p = gain_names; *p != NULL; ++p) {
+    char *tmp = *p;
+    names += std::string(tmp);
+  };
+
+  return names;
+}
+
+osmosdr::gain_range_t bladerf_common::get_gain_range( size_t chan )
+{
+  /* This is an overall system gain range. */
+  return get_gain_range( SYSTEM_GAIN_NAME, chan );
+}
+
+osmosdr::gain_range_t bladerf_common::get_gain_range( const std::string & name, size_t chan )
+{
+  osmosdr::gain_range_t range;
+  struct bladerf_range brf_range;
+  int ret;
+
+  if( name == SYSTEM_GAIN_NAME ) {
+    ret = bladerf_get_gain_range( _dev.get(), (bladerf_channel)chan, &brf_range );
+  } else {
+    ret = bladerf_get_gain_stage_range( _dev.get(), (bladerf_channel)chan, name.c_str(), &brf_range);
+  }
+
+  if( ret ) {
+    throw std::runtime_error( std::string(__FUNCTION__) + " " +
+                              "bladerf_get_gain_range " + name +
+                              " error: " +
+                              std::string(bladerf_strerror(ret)) );
+  }
+
+  range = osmosdr::gain_range_t( brf_range.min, brf_range.max, brf_range.step );
+
+  return range;
+}
+
+bool bladerf_common::set_gain_mode( bool automatic, size_t chan )
+{
+  return false;
+}
+
+bool bladerf_common::get_gain_mode( size_t chan )
+{
+  return false;
+}
+
+double bladerf_common::set_gain( double gain, size_t chan )
+{
+  return set_gain( gain, SYSTEM_GAIN_NAME, chan );
+}
+
+double bladerf_common::set_gain( double gain, const std::string & name, size_t chan )
+{
+  int ret = 0;
+
+  if( name == SYSTEM_GAIN_NAME ) {
+    ret = bladerf_set_gain( _dev.get(), (bladerf_channel)chan, int(gain) );
+  } else {
+    ret = bladerf_set_gain_stage( _dev.get(), (bladerf_channel)chan, name.c_str(), int(gain) );
+  }
+
+  /* Check for errors */
+  if( ret ) {
+    std::string errmsg = (std::string(__FUNCTION__) + " " +
+                          "could not set " + name + " gain: " +
+                          std::string(bladerf_strerror(ret)));
+    if ( BLADERF_ERR_UNSUPPORTED == ret ) {
+      // unsupported, but not worth crashing out
+      std::cerr << errmsg << std::endl;
+    } else {
+      throw std::runtime_error(errmsg);
+    }
+  }
+
+  return get_gain( name, chan );
+}
+
+double bladerf_common::get_gain( size_t chan )
+{
+  /* TODO: This is an overall system gain that has to be set */
+  return get_gain( SYSTEM_GAIN_NAME, chan );
+}
+
+double bladerf_common::get_gain( const std::string & name, size_t chan )
+{
+  int g;
+  int ret = 0;
+
+  if( name == SYSTEM_GAIN_NAME ) {
+    ret = bladerf_get_gain( _dev.get(), (bladerf_channel)chan, &g );
+  } else {
+    ret = bladerf_get_gain_stage( _dev.get(), (bladerf_channel)chan, name.c_str(), &g );
+  }
+
+  /* Check for errors */
+  if( ret ) {
+    throw std::runtime_error( std::string(__FUNCTION__) + " " +
+                              "could not get " + name + " gain: " +
+                              std::string(bladerf_strerror(ret)) );
+  }
+
+  return (double)g;
+}
+
+double bladerf_common::set_bb_gain( double gain, size_t chan )
+{
+  return set_gain( gain, SYSTEM_GAIN_NAME, chan );
 }
 
 int bladerf_common::set_dc_offset(bladerf_module module, const std::complex<double> &offset, size_t chan)

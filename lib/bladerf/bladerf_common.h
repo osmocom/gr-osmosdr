@@ -55,14 +55,38 @@ public:
   virtual ~bladerf_common();
 
 protected:
+  typedef enum {
+    BLADERF_REV_INVALID,
+    BLADERF_REV_1,
+    BLADERF_REV_2
+  } bladerf_boards;
+
   /* Handle initialized and parameters common to both source & sink */
   void init(dict_t &dict, bladerf_module module);
 
   bool start(bladerf_module module);
   bool stop(bladerf_module module);
 
+  size_t get_num_channels(bladerf_module module);
+
   double set_sample_rate(bladerf_module module, double rate);
   double get_sample_rate(bladerf_module module);
+
+  osmosdr::freq_range_t get_freq_range(size_t chan = 0);
+  double set_center_freq(double freq, size_t chan = 0);
+  double get_center_freq(size_t chan = 0);
+
+  std::vector<std::string> get_gain_names( size_t chan = 0 );
+  osmosdr::gain_range_t get_gain_range( size_t chan = 0 );
+  osmosdr::gain_range_t get_gain_range( const std::string & name, size_t chan = 0 );
+  bool set_gain_mode( bool automatic, size_t chan = 0 );
+  bool get_gain_mode( size_t chan = 0 );
+  double set_gain( double gain, size_t chan = 0 );
+  double set_gain( double gain, const std::string & name, size_t chan = 0 );
+  double get_gain( size_t chan = 0 );
+  double get_gain( const std::string & name, size_t chan = 0 );
+
+  double set_bb_gain( double gain, size_t chan = 0 );
 
   int set_dc_offset(bladerf_module module, const std::complex<double> &offset, size_t chan);
   int set_iq_balance(bladerf_module module, const std::complex<double> &balance, size_t chan);
@@ -74,13 +98,15 @@ protected:
   void set_smb_frequency(double frequency);
   double get_smb_frequency();
 
-  osmosdr::freq_range_t freq_range();
+  osmosdr::freq_range_t freq_range(bladerf_channel chan);
   osmosdr::meta_range_t sample_rates();
   osmosdr::freq_range_t filter_bandwidths();
 
   static std::vector< std::string > devices();
 
   bladerf_sptr _dev;
+
+  bladerf_boards _boardtype;
 
   size_t _num_buffers;
   size_t _samples_per_buffer;
@@ -91,9 +117,6 @@ protected:
   int _conv_buf_size; /* In units of samples */
 
   bool _use_metadata;
-
-  osmosdr::gain_range_t _vga1_range;
-  osmosdr::gain_range_t _vga2_range;
 
   std::string _pfx;
 

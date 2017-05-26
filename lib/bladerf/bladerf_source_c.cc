@@ -59,13 +59,13 @@ bladerf_source_c_sptr make_bladerf_source_c (const std::string &args)
  * (2nd & 3rd args to gr_block's constructor).  The input and
  * output signatures are used by the runtime system to
  * check that a valid number and type of inputs and outputs
- * are connected to this block.  In this case, we accept
- * only 0 input and 1 output.
+ * are connected to this block.  In this case, we accept either
+ * 1 or 2 outputs.
  */
 static const int MIN_IN = 0;	// mininum number of input streams
 static const int MAX_IN = 0;	// maximum number of input streams
 static const int MIN_OUT = 1;	// minimum number of output streams
-static const int MAX_OUT = 1;	// maximum number of output streams
+static const int MAX_OUT = 2;	// maximum number of output streams
 
 /*
  * The private constructor
@@ -102,15 +102,6 @@ bladerf_source_c::bladerf_source_c (const std::string &args)
         std::cerr << _pfx << "Invalid sampling mode " << sampling << std::endl;
     }
   }
-
-  /* Set the range of LNA, G_LNA_RXFE[1:0] */
-  _lna_range = osmosdr::gain_range_t( 0, 6, 3 );
-
-  /* Set the range of VGA1, RFB_TIA_RXFE[6:0], nonlinear mapping done inside the lib */
-  _vga1_range = osmosdr::gain_range_t( 5, 30, 1 );
-
-  /* Set the range of VGA2 VGA2GAIN[4:0], not recommended to be used above 30dB */
-  _vga2_range = osmosdr::gain_range_t( 0, 30, 3 );
 
   /* Warn user about using an old FPGA version, as we no longer strip off the
    * markers that were pressent in the pre-v0.0.1 FPGA */
@@ -197,8 +188,7 @@ std::vector<std::string> bladerf_source_c::get_devices()
 
 size_t bladerf_source_c::get_num_channels()
 {
-  /* We only support a single channel for each bladeRF */
-  return 1;
+  return bladerf_common::get_num_channels(BLADERF_MODULE_RX);
 }
 
 osmosdr::meta_range_t bladerf_source_c::get_sample_rates()
@@ -216,45 +206,19 @@ double bladerf_source_c::get_sample_rate()
   return bladerf_common::get_sample_rate( BLADERF_MODULE_RX );
 }
 
-osmosdr::freq_range_t bladerf_source_c::get_freq_range( size_t chan )
+osmosdr::freq_range_t bladerf_source_c::get_freq_range(size_t chan)
 {
-  return freq_range();
+  return bladerf_common::get_freq_range(chan);
 }
 
-double bladerf_source_c::set_center_freq( double freq, size_t chan )
+double bladerf_source_c::set_center_freq(double freq, size_t chan)
 {
-  int ret;
-
-  /* Check frequency range */
-  if( freq < get_freq_range( chan ).start() ||
-      freq > get_freq_range( chan ).stop() ) {
-    std::cerr << "Failed to set out of bound frequency: " << freq << std::endl;
-  } else {
-    ret = bladerf_set_frequency( _dev.get(), BLADERF_MODULE_RX, (uint32_t)freq );
-    if( ret ) {
-      throw std::runtime_error( std::string(__FUNCTION__) + " " +
-                                "failed to set center frequency " +
-                                boost::lexical_cast<std::string>(freq) + ": " +
-                                std::string(bladerf_strerror(ret)) );
-    }
-  }
-
-  return get_center_freq( chan );
+  return bladerf_common::set_center_freq(freq, chan);
 }
 
-double bladerf_source_c::get_center_freq( size_t chan )
+double bladerf_source_c::get_center_freq(size_t chan)
 {
-  uint32_t freq;
-  int ret;
-
-  ret = bladerf_get_frequency( _dev.get(), BLADERF_MODULE_RX, &freq );
-  if( ret ) {
-    throw std::runtime_error( std::string(__FUNCTION__) + " " +
-                              "failed to get center frequency: " +
-                              std::string(bladerf_strerror(ret)) );
-  }
-
-  return (double)freq;
+  return bladerf_common::get_center_freq(chan);
 }
 
 double bladerf_source_c::set_freq_corr( double ppm, size_t chan )
@@ -271,150 +235,52 @@ double bladerf_source_c::get_freq_corr( size_t chan )
 
 std::vector<std::string> bladerf_source_c::get_gain_names( size_t chan )
 {
-  std::vector< std::string > names;
-
-  names += "LNA", "VGA1", "VGA2";
-
-  return names;
+  return bladerf_common::get_gain_names(chan);
 }
 
 osmosdr::gain_range_t bladerf_source_c::get_gain_range( size_t chan )
 {
-  /* TODO: This is an overall system gain range. Given the LNA, VGA1 and VGA2
-  how much total gain can we have in the system */
-  return get_gain_range( "LNA", chan ); /* we use only LNA here for now */
+  return bladerf_common::get_gain_range(chan);
 }
 
 osmosdr::gain_range_t bladerf_source_c::get_gain_range( const std::string & name, size_t chan )
 {
-  osmosdr::gain_range_t range;
-
-  if( name == "LNA" ) {
-    range = _lna_range;
-  } else if( name == "VGA1" ) {
-    range = _vga1_range;
-  } else if( name == "VGA2" ) {
-    range = _vga2_range;
-  } else {
-    throw std::runtime_error( std::string(__FUNCTION__) + " " +
-                              "requested an invalid gain element " + name );
-  }
-
-  return range;
+  return bladerf_common::get_gain_range(name, chan);
 }
 
 bool bladerf_source_c::set_gain_mode( bool automatic, size_t chan )
 {
-  /* TODO: Implement AGC in the FPGA */
-  return false;
+  return bladerf_common::set_gain_mode(automatic, chan);
 }
 
 bool bladerf_source_c::get_gain_mode( size_t chan )
 {
-  /* TODO: Read back AGC mode */
-  return false;
+  return bladerf_common::get_gain_mode(chan);
 }
 
 double bladerf_source_c::set_gain( double gain, size_t chan )
 {
-  /* TODO: This is an overall system gain that has to be set */
-  return set_gain( gain, "LNA", chan ); /* we use only LNA here for now */
+  return bladerf_common::set_gain(gain, chan);
 }
 
-double bladerf_source_c::set_gain( double gain, const std::string & name, size_t chan )
+double bladerf_source_c::set_gain( double gain, const std::string & name, size_t chan)
 {
-  int ret = 0;
-
-  if( name == "LNA" ) {
-    bladerf_lna_gain g;
-
-    if ( gain >= 6.0f )
-      g = BLADERF_LNA_GAIN_MAX;
-    else if ( gain >= 3.0f )
-      g = BLADERF_LNA_GAIN_MID;
-    else /* gain < 3.0f */
-      g = BLADERF_LNA_GAIN_BYPASS;
-
-    ret = bladerf_set_lna_gain( _dev.get(), g );
-  } else if( name == "VGA1" ) {
-    ret = bladerf_set_rxvga1( _dev.get(), (int)gain );
-  } else if( name == "VGA2" ) {
-    ret = bladerf_set_rxvga2( _dev.get(), (int)gain );
-  } else {
-    throw std::runtime_error( std::string(__FUNCTION__) + " " +
-                              "requested to set the gain "
-                              "of an unknown gain element " + name );
-  }
-
-  /* Check for errors */
-  if( ret ) {
-    throw std::runtime_error( std::string(__FUNCTION__) + " " +
-                              "could not set " + name + " gain: " +
-                              std::string(bladerf_strerror(ret)) );
-  }
-
-  return get_gain( name, chan );
+  return bladerf_common::set_gain(gain, name, chan);
 }
 
 double bladerf_source_c::get_gain( size_t chan )
 {
-  /* TODO: This is an overall system gain that has to be set */
-  return get_gain( "LNA", chan ); /* we use only LNA here for now */
+  return bladerf_common::get_gain(chan);
 }
 
 double bladerf_source_c::get_gain( const std::string & name, size_t chan )
 {
-  int g;
-  int ret = 0;
-
-  if( name == "LNA" ) {
-    bladerf_lna_gain lna_g;
-    ret = bladerf_get_lna_gain( _dev.get(), &lna_g );
-    g = lna_g == BLADERF_LNA_GAIN_BYPASS ? 0 : lna_g == BLADERF_LNA_GAIN_MID ? 3 : 6;
-  } else if( name == "VGA1" ) {
-    ret = bladerf_get_rxvga1( _dev.get(), &g );
-  } else if( name == "VGA2" ) {
-    ret = bladerf_get_rxvga2( _dev.get(), &g );
-  } else {
-    throw std::runtime_error( std::string(__FUNCTION__) + " " +
-                              "requested to get the gain "
-                              "of an unknown gain element " + name );
-  }
-
-  /* Check for errors */
-  if( ret ) {
-    throw std::runtime_error( std::string(__FUNCTION__) + " " +
-                              "could not get " + name + " gain: " +
-                              std::string(bladerf_strerror(ret)) );
-  }
-
-  return (double)g;
+  return bladerf_common::get_gain(name, chan);
 }
 
 double bladerf_source_c::set_bb_gain( double gain, size_t chan )
 {
-  osmosdr::gain_range_t vga1_gains = get_gain_range( "VGA1", chan );
-  osmosdr::gain_range_t vga2_gains = get_gain_range( "VGA2", chan );
-
-  // Gain partitioning from:
-  // http://www.limemicro.com/download/FAQ_v1.0r10.pdf part 5.18
-
-  // So: first maximize VGA1 gain, then VGA2
-
-  if ( gain > vga1_gains.stop() + vga2_gains.start() )
-  {
-    double clip_gain = vga2_gains.clip( gain - vga1_gains.stop(), true );
-
-    gain = set_gain(vga1_gains.stop(), "VGA1", chan) + set_gain(clip_gain, "VGA2", chan);
-  }
-  else
-  {
-    double clip_gain = vga1_gains.clip( gain - vga2_gains.start(), true );
-
-    gain = set_gain(clip_gain , "VGA1", chan) + set_gain(vga2_gains.start(), "VGA2", chan);
-  }
-
-  return gain;
+  return bladerf_common::set_bb_gain(gain, chan);
 }
 
 std::vector< std::string > bladerf_source_c::get_antennas( size_t chan )
