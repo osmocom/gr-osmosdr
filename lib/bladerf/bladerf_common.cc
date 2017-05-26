@@ -66,7 +66,23 @@ bladerf_common::~bladerf_common()
     free(_conv_buf);
 }
 
-bladerf_sptr bladerf_common:: get_cached_device(struct bladerf_devinfo devinfo)
+bladerf_board_type bladerf_common::get_board_type(struct bladerf *dev)
+{
+  std::string boardname = std::string(bladerf_get_board_name(dev));
+  bladerf_board_type rv = BLADERF_REV_INVALID;
+
+  if (boardname == "bladerf1") {
+    rv = BLADERF_REV_1;
+  } else if (boardname == "bladerf2") {
+    rv = BLADERF_REV_2;
+  } else {
+    std::cerr << "board name \"" << boardname << "\" unknown" << std::endl;
+  }
+
+  return rv;
+}
+
+bladerf_sptr bladerf_common::get_cached_device(struct bladerf_devinfo devinfo)
 {
   /* Lock to _devs must be aquired by caller */
   BOOST_FOREACH( boost::weak_ptr<struct bladerf> dev, _devs )
@@ -109,7 +125,6 @@ bladerf_sptr bladerf_common::open(const std::string &device_name)
   int rv;
   struct bladerf *raw_dev;
   struct bladerf_devinfo devinfo;
-  std::string boardname;
 
   boost::unique_lock<boost::mutex> lock(_devs_mutex);
 
@@ -131,18 +146,6 @@ bladerf_sptr bladerf_common::open(const std::string &device_name)
   bladerf_sptr dev = bladerf_sptr(raw_dev, bladerf_common::close);
 
   _devs.push_back(boost::weak_ptr<struct bladerf>(dev));
-
-  // TODO: This does NOT get called if early cached_dev return occurs
-  boardname = std::string(bladerf_get_board_name(raw_dev));
-
-  if( "bladerf1" == boardname ) {
-    _boardtype = BLADERF_REV_1;
-  } else if( "bladerf2" == boardname ) {
-    _boardtype = BLADERF_REV_2;
-  } else {
-    std::cerr << "board name \"" << boardname << "\" unknown" << std::endl;
-    _boardtype = BLADERF_REV_INVALID;
-  };
 
   return dev;
 }
@@ -205,6 +208,25 @@ void bladerf_common::set_verbosity(const std::string &verbosity)
     bladerf_log_set_verbosity(l);
 }
 
+bladerf_direction bladerf_common::channel_to_direction(bladerf_channel ch)
+{
+  switch (ch) {
+    case BLADERF_CHANNEL_RX(0):
+    case BLADERF_CHANNEL_RX(1):
+      return BLADERF_RX;
+      break;
+
+    case BLADERF_CHANNEL_TX(0):
+    case BLADERF_CHANNEL_TX(1):
+      return BLADERF_TX;
+      break;
+
+    default:
+      throw std::runtime_error( _pfx + " " + "invalid channel specified" );
+      break;
+  }
+}
+
 bool bladerf_common::start(bladerf_module module)
 {
   int ret;
@@ -218,14 +240,13 @@ bool bladerf_common::start(bladerf_module module)
     format = BLADERF_FORMAT_SC16_Q11;
   }
 
-  // TODO: DRY
+  direction = channel_to_direction(module);
+
   // TODO: MIMO
   if (BLADERF_MODULE_RX == module) {
     layout = BLADERF_RX_X1;
-    direction = BLADERF_RX;
   } else if (BLADERF_MODULE_TX == module) {
     layout = BLADERF_TX_X1;
-    direction = BLADERF_TX;
   } else {
     std::cerr << _pfx << "invalid module: "
               << module << std::endl;
@@ -257,22 +278,12 @@ bool bladerf_common::stop(bladerf_module module)
   int ret;
   bladerf_direction direction;
 
-  // TODO: DRY
-  // TODO: MIMO
-  if (BLADERF_MODULE_RX == module) {
-    direction = BLADERF_RX;
-  } else if (BLADERF_MODULE_TX == module) {
-    direction = BLADERF_TX;
-  } else {
-    std::cerr << _pfx << "invalid module: "
-              << module << std::endl;
-    return false;
-  }
+  direction = channel_to_direction(module);
 
   ret = bladerf_enable_module(_dev.get(), direction, false);
 
   if ( ret != 0 ) {
-    std::cerr << _pfx << "bladerf_enable_modue failed: "
+    std::cerr << _pfx << "bladerf_enable_module failed: "
               << bladerf_strerror(ret) << std::endl;
     return false;
   }
@@ -540,17 +551,17 @@ void bladerf_common::init(dict_t &dict, bladerf_module module)
 
 osmosdr::freq_range_t bladerf_common::freq_range(bladerf_channel chan)
 {
-  struct bladerf_range brf_range;
+  struct bladerf_range range;
   int ret;
 
-  ret = bladerf_get_frequency_range( _dev.get(), chan, &brf_range );
+  ret = bladerf_get_frequency_range( _dev.get(), chan, &range );
 
   if( ret ) {
     throw std::runtime_error( std::string(__FUNCTION__) + " " +
                               "bladerf_get_frequency_range returned " +
                               boost::lexical_cast<std::string>(ret) );
   } else {
-    return osmosdr::freq_range_t((double)brf_range.min, (double)brf_range.max, (double)brf_range.step);
+    return osmosdr::freq_range_t((double)range.min, (double)range.max, (double)range.step);
   };
 }
 
@@ -580,10 +591,10 @@ osmosdr::freq_range_t bladerf_common::filter_bandwidths()
 {
   /* the same for RX & TX according to the datasheet */
   osmosdr::freq_range_t bandwidths;
-  bladerf_range brf_range;
+  bladerf_range range;
   int ret;
 
-  ret = bladerf_get_bandwidth_range( _dev.get(), BLADERF_CHANNEL_RX(0), &brf_range );
+  ret = bladerf_get_bandwidth_range( _dev.get(), BLADERF_CHANNEL_RX(0), &range );
 
   if( ret ) {
     throw std::runtime_error( std::string(__FUNCTION__) + " " +
@@ -591,7 +602,7 @@ osmosdr::freq_range_t bladerf_common::filter_bandwidths()
                               boost::lexical_cast<std::string>(ret) );
   }
 
-  bandwidths += osmosdr::range_t(brf_range.min, brf_range.max, brf_range.step);
+  bandwidths += osmosdr::range_t(range.min, range.max, range.step);
 
   return bandwidths;
 }
@@ -633,11 +644,13 @@ std::vector< std::string > bladerf_common::devices()
 
 size_t bladerf_common::get_num_channels(bladerf_module module)
 {
-  if (BLADERF_REV_2 == _boardtype) {
-    return 1; // TODO: should be 2 but it ain't working yet
-  } else {
-    return 1;
+  size_t rv = 1;
+
+  if (BLADERF_REV_2 == get_board_type(_dev.get())) {
+    rv = 1; // TODO: should be 2 but it ain't working yet
   }
+
+  return rv;
 }
 
 double bladerf_common::set_sample_rate( bladerf_module module, double rate )
@@ -729,11 +742,9 @@ std::vector<std::string> bladerf_common::get_gain_names( size_t chan )
   char *gain_names[max_count];
   int ret;
 
-  memset(&gain_names, 0, sizeof(gain_names));
-
   names += SYSTEM_GAIN_NAME;
 
-  ret = bladerf_get_gain_stages( _dev.get(), (bladerf_channel)chan, (const char**)&gain_names, max_count);
+  ret = bladerf_get_gain_stages( _dev.get(), (bladerf_channel)chan, (const char**)&gain_names, max_count );
 
   if(ret < 0) {
      throw std::runtime_error( std::string(__FUNCTION__) + " " +
@@ -757,14 +768,13 @@ osmosdr::gain_range_t bladerf_common::get_gain_range( size_t chan )
 
 osmosdr::gain_range_t bladerf_common::get_gain_range( const std::string & name, size_t chan )
 {
-  osmosdr::gain_range_t range;
-  struct bladerf_range brf_range;
+  struct bladerf_range range;
   int ret;
 
   if( name == SYSTEM_GAIN_NAME ) {
-    ret = bladerf_get_gain_range( _dev.get(), (bladerf_channel)chan, &brf_range );
+    ret = bladerf_get_gain_range( _dev.get(), (bladerf_channel)chan, &range );
   } else {
-    ret = bladerf_get_gain_stage_range( _dev.get(), (bladerf_channel)chan, name.c_str(), &brf_range);
+    ret = bladerf_get_gain_stage_range( _dev.get(), (bladerf_channel)chan, name.c_str(), &range);
   }
 
   if( ret ) {
@@ -774,9 +784,7 @@ osmosdr::gain_range_t bladerf_common::get_gain_range( const std::string & name, 
                               std::string(bladerf_strerror(ret)) );
   }
 
-  range = osmosdr::gain_range_t( brf_range.min, brf_range.max, brf_range.step );
-
-  return range;
+  return osmosdr::gain_range_t( range.min, range.max, range.step );
 }
 
 bool bladerf_common::set_gain_mode( bool automatic, size_t chan )

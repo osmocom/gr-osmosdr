@@ -389,7 +389,11 @@ std::vector< std::string > bladerf_sink_c::get_antennas( size_t chan )
 {
   std::vector< std::string > antennas;
 
-  antennas += get_antenna( chan );
+  antennas += "TX0";
+
+  if (BLADERF_REV_2 == get_board_type(_dev.get())) {
+    antennas += "TX1";
+  }
 
   return antennas;
 }
@@ -402,7 +406,7 @@ std::string bladerf_sink_c::set_antenna( const std::string & antenna, size_t cha
 std::string bladerf_sink_c::get_antenna( size_t chan )
 {
   /* We only have a single transmit antenna here */
-  return "TX";
+  return "TX0";
 }
 
 void bladerf_sink_c::set_dc_offset( const std::complex<double> &offset, size_t chan )

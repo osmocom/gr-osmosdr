@@ -47,6 +47,11 @@ typedef ptrdiff_t ssize_t;
 #endif //_MSC_VER
 
 typedef boost::shared_ptr<struct bladerf> bladerf_sptr;
+typedef enum {
+  BLADERF_REV_INVALID,
+  BLADERF_REV_1,
+  BLADERF_REV_2
+} bladerf_board_type;
 
 class bladerf_common
 {
@@ -55,11 +60,6 @@ public:
   virtual ~bladerf_common();
 
 protected:
-  typedef enum {
-    BLADERF_REV_INVALID,
-    BLADERF_REV_1,
-    BLADERF_REV_2
-  } bladerf_boards;
 
   /* Handle initialized and parameters common to both source & sink */
   void init(dict_t &dict, bladerf_module module);
@@ -68,6 +68,7 @@ protected:
   bool stop(bladerf_module module);
 
   size_t get_num_channels(bladerf_module module);
+  bladerf_board_type get_board_type(struct bladerf *dev);
 
   double set_sample_rate(bladerf_module module, double rate);
   double get_sample_rate(bladerf_module module);
@@ -106,8 +107,6 @@ protected:
 
   bladerf_sptr _dev;
 
-  bladerf_boards _boardtype;
-
   size_t _num_buffers;
   size_t _samples_per_buffer;
   size_t _num_transfers;
@@ -137,6 +136,8 @@ private:
 
   void set_verbosity(const std::string &verbosity);
   void set_loopback_mode(const std::string &loopback);
+
+  bladerf_direction channel_to_direction(bladerf_channel ch);
 
   static boost::mutex _devs_mutex;
   static std::list<boost::weak_ptr<struct bladerf> > _devs;

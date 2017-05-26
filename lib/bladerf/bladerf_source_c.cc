@@ -287,7 +287,11 @@ std::vector< std::string > bladerf_source_c::get_antennas( size_t chan )
 {
   std::vector< std::string > antennas;
 
-  antennas += get_antenna( chan );
+  antennas += "RX0";
+
+  if (BLADERF_REV_2 == get_board_type(_dev.get())) {
+    antennas += "RX1";
+  }
 
   return antennas;
 }
@@ -300,7 +304,7 @@ std::string bladerf_source_c::set_antenna( const std::string & antenna, size_t c
 std::string bladerf_source_c::get_antenna( size_t chan )
 {
   /* We only have a single receive antenna here */
-  return "RX";
+  return "RX0";
 }
 
 void bladerf_source_c::set_dc_offset_mode( int mode, size_t chan )
