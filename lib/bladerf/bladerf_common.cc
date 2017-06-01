@@ -50,7 +50,7 @@ std::list<boost::weak_ptr<struct bladerf> > bladerf_common::_devs;
 
 // name of system-wide gain
 //(internal only, doesn't match any libbladeRF gain stage)
-static const char* SYSTEM_GAIN_NAME = "Overall";
+static const char* SYSTEM_GAIN_NAME = "system";
 
 bladerf_common::bladerf_common() :
   _conv_buf(NULL),
@@ -773,7 +773,6 @@ std::vector<std::string> bladerf_common::get_gain_names( size_t chan )
   for(char **p = gain_names; *p != NULL && **p != '\0'; ++p) {
     char *tmp = *p;
     names += std::string(tmp);
-    std::cerr << std::string(__FUNCTION__) << " gain stage: '" << std::string(tmp) << "'" << std::endl;
   };
 
   return names;
@@ -808,12 +807,51 @@ osmosdr::gain_range_t bladerf_common::get_gain_range( const std::string & name, 
 
 bool bladerf_common::set_gain_mode( bool automatic, size_t chan )
 {
-  return false;
+  int ret = 0;
+
+  if (automatic) {
+    ret = bladerf_set_gain_mode(  _dev.get(),
+                                  static_cast<bladerf_channel>(chan),
+                                  BLADERF_GAIN_DEFAULT );
+  } else {
+    /* read the gain (presumably automatic), switch to MGC, then set the
+     * gain to that value to minimize surprise */
+    double gain = get_gain(chan);
+    ret = bladerf_set_gain_mode(  _dev.get(),
+                                  static_cast<bladerf_channel>(chan),
+                                  BLADERF_GAIN_MGC );
+    if (!ret) {
+      set_gain(gain, chan);
+    }
+  }
+
+  if( ret ) {
+    throw std::runtime_error( std::string(__FUNCTION__) + " " +
+                              "bladerf_set_gain_mode " +
+                              (automatic ? "automatic" : "manual") +
+                              " error: " +
+                              std::string(bladerf_strerror(ret)) );
+  }
+
+  return get_gain_mode(chan);
 }
 
 bool bladerf_common::get_gain_mode( size_t chan )
 {
-  return false;
+  int ret = 0;
+  bladerf_gain_mode gainmode;
+
+  ret = bladerf_get_gain_mode(  _dev.get(),
+                                static_cast<bladerf_channel>(chan),
+                                &gainmode );
+
+  if( ret ) {
+    throw std::runtime_error( std::string(__FUNCTION__) + " " +
+                              "bladerf_get_gain_mode error: " +
+                              std::string(bladerf_strerror(ret)) );
+  }
+
+  return (gainmode != BLADERF_GAIN_MGC);
 }
 
 double bladerf_common::set_gain( double gain, size_t chan )
