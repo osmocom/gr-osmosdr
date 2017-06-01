@@ -290,7 +290,7 @@ std::vector<std::string> bladerf_sink_c::get_devices()
 
 size_t bladerf_sink_c::get_num_channels()
 {
-  return bladerf_common::get_num_channels(BLADERF_MODULE_RX);
+  return bladerf_common::get_num_channels(BLADERF_MODULE_TX);
 }
 
 osmosdr::meta_range_t bladerf_sink_c::get_sample_rates()

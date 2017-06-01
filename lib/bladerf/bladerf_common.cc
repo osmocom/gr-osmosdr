@@ -50,7 +50,7 @@ std::list<boost::weak_ptr<struct bladerf> > bladerf_common::_devs;
 
 // name of system-wide gain
 //(internal only, doesn't match any libbladeRF gain stage)
-static const char* SYSTEM_GAIN_NAME = "System";
+static const char* SYSTEM_GAIN_NAME = "Overall";
 
 bladerf_common::bladerf_common() :
   _conv_buf(NULL),
@@ -87,12 +87,14 @@ bladerf_sptr bladerf_common::get_cached_device(struct bladerf_devinfo devinfo)
   /* Lock to _devs must be aquired by caller */
   BOOST_FOREACH( boost::weak_ptr<struct bladerf> dev, _devs )
   {
+    int rv;
     struct bladerf_devinfo other_devinfo;
 
-    int rv = bladerf_get_devinfo(bladerf_sptr(dev).get(), &other_devinfo);
-    if (rv < 0)
-      throw std::runtime_error(std::string(__FUNCTION__) + " " +
-                               "Failed to get devinfo for cached device.");
+    rv = bladerf_get_devinfo(bladerf_sptr(dev).get(), &other_devinfo);
+    if (rv < 0) {
+          throw std::runtime_error(std::string(__FUNCTION__) + " " +
+                                   "Failed to get devinfo for cached device.");
+    }
 
     if (bladerf_devinfo_matches(&devinfo, &other_devinfo)) {
       return bladerf_sptr(dev);
@@ -117,32 +119,43 @@ void bladerf_common::close(void* dev)
     }
   }
 
-  bladerf_close((struct bladerf *)dev);
+  bladerf_close(static_cast<struct bladerf *>(dev));
 }
 
 bladerf_sptr bladerf_common::open(const std::string &device_name)
 {
   int rv;
-  struct bladerf *raw_dev;
+  struct bladerf *raw_dev = NULL;
   struct bladerf_devinfo devinfo;
 
   boost::unique_lock<boost::mutex> lock(_devs_mutex);
 
+  /* Initialize the information used to identify the desired device
+   * to all wildcard (i.e., "any device") values */
+  bladerf_init_devinfo(&devinfo);
+
+  /* Populate the devinfo structure from device_name */
   rv = bladerf_get_devinfo_from_str(device_name.c_str(), &devinfo);
-  if (rv < 0)
+  if (rv < 0) {
     throw std::runtime_error(std::string(__FUNCTION__) + " " +
                              "Failed to get devinfo for '" + device_name + "'");
+  }
 
+  /* Do we already have this device open? */
   bladerf_sptr cached_dev = get_cached_device(devinfo);
 
-  if (cached_dev)
+  if (cached_dev) {
     return cached_dev;
+  }
 
+  /* Open the device. */
   rv = bladerf_open_with_devinfo(&raw_dev, &devinfo);
-  if (rv < 0)
+  if (rv < 0) {
     throw std::runtime_error(std::string(__FUNCTION__) + " " +
                              "Failed to open device for '" + device_name + "'");
+  }
 
+  /* Add the device handle to our cache */
   bladerf_sptr dev = bladerf_sptr(raw_dev, bladerf_common::close);
 
   _devs.push_back(boost::weak_ptr<struct bladerf>(dev));
@@ -155,31 +168,33 @@ void bladerf_common::set_loopback_mode(const std::string &loopback)
     bladerf_loopback mode;
     int status;
 
-    // TODO: update for bladeRF 2
     if (loopback == "bb_txlpf_rxvga2") {
-        mode = BLADERF_LB_BB_TXLPF_RXVGA2;
+      mode = BLADERF_LB_BB_TXLPF_RXVGA2;
     } else if (loopback == "bb_txlpf_rxlpf") {
-        mode = BLADERF_LB_BB_TXLPF_RXLPF;
+      mode = BLADERF_LB_BB_TXLPF_RXLPF;
     } else if (loopback == "bb_txvga1_rxvga2") {
-        mode = BLADERF_LB_BB_TXVGA1_RXVGA2;
+      mode = BLADERF_LB_BB_TXVGA1_RXVGA2;
     } else if (loopback == "bb_txvga1_rxlpf") {
-        mode = BLADERF_LB_BB_TXVGA1_RXLPF;
+      mode = BLADERF_LB_BB_TXVGA1_RXLPF;
     } else if (loopback == "rf_lna1") {
-        mode = BLADERF_LB_RF_LNA1;
+      mode = BLADERF_LB_RF_LNA1;
     } else if (loopback == "rf_lna2") {
-        mode = BLADERF_LB_RF_LNA2;
+      mode = BLADERF_LB_RF_LNA2;
     } else if (loopback == "rf_lna3") {
-        mode = BLADERF_LB_RF_LNA3;
+      mode = BLADERF_LB_RF_LNA3;
+    } else if (loopback == "ad9361_bist") {
+      mode = BLADERF_LB_AD9361_BIST;
     } else if (loopback == "none") {
-        mode = BLADERF_LB_NONE;
+      mode = BLADERF_LB_NONE;
     } else {
-        throw std::runtime_error( _pfx + "Invalid loopback mode:" + loopback );
+      throw std::runtime_error( _pfx + "Invalid loopback mode:" + loopback );
     }
 
     status = bladerf_set_loopback( _dev.get(), mode);
     if ( status != 0 ) {
-        throw std::runtime_error( _pfx + "Failed to set loopback mode: " +
-                                  bladerf_strerror(status) );
+      // TODO: handle BLADERF_ERR_UNSUPPORTED more gingerly
+      throw std::runtime_error( _pfx + "Failed to set loopback mode: " +
+                                bladerf_strerror(status) );
     }
 }
 
@@ -188,21 +203,21 @@ void bladerf_common::set_verbosity(const std::string &verbosity)
     bladerf_log_level l;
 
     if (verbosity == "verbose") {
-        l = BLADERF_LOG_LEVEL_VERBOSE;
+      l = BLADERF_LOG_LEVEL_VERBOSE;
     } else if (verbosity == "debug") {
-        l = BLADERF_LOG_LEVEL_DEBUG;
+      l = BLADERF_LOG_LEVEL_DEBUG;
     } else if (verbosity == "info") {
-        l = BLADERF_LOG_LEVEL_INFO;
+      l = BLADERF_LOG_LEVEL_INFO;
     } else if (verbosity == "warning") {
-        l = BLADERF_LOG_LEVEL_WARNING;
+      l = BLADERF_LOG_LEVEL_WARNING;
     } else if (verbosity == "error") {
-        l = BLADERF_LOG_LEVEL_ERROR;
+      l = BLADERF_LOG_LEVEL_ERROR;
     } else if (verbosity == "critical") {
-        l = BLADERF_LOG_LEVEL_CRITICAL;
+      l = BLADERF_LOG_LEVEL_CRITICAL;
     } else if (verbosity == "silent") {
-        l = BLADERF_LOG_LEVEL_SILENT;
+      l = BLADERF_LOG_LEVEL_SILENT;
     } else {
-        throw std::runtime_error( _pfx + "Invalid log level: " + verbosity );
+      throw std::runtime_error( _pfx + "Invalid log level: " + verbosity );
     }
 
     bladerf_log_set_verbosity(l);
@@ -242,11 +257,10 @@ bool bladerf_common::start(bladerf_module module)
 
   direction = channel_to_direction(module);
 
-  // TODO: MIMO
   if (BLADERF_MODULE_RX == module) {
-    layout = BLADERF_RX_X1;
+    layout = _use_mimo ? BLADERF_RX_X2 : BLADERF_RX_X1;
   } else if (BLADERF_MODULE_TX == module) {
-    layout = BLADERF_TX_X1;
+    layout = _use_mimo ? BLADERF_TX_X2 : BLADERF_TX_X1;
   } else {
     std::cerr << _pfx << "invalid module: "
               << module << std::endl;
@@ -505,6 +519,8 @@ void bladerf_common::init(dict_t &dict, bladerf_module module)
 
   _use_metadata = dict.count("enable_metadata") != 0;
 
+  _use_mimo = (dict.count("enable_mimo") != 0) && (get_num_channels(module) >= 2);
+
   /* Require value to be >= 2 so we can ensure we have twice as many
    * buffers as transfers */
   if (_num_buffers <= 1) {
@@ -561,7 +577,7 @@ osmosdr::freq_range_t bladerf_common::freq_range(bladerf_channel chan)
                               "bladerf_get_frequency_range returned " +
                               boost::lexical_cast<std::string>(ret) );
   } else {
-    return osmosdr::freq_range_t((double)range.min, (double)range.max, (double)range.step);
+    return osmosdr::freq_range_t(static_cast<double>(range.min), static_cast<double>(range.max), static_cast<double>(range.step));
   };
 }
 
@@ -644,13 +660,15 @@ std::vector< std::string > bladerf_common::devices()
 
 size_t bladerf_common::get_num_channels(bladerf_module module)
 {
-  size_t rv = 1;
+  // TODO: Need to figure out how to deal with output_signature()->max_streams
+  // being stuck at 1 in source_impl.cc
+  return 1;
 
-  if (BLADERF_REV_2 == get_board_type(_dev.get())) {
-    rv = 1; // TODO: should be 2 but it ain't working yet
-  }
+  // if (get_board_type(_dev.get()) == BLADERF_REV_2) {
+  //   return 2;
+  // }
 
-  return rv;
+  // return 1;
 }
 
 double bladerf_common::set_sample_rate( bladerf_module module, double rate )
@@ -658,7 +676,7 @@ double bladerf_common::set_sample_rate( bladerf_module module, double rate )
   int status;
   struct bladerf_rational_rate rational_rate, actual;
 
-  rational_rate.integer = (uint32_t)rate;
+  rational_rate.integer = static_cast<uint32_t>(rate);
   rational_rate.den = 10000;
   rational_rate.num = (rate - rational_rate.integer) * rational_rate.den;
 
@@ -671,7 +689,7 @@ double bladerf_common::set_sample_rate( bladerf_module module, double rate )
                               std::string(bladerf_strerror(status)));
   }
 
-  return actual.integer + actual.num / (double)actual.den;
+  return actual.integer + actual.num / static_cast<double>(actual.den);
 }
 
 double bladerf_common::get_sample_rate( bladerf_module module )
@@ -688,7 +706,7 @@ double bladerf_common::get_sample_rate( bladerf_module module )
                              "Failed to get sample rate:" +
                              std::string(bladerf_strerror(status)) );
   } else {
-    ret = rate.integer + rate.num / (double)rate.den;
+    ret = rate.integer + rate.num / static_cast<double>(rate.den);
   }
 
   return ret;
@@ -696,7 +714,7 @@ double bladerf_common::get_sample_rate( bladerf_module module )
 
 osmosdr::freq_range_t bladerf_common::get_freq_range( size_t chan )
 {
-  return freq_range((bladerf_channel)chan);
+  return freq_range(static_cast<bladerf_channel>(chan));
 }
 
 double bladerf_common::set_center_freq( double freq, size_t chan )
@@ -708,7 +726,7 @@ double bladerf_common::set_center_freq( double freq, size_t chan )
       freq > get_freq_range( chan ).stop() ) {
     std::cerr << "Failed to set out of bound frequency: " << freq << std::endl;
   } else {
-    ret = bladerf_set_frequency( _dev.get(), (bladerf_channel)chan, (uint64_t)freq );
+    ret = bladerf_set_frequency( _dev.get(), static_cast<bladerf_channel>(chan), static_cast<uint64_t>(freq) );
     if( ret ) {
       throw std::runtime_error( std::string(__FUNCTION__) + " " +
                                 "failed to set center frequency " +
@@ -725,14 +743,14 @@ double bladerf_common::get_center_freq( size_t chan )
   uint64_t freq;
   int ret;
 
-  ret = bladerf_get_frequency( _dev.get(), (bladerf_channel)chan, &freq );
+  ret = bladerf_get_frequency( _dev.get(), static_cast<bladerf_channel>(chan), &freq );
   if( ret ) {
     throw std::runtime_error( std::string(__FUNCTION__) + " " +
                               "failed to get center frequency: " +
                               std::string(bladerf_strerror(ret)) );
   }
 
-  return (double)freq;
+  return static_cast<double>(freq);
 }
 
 std::vector<std::string> bladerf_common::get_gain_names( size_t chan )
@@ -744,7 +762,7 @@ std::vector<std::string> bladerf_common::get_gain_names( size_t chan )
 
   names += SYSTEM_GAIN_NAME;
 
-  ret = bladerf_get_gain_stages( _dev.get(), (bladerf_channel)chan, (const char**)&gain_names, max_count );
+  ret = bladerf_get_gain_stages( _dev.get(), static_cast<bladerf_channel>(chan), (const char**)&gain_names, max_count );
 
   if(ret < 0) {
      throw std::runtime_error( std::string(__FUNCTION__) + " " +
@@ -752,9 +770,10 @@ std::vector<std::string> bladerf_common::get_gain_names( size_t chan )
                               std::string(bladerf_strerror(ret)) );
   }
 
-  for(char **p = gain_names; *p != NULL; ++p) {
+  for(char **p = gain_names; *p != NULL && **p != '\0'; ++p) {
     char *tmp = *p;
     names += std::string(tmp);
+    std::cerr << std::string(__FUNCTION__) << " gain stage: '" << std::string(tmp) << "'" << std::endl;
   };
 
   return names;
@@ -772,9 +791,9 @@ osmosdr::gain_range_t bladerf_common::get_gain_range( const std::string & name, 
   int ret;
 
   if( name == SYSTEM_GAIN_NAME ) {
-    ret = bladerf_get_gain_range( _dev.get(), (bladerf_channel)chan, &range );
+    ret = bladerf_get_gain_range( _dev.get(), static_cast<bladerf_channel>(chan), &range );
   } else {
-    ret = bladerf_get_gain_stage_range( _dev.get(), (bladerf_channel)chan, name.c_str(), &range);
+    ret = bladerf_get_gain_stage_range( _dev.get(), static_cast<bladerf_channel>(chan), name.c_str(), &range);
   }
 
   if( ret ) {
@@ -807,9 +826,9 @@ double bladerf_common::set_gain( double gain, const std::string & name, size_t c
   int ret = 0;
 
   if( name == SYSTEM_GAIN_NAME ) {
-    ret = bladerf_set_gain( _dev.get(), (bladerf_channel)chan, int(gain) );
+    ret = bladerf_set_gain( _dev.get(), static_cast<bladerf_channel>(chan), static_cast<int>(gain) );
   } else {
-    ret = bladerf_set_gain_stage( _dev.get(), (bladerf_channel)chan, name.c_str(), int(gain) );
+    ret = bladerf_set_gain_stage( _dev.get(), static_cast<bladerf_channel>(chan), name.c_str(), static_cast<int>(gain) );
   }
 
   /* Check for errors */
@@ -830,7 +849,6 @@ double bladerf_common::set_gain( double gain, const std::string & name, size_t c
 
 double bladerf_common::get_gain( size_t chan )
 {
-  /* TODO: This is an overall system gain that has to be set */
   return get_gain( SYSTEM_GAIN_NAME, chan );
 }
 
@@ -840,9 +858,9 @@ double bladerf_common::get_gain( const std::string & name, size_t chan )
   int ret = 0;
 
   if( name == SYSTEM_GAIN_NAME ) {
-    ret = bladerf_get_gain( _dev.get(), (bladerf_channel)chan, &g );
+    ret = bladerf_get_gain( _dev.get(), static_cast<bladerf_channel>(chan), &g );
   } else {
-    ret = bladerf_get_gain_stage( _dev.get(), (bladerf_channel)chan, name.c_str(), &g );
+    ret = bladerf_get_gain_stage( _dev.get(), static_cast<bladerf_channel>(chan), name.c_str(), &g );
   }
 
   /* Check for errors */
@@ -865,8 +883,8 @@ int bladerf_common::set_dc_offset(bladerf_module module, const std::complex<doub
     int ret = 0;
     int16_t val_i, val_q;
 
-    val_i = (int16_t)(offset.real() * DCOFF_SCALE);
-    val_q = (int16_t)(offset.imag() * DCOFF_SCALE);
+    val_i = static_cast<int16_t>(offset.real() * DCOFF_SCALE);
+    val_q = static_cast<int16_t>(offset.imag() * DCOFF_SCALE);
 
     ret  = bladerf_set_correction(_dev.get(), module, BLADERF_CORR_LMS_DCOFF_I, val_i);
     ret |= bladerf_set_correction(_dev.get(), module, BLADERF_CORR_LMS_DCOFF_Q, val_q);
@@ -879,8 +897,8 @@ int bladerf_common::set_iq_balance(bladerf_module module, const std::complex<dou
     int ret = 0;
     int16_t val_gain, val_phase;
 
-    val_gain = (int16_t)(balance.real() * GAIN_SCALE);
-    val_phase = (int16_t)(balance.imag() * PHASE_SCALE);
+    val_gain = static_cast<int16_t>(balance.real() * GAIN_SCALE);
+    val_phase = static_cast<int16_t>(balance.imag() * PHASE_SCALE);
 
     ret  = bladerf_set_correction(_dev.get(), module, BLADERF_CORR_FPGA_GAIN, val_gain);
     ret |= bladerf_set_correction(_dev.get(), module, BLADERF_CORR_FPGA_PHASE, val_phase);
@@ -936,12 +954,12 @@ void bladerf_common::set_smb_frequency(double frequency)
 {
   uint32_t actual_frequency = frequency;
 
-  int status = bladerf_set_smb_frequency( _dev.get(), uint32_t(frequency), &actual_frequency );
+  int status = bladerf_set_smb_frequency( _dev.get(), static_cast<uint32_t>(frequency), &actual_frequency );
   if ( status != 0 )
     throw std::runtime_error(_pfx + "Failed to set SMB frequency: " +
                              bladerf_strerror(status));
 
-  if ( uint32_t(frequency) != actual_frequency )
+  if ( static_cast<uint32_t>(frequency) != actual_frequency )
     std::cerr << _pfx << "Wanted SMB frequency is " << frequency
               << ", actual is " << actual_frequency
               << std::endl;
@@ -956,5 +974,5 @@ double bladerf_common::get_smb_frequency()
     throw std::runtime_error(_pfx + "Failed to get SMB frequency: " +
                              bladerf_strerror(status));
 
-  return actual_frequency;
+  return static_cast<double>(actual_frequency);
 }

@@ -116,6 +116,7 @@ protected:
   int _conv_buf_size; /* In units of samples */
 
   bool _use_metadata;
+  bool _use_mimo;
 
   std::string _pfx;
 
