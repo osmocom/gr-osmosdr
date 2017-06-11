@@ -305,6 +305,7 @@ rtl_tcp_source_c::rtl_tcp_source_c(const std::string &args) :
 
 rtl_tcp_source_c::~rtl_tcp_source_c()
 {
+  delete [] d_LUT;
   delete [] d_temp_buff;
 
   if (d_socket != -1) {
