@@ -154,6 +154,7 @@ rtl_tcp_source_c::rtl_tcp_source_c(const std::string &args) :
   unsigned short port = 1234;
   int payload_size = 16384;
   unsigned int direct_samp = 0, offset_tune = 0;
+  int bias_tee = 0;
 
   _freq = 0;
   _rate = 0;
@@ -181,6 +182,9 @@ rtl_tcp_source_c::rtl_tcp_source_c(const std::string &args) :
 
   if (dict.count("offset_tune"))
     offset_tune = boost::lexical_cast< unsigned int >( dict["offset_tune"] );
+
+  if (dict.count("bias"))
+    bias_tee = boost::lexical_cast<bool>( dict["bias"] );
 
   if (!host.length())
     host = "127.0.0.1";
@@ -218,7 +222,6 @@ rtl_tcp_source_c::rtl_tcp_source_c(const std::string &args) :
     report_error("rtl_tcp_source_f/getaddrinfo",
                  "can't initialize source socket" );
 
-  // FIXME leaks if report_error throws below
   d_temp_buff = new unsigned char[payload_size];   // allow it to hold up to payload_size bytes
   d_LUT = new float[0x100];
   for (int i = 0; i < 0x100; ++i)
@@ -293,13 +296,19 @@ rtl_tcp_source_c::rtl_tcp_source_c(const std::string &args) :
   set_gain_mode(false); /* enable manual gain mode by default */
 
   // set direct sampling
-  struct command cmd = { 0x09, htonl(direct_samp) };
+  struct command cmd;
+
+  cmd = { 0x09, htonl(direct_samp) };
   send(d_socket, (const char*)&cmd, sizeof(cmd), 0);
   if (direct_samp)
     _no_tuner = true;
 
   // set offset tuning
   cmd = { 0x0a, htonl(offset_tune) };
+  send(d_socket, (const char*)&cmd, sizeof(cmd), 0);
+
+  // set bias tee
+  cmd = { 0x0e, htonl(bias_tee) };
   send(d_socket, (const char*)&cmd, sizeof(cmd), 0);
 }
 
