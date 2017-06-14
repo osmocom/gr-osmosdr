@@ -29,8 +29,6 @@
 
 #include <gnuradio/io_signature.h>
 #include <gnuradio/constants.h>
-#include <gnuradio/blocks/throttle.h>
-#include <gnuradio/blocks/null_sink.h>
 
 #ifdef ENABLE_UHD
 #include "uhd_sink_c.h"
@@ -56,10 +54,6 @@
 
 #include "arg_helpers.h"
 #include "sink_impl.h"
-
-/* This avoids throws in ctor of gr::hier_block2, as gnuradio is unable to deal
- with this behavior in a clean way. The GR maintainer Rondeau has been informed. */
-#define WORKAROUND_GR_HIER_BLOCK2_BUG
 
 /*
  * Create a new instance of sink_impl and return
@@ -115,7 +109,7 @@ sink_impl::sink_impl( const std::string &args )
   std::cerr << "built-in sink types: ";
   BOOST_FOREACH(std::string dev_type, dev_types)
     std::cerr << dev_type << " ";
-  std::cerr << std::endl << std::flush;
+  std::cerr << std::endl;
 
   BOOST_FOREACH(std::string arg, arg_list) {
     dict_t dict = params_to_dict(arg);
@@ -126,9 +120,7 @@ sink_impl::sink_impl( const std::string &args )
       }
     }
   }
-#ifdef WORKAROUND_GR_HIER_BLOCK2_BUG
-  try {
-#endif
+
   if ( ! device_specified ) {
     std::vector< std::string > dev_list;
 #ifdef ENABLE_UHD
@@ -167,7 +159,7 @@ sink_impl::sink_impl( const std::string &args )
     if ( dev_list.size() )
       arg_list.push_back( dev_list.front() );
     else
-      throw std::runtime_error("No supported devices found to pick from.");
+      throw std::runtime_error("No supported devices found (check the connection and/or udev rules).");
   }
 
   BOOST_FOREACH(std::string arg, arg_list) {
@@ -237,35 +229,6 @@ sink_impl::sink_impl( const std::string &args )
 
   if (!_devs.size())
     throw std::runtime_error("No devices specified via device arguments.");
-#ifdef WORKAROUND_GR_HIER_BLOCK2_BUG
-  } catch ( std::exception &ex ) {
-    std::cerr << std::endl << "FATAL: " << ex.what() << std::endl << std::endl;
-
-    size_t missing_chans = 0;
-    if ( input_signature()->max_streams() > 0 )
-      missing_chans = input_signature()->max_streams() - channel;
-
-    std::cerr << "Trying to fill up " << missing_chans
-              << " missing channel(s) with null sink(s).\n"
-              << "This is being done to prevent the application from crashing\n"
-              << "due to gnuradio bug #528.\n"
-              << std::endl;
-
-    for (size_t i = 0; i < missing_chans; i++) {
-      /* we try to prevent the whole application from crashing by faking
-       * the missing hardware (channels) with a null sink */
-
-      gr::blocks::null_sink::sptr null_sink = \
-          gr::blocks::null_sink::make( sizeof(gr_complex) );
-
-      gr::blocks::throttle::sptr throttle = \
-          gr::blocks::throttle::make( sizeof(gr_complex), 1e5 );
-
-      connect(self(), channel++, throttle, 0);
-      connect(throttle, 0, null_sink, 0);
-    }
-  }
-#endif
 }
 
 size_t sink_impl::get_num_channels()

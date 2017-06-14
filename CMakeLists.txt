@@ -150,7 +150,7 @@ set(GRC_BLOCKS_DIR      ${GR_PKG_DATA_DIR}/grc/blocks)
 # Find build dependencies
 ########################################################################
 set(GR_REQUIRED_COMPONENTS RUNTIME PMT BLOCKS)
-set(MIN_GR_VERSION "3.7.8")
+set(MIN_GR_VERSION "3.7.10")
 find_package(Gnuradio REQUIRED)
 if("${Gnuradio_VERSION}" VERSION_LESS MIN_GR_VERSION)
     MESSAGE(FATAL_ERROR "GnuRadio version required: >=\"" ${MIN_GR_VERSION} "\" found: \"" ${Gnuradio_VERSION} "\"")
