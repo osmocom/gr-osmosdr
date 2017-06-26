@@ -912,11 +912,6 @@ double bladerf_common::get_gain( const std::string & name, size_t chan )
   return (double)g;
 }
 
-double bladerf_common::set_bb_gain( double gain, size_t chan )
-{
-  return set_gain( gain, SYSTEM_GAIN_NAME, chan );
-}
-
 int bladerf_common::set_dc_offset(bladerf_module module, const std::complex<double> &offset, size_t chan)
 {
     int ret = 0;

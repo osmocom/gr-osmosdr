@@ -87,8 +87,6 @@ protected:
   double get_gain( size_t chan = 0 );
   double get_gain( const std::string & name, size_t chan = 0 );
 
-  double set_bb_gain( double gain, size_t chan = 0 );
-
   int set_dc_offset(bladerf_module module, const std::complex<double> &offset, size_t chan);
   int set_iq_balance(bladerf_module module, const std::complex<double> &balance, size_t chan);
 

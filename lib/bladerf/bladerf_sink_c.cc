@@ -380,10 +380,6 @@ double bladerf_sink_c::get_gain( const std::string & name, size_t chan )
   return bladerf_common::get_gain(name, chan);
 }
 
-double bladerf_sink_c::set_bb_gain( double gain, size_t chan )
-{
-  return bladerf_common::set_bb_gain(gain, chan);
-}
 
 std::vector< std::string > bladerf_sink_c::get_antennas( size_t chan )
 {
