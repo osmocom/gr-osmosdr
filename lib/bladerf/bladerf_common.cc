@@ -48,8 +48,9 @@ using namespace boost::assign;
 boost::mutex bladerf_common::_devs_mutex;
 std::list<boost::weak_ptr<struct bladerf> > bladerf_common::_devs;
 
-// name of system-wide gain
-//(internal only, doesn't match any libbladeRF gain stage)
+/* name of system-wide gain
+ * (internal only, doesn't match any libbladeRF gain stage)
+ */
 static const char* SYSTEM_GAIN_NAME = "system";
 
 bladerf_common::bladerf_common() :
@@ -187,7 +188,7 @@ void bladerf_common::set_loopback_mode(const std::string &loopback)
     } else if (loopback == "none") {
       mode = BLADERF_LB_NONE;
     } else {
-      throw std::runtime_error( _pfx + "Invalid loopback mode:" + loopback );
+      throw std::runtime_error( _pfx + "Unknown loopback mode:" + loopback );
     }
 
     status = bladerf_set_loopback( _dev.get(), mode);
