@@ -310,23 +310,23 @@ double bladerf_sink_c::get_sample_rate()
 
 osmosdr::freq_range_t bladerf_sink_c::get_freq_range(size_t chan)
 {
-  return bladerf_common::get_freq_range(chan);
+  return bladerf_common::get_freq_range(BLADERF_CHANNEL_TX(chan));
 }
 
 double bladerf_sink_c::set_center_freq(double freq, size_t chan)
 {
-  return bladerf_common::set_center_freq(freq, chan);
+  return bladerf_common::set_center_freq(freq, BLADERF_CHANNEL_TX(chan));
 }
 
 double bladerf_sink_c::get_center_freq(size_t chan)
 {
-  return bladerf_common::get_center_freq(chan);
+  return bladerf_common::get_center_freq(BLADERF_CHANNEL_TX(chan));
 }
 
 double bladerf_sink_c::set_freq_corr( double ppm, size_t chan )
 {
   /* TODO: Write the VCTCXO with a correction value (also changes RX ppm value!) */
-  return get_freq_corr( chan );
+  return get_freq_corr( BLADERF_CHANNEL_TX(chan) );
 }
 
 double bladerf_sink_c::get_freq_corr( size_t chan )
@@ -337,49 +337,48 @@ double bladerf_sink_c::get_freq_corr( size_t chan )
 
 std::vector<std::string> bladerf_sink_c::get_gain_names( size_t chan )
 {
-  return bladerf_common::get_gain_names(chan);
+  return bladerf_common::get_gain_names(BLADERF_CHANNEL_TX(chan));
 }
 
 osmosdr::gain_range_t bladerf_sink_c::get_gain_range( size_t chan )
 {
-  return bladerf_common::get_gain_range(chan);
+  return bladerf_common::get_gain_range(BLADERF_CHANNEL_TX(chan));
 }
 
 osmosdr::gain_range_t bladerf_sink_c::get_gain_range( const std::string & name, size_t chan )
 {
-  return bladerf_common::get_gain_range(name, chan);
+  return bladerf_common::get_gain_range(name, BLADERF_CHANNEL_TX(chan));
 }
 
 bool bladerf_sink_c::set_gain_mode( bool automatic, size_t chan )
 {
-  return bladerf_common::set_gain_mode(automatic, chan);
+  return bladerf_common::set_gain_mode(automatic, BLADERF_CHANNEL_TX(chan));
 }
 
 bool bladerf_sink_c::get_gain_mode( size_t chan )
 {
-  return bladerf_common::get_gain_mode(chan);
+  return bladerf_common::get_gain_mode(BLADERF_CHANNEL_TX(chan));
 }
 
 double bladerf_sink_c::set_gain( double gain, size_t chan )
 {
-  return bladerf_common::set_gain(gain, chan);
+  return bladerf_common::set_gain(gain, BLADERF_CHANNEL_TX(chan));
 }
 
 double bladerf_sink_c::set_gain( double gain, const std::string & name, size_t chan)
 {
-  return bladerf_common::set_gain(gain, name, chan);
+  return bladerf_common::set_gain(gain, name, BLADERF_CHANNEL_TX(chan));
 }
 
 double bladerf_sink_c::get_gain( size_t chan )
 {
-  return bladerf_common::get_gain(chan);
+  return bladerf_common::get_gain(BLADERF_CHANNEL_TX(chan));
 }
 
 double bladerf_sink_c::get_gain( const std::string & name, size_t chan )
 {
-  return bladerf_common::get_gain(name, chan);
+  return bladerf_common::get_gain(name, BLADERF_CHANNEL_TX(chan));
 }
-
 
 std::vector< std::string > bladerf_sink_c::get_antennas( size_t chan )
 {
@@ -396,12 +395,13 @@ std::vector< std::string > bladerf_sink_c::get_antennas( size_t chan )
 
 std::string bladerf_sink_c::set_antenna( const std::string & antenna, size_t chan )
 {
-  return get_antenna( chan );
+  return get_antenna( BLADERF_CHANNEL_TX(chan) );
 }
 
 std::string bladerf_sink_c::get_antenna( size_t chan )
 {
   /* We only have a single transmit antenna here */
+  // TODO: the above is a lie
   return "TX0";
 }
 
