@@ -809,22 +809,11 @@ osmosdr::gain_range_t bladerf_common::get_gain_range( const std::string & name, 
 bool bladerf_common::set_gain_mode( bool automatic, size_t chan )
 {
   int ret = 0;
+  bladerf_gain_mode mode = automatic ? BLADERF_GAIN_DEFAULT : BLADERF_GAIN_MGC;
 
-  if (automatic) {
-    ret = bladerf_set_gain_mode(  _dev.get(),
-                                  static_cast<bladerf_channel>(chan),
-                                  BLADERF_GAIN_DEFAULT );
-  } else {
-    /* read the gain (presumably automatic), switch to MGC, then set the
-     * gain to that value to minimize surprise */
-    double gain = get_gain(chan);
-    ret = bladerf_set_gain_mode(  _dev.get(),
-                                  static_cast<bladerf_channel>(chan),
-                                  BLADERF_GAIN_MGC );
-    if (!ret) {
-      set_gain(gain, chan);
-    }
-  }
+  ret = bladerf_set_gain_mode(  _dev.get(),
+                                static_cast<bladerf_channel>(chan),
+                                mode );
 
   if( ret ) {
     throw std::runtime_error( std::string(__FUNCTION__) + " " +
