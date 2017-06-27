@@ -224,48 +224,25 @@ void bladerf_common::set_verbosity(const std::string &verbosity)
     bladerf_log_set_verbosity(l);
 }
 
-bladerf_direction bladerf_common::channel_to_direction(bladerf_channel ch)
-{
-  switch (ch) {
-    case BLADERF_CHANNEL_RX(0):
-    case BLADERF_CHANNEL_RX(1):
-      return BLADERF_RX;
-      break;
-
-    case BLADERF_CHANNEL_TX(0):
-    case BLADERF_CHANNEL_TX(1):
-      return BLADERF_TX;
-      break;
-
-    default:
-      throw std::runtime_error( _pfx + " " + "invalid channel specified" );
-      break;
-  }
-}
-
-bool bladerf_common::start(bladerf_module module)
+bool bladerf_common::start(bladerf_direction direction)
 {
   int ret;
   bladerf_format format;
   bladerf_channel_layout layout;
-  bladerf_direction direction;
 
-  if (_use_metadata) {
-    format = BLADERF_FORMAT_SC16_Q11_META;
-  } else {
-    format = BLADERF_FORMAT_SC16_Q11;
-  }
+  format = _use_metadata ? BLADERF_FORMAT_SC16_Q11_META : BLADERF_FORMAT_SC16_Q11;
 
-  direction = channel_to_direction(module);
-
-  if (BLADERF_MODULE_RX == module) {
-    layout = _use_mimo ? BLADERF_RX_X2 : BLADERF_RX_X1;
-  } else if (BLADERF_MODULE_TX == module) {
-    layout = _use_mimo ? BLADERF_TX_X2 : BLADERF_TX_X1;
-  } else {
-    std::cerr << _pfx << "invalid module: "
-              << module << std::endl;
-    return false;
+  switch (direction) {
+    case BLADERF_RX:
+      layout = _use_mimo ? BLADERF_RX_X2 : BLADERF_RX_X1;
+      break;
+    case BLADERF_TX:
+      layout = _use_mimo ? BLADERF_TX_X2 : BLADERF_TX_X1;
+      break;
+    default:
+      std::cerr << _pfx << "invalid direction: "
+                << direction << std::endl;
+      return false;
   }
 
   ret = bladerf_sync_config(_dev.get(), layout, format,
@@ -279,6 +256,7 @@ bool bladerf_common::start(bladerf_module module)
   }
 
   ret = bladerf_enable_module(_dev.get(), direction, true);
+
   if ( ret != 0 ) {
     std::cerr << _pfx << "bladerf_enable_module failed: "
               << bladerf_strerror(ret) << std::endl;
@@ -288,12 +266,9 @@ bool bladerf_common::start(bladerf_module module)
   return true;
 }
 
-bool bladerf_common::stop(bladerf_module module)
+bool bladerf_common::stop(bladerf_direction direction)
 {
   int ret;
-  bladerf_direction direction;
-
-  direction = channel_to_direction(module);
 
   ret = bladerf_enable_module(_dev.get(), direction, false);
 
@@ -323,13 +298,13 @@ static bool version_greater_or_equal(const struct bladerf_version *version,
     }
 }
 
-void bladerf_common::init(dict_t &dict, bladerf_module module)
+void bladerf_common::init(dict_t &dict, bladerf_direction direction)
 {
   int ret;
   std::string device_name("");
   struct bladerf_version ver;
   char serial[BLADERF_SERIAL_LENGTH];
-  const char *type = (module == BLADERF_MODULE_TX ? "sink" : "source");
+  const char *type = (direction == BLADERF_TX ? "sink" : "source");
 
   _pfx = std::string("[bladeRF ") + std::string(type) + std::string("] ");
 
@@ -421,14 +396,14 @@ void bladerf_common::init(dict_t &dict, bladerf_module module)
     throw std::runtime_error( oss.str() );
   }
 
-  if ( module == BLADERF_MODULE_RX )
+  if ( direction == BLADERF_RX )
   {
       if ( dict.count("loopback") )
           set_loopback_mode( dict["loopback"] );
       else
           set_loopback_mode( "none" );
   }
-  else if ( module == BLADERF_MODULE_TX && dict.count("loopback") )
+  else if ( direction == BLADERF_TX && dict.count("loopback") )
   {
       std::cerr << _pfx
                 << "Warning: 'loopback' has been specified on a bladeRF sink, "
@@ -461,7 +436,7 @@ void bladerf_common::init(dict_t &dict, bladerf_module module)
         filter = BLADERF_XB200_AUTO_1DB;
       }
 
-      if (bladerf_xb200_set_filterbank(_dev.get(), module, filter)) {
+      if (bladerf_xb200_set_filterbank(_dev.get(), direction, filter)) {
           std::cerr << _pfx << "Could not set XB-200 filter" << std::endl;
       }
     }
@@ -520,7 +495,7 @@ void bladerf_common::init(dict_t &dict, bladerf_module module)
 
   _use_metadata = dict.count("enable_metadata") != 0;
 
-  _use_mimo = (dict.count("enable_mimo") != 0) && (get_num_channels(module) >= 2);
+  _use_mimo = (dict.count("enable_mimo") != 0) && (get_num_channels(direction) >= 2);
 
   /* Require value to be >= 2 so we can ensure we have twice as many
    * buffers as transfers */
@@ -659,7 +634,7 @@ std::vector< std::string > bladerf_common::devices()
   return ret;
 }
 
-size_t bladerf_common::get_num_channels(bladerf_module module)
+size_t bladerf_common::get_num_channels(bladerf_direction direction)
 {
   // TODO: Need to figure out how to deal with output_signature()->max_streams
   // being stuck at 1 in source_impl.cc
@@ -672,7 +647,7 @@ size_t bladerf_common::get_num_channels(bladerf_module module)
   // return 1;
 }
 
-double bladerf_common::set_sample_rate( bladerf_module module, double rate )
+double bladerf_common::set_sample_rate( bladerf_direction direction, double rate )
 {
   int status;
   struct bladerf_rational_rate rational_rate, actual;
@@ -681,7 +656,7 @@ double bladerf_common::set_sample_rate( bladerf_module module, double rate )
   rational_rate.den = 10000;
   rational_rate.num = (rate - rational_rate.integer) * rational_rate.den;
 
-  status = bladerf_set_rational_sample_rate( _dev.get(), module,
+  status = bladerf_set_rational_sample_rate( _dev.get(), direction,
                                              &rational_rate, &actual );
 
   if ( status != 0 ) {
@@ -693,14 +668,14 @@ double bladerf_common::set_sample_rate( bladerf_module module, double rate )
   return actual.integer + actual.num / static_cast<double>(actual.den);
 }
 
-double bladerf_common::get_sample_rate( bladerf_module module )
+double bladerf_common::get_sample_rate( bladerf_direction direction )
 {
   int status;
   double ret = 0.0;
   struct bladerf_rational_rate rate;
 
 
-  status = bladerf_get_rational_sample_rate( _dev.get(), module, &rate );
+  status = bladerf_get_rational_sample_rate( _dev.get(), direction, &rate );
 
   if ( status != 0 ) {
    throw std::runtime_error( std::string(__FUNCTION__) +
@@ -901,7 +876,7 @@ double bladerf_common::get_gain( const std::string & name, size_t chan )
   return (double)g;
 }
 
-int bladerf_common::set_dc_offset(bladerf_module module, const std::complex<double> &offset, size_t chan)
+int bladerf_common::set_dc_offset(bladerf_direction direction, const std::complex<double> &offset, size_t chan)
 {
     int ret = 0;
     int16_t val_i, val_q;
@@ -909,13 +884,13 @@ int bladerf_common::set_dc_offset(bladerf_module module, const std::complex<doub
     val_i = static_cast<int16_t>(offset.real() * DCOFF_SCALE);
     val_q = static_cast<int16_t>(offset.imag() * DCOFF_SCALE);
 
-    ret  = bladerf_set_correction(_dev.get(), module, BLADERF_CORR_LMS_DCOFF_I, val_i);
-    ret |= bladerf_set_correction(_dev.get(), module, BLADERF_CORR_LMS_DCOFF_Q, val_q);
+    ret  = bladerf_set_correction(_dev.get(), direction, BLADERF_CORR_LMS_DCOFF_I, val_i);
+    ret |= bladerf_set_correction(_dev.get(), direction, BLADERF_CORR_LMS_DCOFF_Q, val_q);
 
     return ret;
 }
 
-int bladerf_common::set_iq_balance(bladerf_module module, const std::complex<double> &balance, size_t chan)
+int bladerf_common::set_iq_balance(bladerf_direction direction, const std::complex<double> &balance, size_t chan)
 {
     int ret = 0;
     int16_t val_gain, val_phase;
@@ -923,8 +898,8 @@ int bladerf_common::set_iq_balance(bladerf_module module, const std::complex<dou
     val_gain = static_cast<int16_t>(balance.real() * GAIN_SCALE);
     val_phase = static_cast<int16_t>(balance.imag() * PHASE_SCALE);
 
-    ret  = bladerf_set_correction(_dev.get(), module, BLADERF_CORR_FPGA_GAIN, val_gain);
-    ret |= bladerf_set_correction(_dev.get(), module, BLADERF_CORR_FPGA_PHASE, val_phase);
+    ret  = bladerf_set_correction(_dev.get(), direction, BLADERF_CORR_FPGA_GAIN, val_gain);
+    ret |= bladerf_set_correction(_dev.get(), direction, BLADERF_CORR_FPGA_PHASE, val_phase);
 
     return ret;
 }

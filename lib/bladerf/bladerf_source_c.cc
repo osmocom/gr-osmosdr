@@ -81,7 +81,7 @@ bladerf_source_c::bladerf_source_c (const std::string &args)
 
   dict_t dict = params_to_dict(args);
 
-  init(dict, BLADERF_MODULE_RX);
+  init(dict, BLADERF_RX);
 
   if (dict.count("sampling"))
   {
@@ -119,12 +119,12 @@ bladerf_source_c::bladerf_source_c (const std::string &args)
 
 bool bladerf_source_c::start()
 {
-  return bladerf_common::start(BLADERF_MODULE_RX);
+  return bladerf_common::start(BLADERF_RX);
 }
 
 bool bladerf_source_c::stop()
 {
-  return bladerf_common::stop(BLADERF_MODULE_RX);
+  return bladerf_common::stop(BLADERF_RX);
 }
 
 int bladerf_source_c::work( int noutput_items,
@@ -188,7 +188,7 @@ std::vector<std::string> bladerf_source_c::get_devices()
 
 size_t bladerf_source_c::get_num_channels()
 {
-  return bladerf_common::get_num_channels(BLADERF_MODULE_RX);
+  return bladerf_common::get_num_channels(BLADERF_RX);
 }
 
 osmosdr::meta_range_t bladerf_source_c::get_sample_rates()
@@ -198,12 +198,12 @@ osmosdr::meta_range_t bladerf_source_c::get_sample_rates()
 
 double bladerf_source_c::set_sample_rate( double rate )
 {
-  return bladerf_common::set_sample_rate( BLADERF_MODULE_RX, rate);
+  return bladerf_common::set_sample_rate( BLADERF_RX, rate);
 }
 
 double bladerf_source_c::get_sample_rate()
 {
-  return bladerf_common::get_sample_rate( BLADERF_MODULE_RX );
+  return bladerf_common::get_sample_rate( BLADERF_RX );
 }
 
 osmosdr::freq_range_t bladerf_source_c::get_freq_range(size_t chan)
@@ -320,7 +320,7 @@ void bladerf_source_c::set_dc_offset( const std::complex<double> &offset, size_t
 {
   int ret = 0;
 
-  ret = bladerf_common::set_dc_offset(BLADERF_MODULE_RX, offset, chan);
+  ret = bladerf_common::set_dc_offset(BLADERF_RX, offset, chan);
 
   if( ret ) {
     throw std::runtime_error( std::string(__FUNCTION__) + " " +
@@ -346,7 +346,7 @@ void bladerf_source_c::set_iq_balance( const std::complex<double> &balance, size
 {
   int ret = 0;
 
-  ret = bladerf_common::set_iq_balance(BLADERF_MODULE_RX, balance, chan);
+  ret = bladerf_common::set_iq_balance(BLADERF_RX, balance, chan);
 
   if( ret ) {
     throw std::runtime_error( std::string(__FUNCTION__) + " " +
@@ -363,7 +363,7 @@ double bladerf_source_c::set_bandwidth( double bandwidth, size_t chan )
   if ( bandwidth == 0.0 ) /* bandwidth of 0 means automatic filter selection */
     bandwidth = get_sample_rate() * 0.75; /* select narrower filters to prevent aliasing */
 
-  ret = bladerf_set_bandwidth( _dev.get(), BLADERF_MODULE_RX, (uint32_t)bandwidth, &actual );
+  ret = bladerf_set_bandwidth( _dev.get(), BLADERF_RX, (uint32_t)bandwidth, &actual );
   if( ret ) {
     throw std::runtime_error( std::string(__FUNCTION__) + " " +
                               "could not set bandwidth: " +
@@ -378,7 +378,7 @@ double bladerf_source_c::get_bandwidth( size_t chan )
   uint32_t bandwidth;
   int ret;
 
-  ret = bladerf_get_bandwidth( _dev.get(), BLADERF_MODULE_RX, &bandwidth );
+  ret = bladerf_get_bandwidth( _dev.get(), BLADERF_RX, &bandwidth );
   if( ret ) {
     throw std::runtime_error( std::string(__FUNCTION__) + " " +
                               "could not get bandwidth:" +

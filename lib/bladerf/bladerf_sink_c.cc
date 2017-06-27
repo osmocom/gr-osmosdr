@@ -86,18 +86,18 @@ bladerf_sink_c::bladerf_sink_c (const std::string &args)
   dict_t dict = params_to_dict(args);
 
   /* Perform src/sink agnostic initializations */
-  init(dict, BLADERF_MODULE_TX);
+  init(dict, BLADERF_TX);
 }
 
 bool bladerf_sink_c::start()
 {
   _in_burst = false;
-  return bladerf_common::start(BLADERF_MODULE_TX);
+  return bladerf_common::start(BLADERF_TX);
 }
 
 bool bladerf_sink_c::stop()
 {
-  return bladerf_common::stop(BLADERF_MODULE_TX);
+  return bladerf_common::stop(BLADERF_TX);
 }
 
 #define INVALID_IDX -1
@@ -290,7 +290,7 @@ std::vector<std::string> bladerf_sink_c::get_devices()
 
 size_t bladerf_sink_c::get_num_channels()
 {
-  return bladerf_common::get_num_channels(BLADERF_MODULE_TX);
+  return bladerf_common::get_num_channels(BLADERF_TX);
 }
 
 osmosdr::meta_range_t bladerf_sink_c::get_sample_rates()
@@ -300,12 +300,12 @@ osmosdr::meta_range_t bladerf_sink_c::get_sample_rates()
 
 double bladerf_sink_c::set_sample_rate(double rate)
 {
-  return bladerf_common::set_sample_rate(BLADERF_MODULE_TX, rate);
+  return bladerf_common::set_sample_rate(BLADERF_TX, rate);
 }
 
 double bladerf_sink_c::get_sample_rate()
 {
-  return bladerf_common::get_sample_rate(BLADERF_MODULE_TX);
+  return bladerf_common::get_sample_rate(BLADERF_TX);
 }
 
 osmosdr::freq_range_t bladerf_sink_c::get_freq_range(size_t chan)
@@ -409,7 +409,7 @@ void bladerf_sink_c::set_dc_offset( const std::complex<double> &offset, size_t c
 {
   int ret = 0;
 
-  ret = bladerf_common::set_dc_offset(BLADERF_MODULE_TX, offset, chan);
+  ret = bladerf_common::set_dc_offset(BLADERF_TX, offset, chan);
 
   if( ret ) {
     throw std::runtime_error( std::string(__FUNCTION__) + " " +
@@ -422,7 +422,7 @@ void bladerf_sink_c::set_iq_balance( const std::complex<double> &balance, size_t
 {
   int ret = 0;
 
-  ret = bladerf_common::set_iq_balance(BLADERF_MODULE_TX, balance, chan);
+  ret = bladerf_common::set_iq_balance(BLADERF_TX, balance, chan);
 
   if( ret ) {
     throw std::runtime_error( std::string(__FUNCTION__) + " " +
@@ -439,7 +439,7 @@ double bladerf_sink_c::set_bandwidth( double bandwidth, size_t chan )
   if ( bandwidth == 0.0 ) /* bandwidth of 0 means automatic filter selection */
     bandwidth = get_sample_rate() * 0.75; /* select narrower filters to prevent aliasing */
 
-  ret = bladerf_set_bandwidth( _dev.get(), BLADERF_MODULE_TX, (uint32_t)bandwidth, &actual );
+  ret = bladerf_set_bandwidth( _dev.get(), BLADERF_TX, (uint32_t)bandwidth, &actual );
   if( ret ) {
     throw std::runtime_error( std::string(__FUNCTION__) + " " +
                               "could not set bandwidth:" +
@@ -454,7 +454,7 @@ double bladerf_sink_c::get_bandwidth( size_t chan )
   uint32_t bandwidth;
   int ret;
 
-  ret = bladerf_get_bandwidth( _dev.get(), BLADERF_MODULE_TX, &bandwidth );
+  ret = bladerf_get_bandwidth( _dev.get(), BLADERF_TX, &bandwidth );
   if( ret ) {
     throw std::runtime_error( std::string(__FUNCTION__) + " " +
                               "could not get bandwidth: " +

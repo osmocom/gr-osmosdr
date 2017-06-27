@@ -62,16 +62,16 @@ public:
 protected:
 
   /* Handle initialized and parameters common to both source & sink */
-  void init(dict_t &dict, bladerf_module module);
+  void init(dict_t &dict, bladerf_direction direction);
 
-  bool start(bladerf_module module);
-  bool stop(bladerf_module module);
+  bool start(bladerf_direction direction);
+  bool stop(bladerf_direction direction);
 
-  size_t get_num_channels(bladerf_module module);
+  size_t get_num_channels(bladerf_direction direction);
   bladerf_board_type get_board_type(struct bladerf *dev);
 
-  double set_sample_rate(bladerf_module module, double rate);
-  double get_sample_rate(bladerf_module module);
+  double set_sample_rate(bladerf_direction direction, double rate);
+  double get_sample_rate(bladerf_direction direction);
 
   osmosdr::freq_range_t get_freq_range(size_t chan = 0);
   double set_center_freq(double freq, size_t chan = 0);
@@ -87,8 +87,8 @@ protected:
   double get_gain( size_t chan = 0 );
   double get_gain( const std::string & name, size_t chan = 0 );
 
-  int set_dc_offset(bladerf_module module, const std::complex<double> &offset, size_t chan);
-  int set_iq_balance(bladerf_module module, const std::complex<double> &balance, size_t chan);
+  int set_dc_offset(bladerf_direction direction, const std::complex<double> &offset, size_t chan);
+  int set_iq_balance(bladerf_direction direction, const std::complex<double> &balance, size_t chan);
 
   void set_clock_source(const std::string &source, const size_t mboard = 0);
   std::string get_clock_source(const size_t mboard = 0);
@@ -135,8 +135,6 @@ private:
 
   void set_verbosity(const std::string &verbosity);
   void set_loopback_mode(const std::string &loopback);
-
-  bladerf_direction channel_to_direction(bladerf_channel ch);
 
   static boost::mutex _devs_mutex;
   static std::list<boost::weak_ptr<struct bladerf> > _devs;
