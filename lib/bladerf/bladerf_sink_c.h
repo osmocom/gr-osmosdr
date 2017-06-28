@@ -42,7 +42,7 @@ class bladerf_sink_c;
  *
  * As a convention, the _sptr suffix indicates a boost::shared_ptr
  */
-typedef boost::shared_ptr<bladerf_sink_c> bladerf_sink_c_sptr;
+typedef boost::shared_ptr < bladerf_sink_c > bladerf_sink_c_sptr;
 
 /*!
  * \brief Return a shared_ptr to a new instance of bladerf_sink_c.
@@ -51,19 +51,17 @@ typedef boost::shared_ptr<bladerf_sink_c> bladerf_sink_c_sptr;
  * constructor is private.  make_bladerf_sink_c is the public
  * interface for creating new instances.
  */
-bladerf_sink_c_sptr make_bladerf_sink_c (const std::string & args = "");
+bladerf_sink_c_sptr make_bladerf_sink_c(const std::string &args = "");
 
-class bladerf_sink_c :
-    public gr::sync_block,
-    public sink_iface,
-    protected bladerf_common
+class bladerf_sink_c:public gr::sync_block,
+  public sink_iface, protected bladerf_common
 {
 private:
   // The friend declaration allows bladerf_make_sink_c to
   // access the private constructor.
-  friend bladerf_sink_c_sptr make_bladerf_sink_c (const std::string & args);
+  friend bladerf_sink_c_sptr make_bladerf_sink_c(const std::string &args);
 
-  bladerf_sink_c (const std::string & args);  	// private constructor
+  bladerf_sink_c(const std::string &args);      // private constructor
 
   // Transmit converted samples stored in _conv_buf, applying SOB and EOB
   // based upon the provided tags
@@ -77,49 +75,50 @@ public:
   bool start();
   bool stop();
 
-  int work( int noutput_items,
-            gr_vector_const_void_star &input_items,
-            gr_vector_void_star &output_items );
+  int work(int noutput_items,
+           gr_vector_const_void_star &input_items,
+           gr_vector_void_star &output_items);
 
-  static std::vector< std::string > get_devices();
+  static std::vector < std::string > get_devices();
 
-  size_t get_num_channels( void );
+  size_t get_num_channels(void);
 
-  osmosdr::meta_range_t get_sample_rates( void );
-  double set_sample_rate( double rate );
-  double get_sample_rate( void );
+  osmosdr::meta_range_t get_sample_rates(void);
+  double set_sample_rate(double rate);
+  double get_sample_rate(void);
 
   osmosdr::freq_range_t get_freq_range(size_t chan = 0);
   double set_center_freq(double freq, size_t chan = 0);
   double get_center_freq(size_t chan = 0);
 
-  double set_freq_corr( double ppm, size_t chan = 0 );
-  double get_freq_corr( size_t chan = 0 );
+  double set_freq_corr(double ppm, size_t chan = 0);
+  double get_freq_corr(size_t chan = 0);
 
-  std::vector<std::string> get_gain_names( size_t chan = 0 );
-  osmosdr::gain_range_t get_gain_range( size_t chan = 0 );
-  osmosdr::gain_range_t get_gain_range( const std::string & name, size_t chan = 0 );
-  bool set_gain_mode( bool automatic, size_t chan = 0 );
-  bool get_gain_mode( size_t chan = 0 );
-  double set_gain( double gain, size_t chan = 0 );
-  double set_gain( double gain, const std::string & name, size_t chan = 0 );
-  double get_gain( size_t chan = 0 );
-  double get_gain( const std::string & name, size_t chan = 0 );
+  std::vector < std::string > get_gain_names(size_t chan = 0);
+  osmosdr::gain_range_t get_gain_range(size_t chan = 0);
+  osmosdr::gain_range_t get_gain_range(const std::string &name, size_t chan =
+                                         0);
+  bool set_gain_mode(bool automatic, size_t chan = 0);
+  bool get_gain_mode(size_t chan = 0);
+  double set_gain(double gain, size_t chan = 0);
+  double set_gain(double gain, const std::string &name, size_t chan = 0);
+  double get_gain(size_t chan = 0);
+  double get_gain(const std::string &name, size_t chan = 0);
 
-  std::vector< std::string > get_antennas( size_t chan = 0 );
-  std::string set_antenna( const std::string & antenna, size_t chan = 0 );
-  std::string get_antenna( size_t chan = 0 );
+  std::vector < std::string > get_antennas(size_t chan = 0);
+  std::string set_antenna(const std::string &antenna, size_t chan = 0);
+  std::string get_antenna(size_t chan = 0);
 
-  void set_dc_offset( const std::complex<double> &offset, size_t chan );
-  void set_iq_balance( const std::complex<double> &balance, size_t chan );
+  void set_dc_offset(const std::complex < double > &offset, size_t chan);
+  void set_iq_balance(const std::complex < double > &balance, size_t chan);
 
-  double set_bandwidth( double bandwidth, size_t chan = 0 );
-  double get_bandwidth( size_t chan = 0 );
-  osmosdr::freq_range_t get_bandwidth_range( size_t chan = 0 );
+  double set_bandwidth(double bandwidth, size_t chan = 0);
+  double get_bandwidth(size_t chan = 0);
+  osmosdr::freq_range_t get_bandwidth_range(size_t chan = 0);
 
   void set_clock_source(const std::string &source, const size_t mboard = 0);
   std::string get_clock_source(const size_t mboard);
-  std::vector<std::string> get_clock_sources(const size_t mboard);
+  std::vector < std::string > get_clock_sources(const size_t mboard);
 };
 
-#endif /* INCLUDED_BLADERF_SINK_C_H */
+#endif                          /* INCLUDED_BLADERF_SINK_C_H */

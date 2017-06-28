@@ -44,9 +44,9 @@
 #ifdef _MSC_VER
 #include <cstddef>
 typedef ptrdiff_t ssize_t;
-#endif //_MSC_VER
+#endif                          //_MSC_VER
 
-typedef boost::shared_ptr<struct bladerf> bladerf_sptr;
+typedef boost::shared_ptr < struct bladerf >bladerf_sptr;
 typedef enum {
   BLADERF_REV_INVALID,
   BLADERF_REV_1,
@@ -57,7 +57,7 @@ class bladerf_common
 {
 public:
   bladerf_common();
-  virtual ~bladerf_common();
+  virtual ~ bladerf_common();
 
 protected:
 
@@ -77,22 +77,25 @@ protected:
   double set_center_freq(double freq, size_t chan = 0);
   double get_center_freq(size_t chan = 0);
 
-  std::vector<std::string> get_gain_names( size_t chan = 0 );
-  osmosdr::gain_range_t get_gain_range( size_t chan = 0 );
-  osmosdr::gain_range_t get_gain_range( const std::string & name, size_t chan = 0 );
-  bool set_gain_mode( bool automatic, size_t chan = 0 );
-  bool get_gain_mode( size_t chan = 0 );
-  double set_gain( double gain, size_t chan = 0 );
-  double set_gain( double gain, const std::string & name, size_t chan = 0 );
-  double get_gain( size_t chan = 0 );
-  double get_gain( const std::string & name, size_t chan = 0 );
+  std::vector < std::string > get_gain_names(size_t chan = 0);
+  osmosdr::gain_range_t get_gain_range(size_t chan = 0);
+  osmosdr::gain_range_t get_gain_range(const std::string &name, size_t chan =
+                                         0);
+  bool set_gain_mode(bool automatic, size_t chan = 0);
+  bool get_gain_mode(size_t chan = 0);
+  double set_gain(double gain, size_t chan = 0);
+  double set_gain(double gain, const std::string &name, size_t chan = 0);
+  double get_gain(size_t chan = 0);
+  double get_gain(const std::string &name, size_t chan = 0);
 
-  int set_dc_offset(bladerf_direction direction, const std::complex<double> &offset, size_t chan);
-  int set_iq_balance(bladerf_direction direction, const std::complex<double> &balance, size_t chan);
+  int set_dc_offset(bladerf_direction direction,
+                    const std::complex < double > &offset, size_t chan);
+  int set_iq_balance(bladerf_direction direction,
+                     const std::complex < double > &balance, size_t chan);
 
   void set_clock_source(const std::string &source, const size_t mboard = 0);
   std::string get_clock_source(const size_t mboard = 0);
-  std::vector<std::string> get_clock_sources(const size_t mboard = 0);
+  std::vector < std::string > get_clock_sources(const size_t mboard = 0);
 
   void set_smb_frequency(double frequency);
   double get_smb_frequency();
@@ -101,7 +104,7 @@ protected:
   osmosdr::meta_range_t sample_rates();
   osmosdr::freq_range_t filter_bandwidths();
 
-  static std::vector< std::string > devices();
+  static std::vector < std::string > devices();
 
   bladerf_sptr _dev;
 
@@ -111,7 +114,7 @@ protected:
   unsigned int _stream_timeout_ms;
 
   int16_t *_conv_buf;
-  int _conv_buf_size; /* In units of samples */
+  int _conv_buf_size;           /* In units of samples */
 
   bool _use_metadata;
   bool _use_mimo;
@@ -122,9 +125,9 @@ protected:
   unsigned int _consecutive_failures;
 
   /* BladeRF IQ correction parameters */
-  static const int16_t DCOFF_SCALE  = 2048;
-  static const int16_t GAIN_SCALE   = 4096;
-  static const int16_t PHASE_SCALE  = 4096;
+  static const int16_t DCOFF_SCALE = 2048;
+  static const int16_t GAIN_SCALE = 4096;
+  static const int16_t PHASE_SCALE = 4096;
 
   static const unsigned int MAX_CONSECUTIVE_FAILURES = 3;
 
@@ -137,7 +140,7 @@ private:
   void set_loopback_mode(const std::string &loopback);
 
   static boost::mutex _devs_mutex;
-  static std::list<boost::weak_ptr<struct bladerf> > _devs;
+  static std::list < boost::weak_ptr < struct bladerf >>_devs;
 };
 
 #endif
