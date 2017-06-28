@@ -749,22 +749,22 @@ std::vector<std::string> bladerf_common::get_gain_names(size_t chan)
   const size_t max_count = 16;
   std::vector < std::string > names;
   char *gain_names[max_count];
-  int status;
+  int count;
 
   names += SYSTEM_GAIN_NAME;
 
-  status = bladerf_get_gain_stages(_dev.get(),
-                                   static_cast<bladerf_channel>(chan),
-                                   (const char **) &gain_names,
-                                   max_count);
-  if (status < 0) {
+  count = bladerf_get_gain_stages(_dev.get(),
+                                  static_cast<bladerf_channel>(chan),
+                                  reinterpret_cast<const char **>(&gain_names),
+                                  max_count);
+  if (count < 0) {
     throw std::runtime_error(_pfx +
                              "failed to get gain stages: " +
-                             bladerf_strerror(status));
+                             bladerf_strerror(count));
   }
 
-  for (char **p = gain_names; *p != NULL && **p != '\0'; ++p) {
-    char *tmp = *p;
+  for (int i = 0; i < count; ++i) {
+    char *tmp = gain_names[i];
     names += std::string(tmp);
   };
 
