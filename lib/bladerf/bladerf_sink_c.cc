@@ -62,31 +62,37 @@ bladerf_sink_c_sptr make_bladerf_sink_c(const std::string &args)
 }
 
 /*
- * Specify constraints on number of input and output streams.
- * This info is used to construct the input and output signatures
- * (2nd & 3rd args to gr_block's constructor).  The input and
- * output signatures are used by the runtime system to
- * check that a valid number and type of inputs and outputs
- * are connected to this block.  In this case, we accept either
- * 1 or 2 inputs.
- */
-static const int MIN_IN = 1;    // mininum number of input streams
-static const int MAX_IN = 2;    // maximum number of input streams
-static const int MIN_OUT = 0;   // minimum number of output streams
-static const int MAX_OUT = 0;   // maximum number of output streams
-
-/*
  * The private constructor
  */
 bladerf_sink_c::bladerf_sink_c(const std::string &args)
   :gr::sync_block("bladerf_sink_c",
-                  gr::io_signature::make(MIN_IN, MAX_IN, sizeof(gr_complex)),
-                  gr::io_signature::make(MIN_OUT, MAX_OUT, sizeof(gr_complex)))
+                  args_to_io_signature(args),
+                  gr::io_signature::make(0, 0, 0))
 {
   dict_t dict = params_to_dict(args);
 
   /* Perform src/sink agnostic initializations */
   init(dict, BLADERF_TX);
+
+  /* Bounds-checking input signature depending on our underlying hardware */
+  size_t max_nchan = 1;
+
+  if (get_board_type(_dev.get()) == BLADERF_REV_2) {
+    max_nchan = 2;
+  }
+
+  if (get_num_channels() > max_nchan) {
+    std::cerr << _pfx
+              << "Warning: number of channels specified on command line ("
+              << get_num_channels() << ") is greater than the maximum number "
+              << "supported by this device (" << max_nchan << "). Resetting "
+              << "to " << max_nchan << "."
+              << std::endl;
+
+    set_input_signature( gr::io_signature::make(max_nchan, max_nchan, sizeof(gr_complex) ) );
+  }
+
+  _use_mimo = get_num_channels() > 1;
 }
 
 bool bladerf_sink_c::start()
@@ -289,7 +295,7 @@ std::vector < std::string > bladerf_sink_c::get_devices()
 
 size_t bladerf_sink_c::get_num_channels()
 {
-  return bladerf_common::get_num_channels(BLADERF_TX);
+  return input_signature()->max_streams();
 }
 
 osmosdr::meta_range_t bladerf_sink_c::get_sample_rates()

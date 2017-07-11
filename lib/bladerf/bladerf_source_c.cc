@@ -54,26 +54,12 @@ bladerf_source_c_sptr make_bladerf_source_c(const std::string &args)
 }
 
 /*
- * Specify constraints on number of input and output streams.
- * This info is used to construct the input and output signatures
- * (2nd & 3rd args to gr_block's constructor).  The input and
- * output signatures are used by the runtime system to
- * check that a valid number and type of inputs and outputs
- * are connected to this block.  In this case, we accept either
- * 1 or 2 outputs.
- */
-static const int MIN_IN = 0;    // mininum number of input streams
-static const int MAX_IN = 0;    // maximum number of input streams
-static const int MIN_OUT = 1;   // minimum number of output streams
-static const int MAX_OUT = 2;   // maximum number of output streams
-
-/*
  * The private constructor
  */
 bladerf_source_c::bladerf_source_c(const std::string &args)
   :gr::sync_block("bladerf_source_c",
-                  gr::io_signature::make(MIN_IN, MAX_IN, sizeof(gr_complex)),
-                  gr::io_signature::make(MIN_OUT, MAX_OUT, sizeof(gr_complex)))
+                  gr::io_signature::make(0, 0, 0),
+                  args_to_io_signature(args))
 {
   int status;
   std::string device_name;
@@ -125,6 +111,26 @@ bladerf_source_c::bladerf_source_c(const std::string &args)
               << "earlier FPGA version will result in misinterpeted samples."
               << std::endl;
   }
+
+  /* Bounds-checking output signature depending on our underlying hardware */
+  size_t max_nchan = 1;
+
+  if (get_board_type(_dev.get()) == BLADERF_REV_2) {
+    max_nchan = 2;
+  }
+
+  if (get_num_channels() > max_nchan) {
+    std::cerr << _pfx
+              << "Warning: number of channels specified on command line ("
+              << get_num_channels() << ") is greater than the maximum number "
+              << "supported by this device (" << max_nchan << "). Resetting "
+              << "to " << max_nchan << "."
+              << std::endl;
+
+    set_output_signature( gr::io_signature::make(max_nchan, max_nchan, sizeof(gr_complex) ) );
+  }
+
+  _use_mimo = get_num_channels() > 1;
 }
 
 bool bladerf_source_c::start()
@@ -199,7 +205,7 @@ std::vector < std::string > bladerf_source_c::get_devices()
 
 size_t bladerf_source_c::get_num_channels()
 {
-  return bladerf_common::get_num_channels(BLADERF_RX);
+  return output_signature()->max_streams();
 }
 
 osmosdr::meta_range_t bladerf_source_c::get_sample_rates()

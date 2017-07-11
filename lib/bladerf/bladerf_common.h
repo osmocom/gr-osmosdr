@@ -67,7 +67,6 @@ protected:
   bool start(bladerf_direction direction);
   bool stop(bladerf_direction direction);
 
-  size_t get_num_channels(bladerf_direction direction);
   bladerf_board_type get_board_type(struct bladerf *dev);
 
   double set_sample_rate(bladerf_direction direction, double rate);

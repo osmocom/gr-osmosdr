@@ -68,6 +68,11 @@ bladerf_common::~bladerf_common()
 
 bladerf_board_type bladerf_common::get_board_type(struct bladerf *dev)
 {
+  if (NULL == dev) {
+    throw std::runtime_error(std::string(__FUNCTION__) + ": " +
+                             "null pointer caught: dev");
+  }
+
   std::string boardname = std::string(bladerf_get_board_name(dev));
 
   if (boardname == "bladerf1") {
@@ -91,7 +96,7 @@ bladerf_sptr bladerf_common::get_cached_device( struct bladerf_devinfo devinfo )
 
     status = bladerf_get_devinfo(bladerf_sptr(dev).get(), &other_devinfo);
     if (status < 0) {
-      throw std::runtime_error(std::string(__FUNCTION__) +
+      throw std::runtime_error(std::string(__FUNCTION__) + ": " +
                                "Failed to get devinfo for cached device: " +
                                bladerf_strerror(status));
     }
@@ -505,9 +510,6 @@ void bladerf_common::init(dict_t &dict, bladerf_direction direction)
 
   _use_metadata = dict.count("enable_metadata") != 0;
 
-  _use_mimo = (dict.count("enable_mimo") != 0) &&
-              (get_num_channels(direction) >= 2);
-
   /* Require value to be >= 2 so we can ensure we have twice as many
    * buffers as transfers */
   if (_num_buffers <= 1) {
@@ -652,19 +654,6 @@ std::vector < std::string > bladerf_common::devices()
   }
 
   return ret;
-}
-
-size_t bladerf_common::get_num_channels(bladerf_direction direction)
-{
-  // TODO: Need to figure out how to deal with output_signature()->max_streams
-  // being stuck at 1 in source_impl.cc
-  return 1;
-
-  // if (get_board_type(_dev.get()) == BLADERF_REV_2) {
-  //   return 2;
-  // }
-
-  // return 1;
 }
 
 double bladerf_common::set_sample_rate(bladerf_direction direction, double rate)
