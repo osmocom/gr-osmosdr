@@ -78,6 +78,10 @@
 #include <airspy_source_c.h>
 #endif
 
+#ifdef ENABLE_AIRSPYHF
+#include <airspyhf_source_c.h>
+#endif
+
 #ifdef ENABLE_SOAPY
 #include <soapy_source_c.h>
 #endif
@@ -184,6 +188,10 @@ devices_t device::find(const device_t &hint)
 #endif
 #ifdef ENABLE_AIRSPY
   BOOST_FOREACH( std::string dev, airspy_source_c::get_devices() )
+    devices.push_back( device_t(dev) );
+#endif
+#ifdef ENABLE_AIRSPYHF
+  BOOST_FOREACH( std::string dev, airspyhf_source_c::get_devices() )
     devices.push_back( device_t(dev) );
 #endif
 #ifdef ENABLE_FREESRP
