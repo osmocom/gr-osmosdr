@@ -487,6 +487,16 @@ void bladerf_common::init(dict_t &dict, bladerf_direction direction)
               << std::endl;
   }
 
+  /* Specify initial gain mode */
+  if (direction == BLADERF_RX) {
+    if (dict.count("agc")) {
+      set_gain_mode(boost::lexical_cast<bool>(dict["agc"]));
+      std::cerr << _pfx
+                << "Gain mode set to " << get_gain_mode()
+                << std::endl;
+    }
+  }
+
   /* Initialize buffer and sample configuration */
   _num_buffers = 0;
   if (dict.count("buffers")) {
