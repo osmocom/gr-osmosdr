@@ -187,6 +187,8 @@ void bladerf_common::set_loopback_mode(const std::string &loopback)
     mode = BLADERF_LB_RF_LNA2;
   } else if (loopback == "rf_lna3") {
     mode = BLADERF_LB_RF_LNA3;
+  } else if (loopback == "firmware") {
+    mode = BLADERF_LB_FIRMWARE;
   } else if (loopback == "ad9361_bist") {
     mode = BLADERF_LB_AD9361_BIST;
   } else if (loopback == "none") {
