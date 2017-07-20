@@ -205,6 +205,31 @@ void bladerf_common::set_loopback_mode(const std::string &loopback)
   }
 }
 
+void bladerf_common::set_rx_mux_mode(const std::string &rxmux)
+{
+  int status;
+  bladerf_rx_mux mode;
+
+  if (rxmux == "baseband") {
+    mode = BLADERF_RX_MUX_BASEBAND;
+  } else if (rxmux == "12bit") {
+    mode = BLADERF_RX_MUX_12BIT_COUNTER;
+  } else if (rxmux == "32bit") {
+    mode = BLADERF_RX_MUX_32BIT_COUNTER;
+  } else if (rxmux == "digital") {
+    mode = BLADERF_RX_MUX_DIGITAL_LOOPBACK;
+  } else {
+    throw std::runtime_error(_pfx + "Unknown RX mux mode: " + rxmux);
+  }
+
+  status = bladerf_set_rx_mux(_dev.get(), mode);
+  if (status != 0) {
+    // TODO: handle BLADERF_ERR_UNSUPPORTED more gingerly
+    throw std::runtime_error(_pfx + "Failed to set RX mux mode: " +
+                             bladerf_strerror(status));
+  }
+}
+
 void bladerf_common::set_verbosity(const std::string &verbosity)
 {
   bladerf_log_level l;
@@ -413,8 +438,21 @@ void bladerf_common::init(dict_t &dict, bladerf_direction direction)
   } else if (direction == BLADERF_TX && dict.count("loopback")) {
     std::cerr << _pfx
               << "Warning: 'loopback' has been specified on a bladeRF "
-              << "sink,  and will have no effect. This parameter should "
+              << "sink, and will have no effect. This parameter should "
               << "be specified on the associated bladeRF source."
+              << std::endl;
+  }
+
+  if (direction == BLADERF_RX) {
+    if (dict.count("rxmux")) {
+      set_rx_mux_mode(dict["rxmux"]);
+    } else {
+      set_rx_mux_mode("baseband");
+    }
+  } else if (direction == BLADERF_TX && dict.count("rxmux")) {
+    std::cerr << _pfx
+              << "Warning: 'rxmux' has been specified on a bladeRF sink, "
+              << "and will have no effect."
               << std::endl;
   }
 

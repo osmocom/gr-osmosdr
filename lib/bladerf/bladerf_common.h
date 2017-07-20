@@ -137,6 +137,7 @@ private:
 
   void set_verbosity(const std::string &verbosity);
   void set_loopback_mode(const std::string &loopback);
+  void set_rx_mux_mode(const std::string &rxmux);
 
   static boost::mutex _devs_mutex;
   static std::list < boost::weak_ptr < struct bladerf >>_devs;
