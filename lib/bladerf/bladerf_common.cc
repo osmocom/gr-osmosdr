@@ -40,8 +40,9 @@
 
 #include "bladerf_common.h"
 
-#define NUM_BUFFERS 32
+#define NUM_BUFFERS 256
 #define NUM_SAMPLES_PER_BUFFER (4 * 1024)
+#define NUM_TRANSFERS 16
 
 using namespace boost::assign;
 
@@ -584,12 +585,12 @@ void bladerf_common::init(dict_t &dict, bladerf_direction direction)
   }
 
   /* If the user hasn't specified the desired number of transfers, set it to
-   * min(32, num_buffers / 2) */
+   * min(NUM_TRANSFERS, num_buffers / 2) */
   if (_num_transfers == 0) {
     _num_transfers = _num_buffers / 2;
 
-    if (_num_transfers > 32) {
-      _num_transfers = 32;
+    if (_num_transfers > NUM_TRANSFERS) {
+      _num_transfers = NUM_TRANSFERS;
     }
   } else if (_num_transfers >= _num_buffers) {
     _num_transfers = _num_buffers - 1;
@@ -598,6 +599,12 @@ void bladerf_common::init(dict_t &dict, bladerf_direction direction)
               << "Try using a smaller num_transfers value if timeouts occur."
               << std::endl;
   }
+
+  std::cerr << _pfx
+            << "Buffers: " << _num_buffers << ", "
+            << "Samples per buffer: " << _samples_per_buffer << ", "
+            << "Transfers: " << _num_transfers
+            << std::endl;
 
   _conv_buf = static_cast<int16_t *>(malloc(_conv_buf_size * 2 * sizeof(int16_t)));
 
