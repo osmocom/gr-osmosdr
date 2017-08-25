@@ -310,7 +310,7 @@ class app_gui(pubsub):
                     key=osmocom_siggen.BWIDTH_KEY,
                     minimum=bw_range.start(),
                     maximum=bw_range.stop(),
-                    step_size=bw_range.step(),
+                    step_size=None if bw_range.step()==0 else bw_range.step(),
                 )
                 bwidth_hbox.AddSpacer(3)
 
