@@ -48,6 +48,10 @@
 #include <rtl_source_c.h>
 #endif
 
+#ifdef ENABLE_OSMOPLUTO
+#include <pluto_source_c.h>
+#endif
+
 #ifdef ENABLE_RTL_TCP
 #include <rtl_tcp_source_c.h>
 #endif
@@ -138,6 +142,9 @@ source_impl::source_impl( const std::string &args )
 #ifdef ENABLE_RTL
   dev_types.push_back("rtl");
 #endif
+#ifdef ENABLE_OSMOPLUTO
+  dev_types.push_back("pluto");
+#endif
 #ifdef ENABLE_RTL_TCP
   dev_types.push_back("rtl_tcp");
 #endif
@@ -211,6 +218,10 @@ source_impl::source_impl( const std::string &args )
 #ifdef ENABLE_RTL
     BOOST_FOREACH( std::string dev, rtl_source_c::get_devices() )
       dev_list.push_back( dev );
+#endif
+#ifdef ENABLE_OSMOPLUTO
+	BOOST_FOREACH(std::string dev, pluto_source_c::get_devices())
+		dev_list.push_back(dev);
 #endif
 #ifdef ENABLE_UHD
     BOOST_FOREACH( std::string dev, uhd_source_c::get_devices() )
@@ -300,6 +311,13 @@ source_impl::source_impl( const std::string &args )
       rtl_source_c_sptr src = make_rtl_source_c( arg );
       block = src; iface = src.get();
     }
+#endif
+
+#ifdef ENABLE_RTL
+	if (dict.count("pluto")) {
+		pluto_source_c_sptr src = make_pluto_source_c(arg);
+		block = src; iface = src.get();
+	}
 #endif
 
 #ifdef ENABLE_RTL_TCP

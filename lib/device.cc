@@ -46,6 +46,10 @@
 #include <rtl_source_c.h>
 #endif
 
+#ifdef ENABLE_OSMOPLUTO
+#include <pluto_source_c.h>
+#endif
+
 #ifdef ENABLE_RTL_TCP
 #include <rtl_tcp_source_c.h>
 #endif
@@ -157,6 +161,10 @@ devices_t device::find(const device_t &hint)
 #ifdef ENABLE_RTL
   BOOST_FOREACH( std::string dev, rtl_source_c::get_devices() )
     devices.push_back( device_t(dev) );
+#endif
+#ifdef ENABLE_OSMOPLUTO
+  BOOST_FOREACH(std::string dev, pluto_source_c::get_devices())
+	  devices.push_back(device_t(dev));
 #endif
 #ifdef ENABLE_UHD
   BOOST_FOREACH( std::string dev, uhd_source_c::get_devices() )

@@ -159,6 +159,14 @@ GR_INCLUDE_SUBDIRECTORY(rtl)
 endif(ENABLE_RTL)
 
 ########################################################################
+# Setup plutosdr
+########################################################################
+GR_REGISTER_COMPONENT("Osmocom experimental Plutosdr lib" ENABLE_OSMOPLUTO LIBOSMOPLUTO_FOUND)
+if(ENABLE_OSMOPLUTO)
+GR_INCLUDE_SUBDIRECTORY(pluto)
+endif(ENABLE_OSMOPLUTO)
+
+########################################################################
 # Setup RTL_TCP component
 ########################################################################
 GR_REGISTER_COMPONENT("RTLSDR TCP Client" ENABLE_RTL_TCP GNURADIO_BLOCKS_FOUND)
@@ -211,10 +219,12 @@ endif(ENABLE_BLADERF)
 ########################################################################
 # Setup RFSPACE component
 ########################################################################
+if(NOT MSVC)
 GR_REGISTER_COMPONENT("RFSPACE Receivers" ENABLE_RFSPACE)
 if(ENABLE_RFSPACE)
 GR_INCLUDE_SUBDIRECTORY(rfspace)
 endif(ENABLE_RFSPACE)
+endif()
 
 ########################################################################
 # Setup AIRSPY component
