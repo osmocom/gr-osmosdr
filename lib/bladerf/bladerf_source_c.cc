@@ -614,11 +614,11 @@ void bladerf_source_c::set_rx_mux_mode(const std::string &rxmux)
 
 void bladerf_source_c::set_agc_mode(const std::string &agcmode)
 {
+#ifndef BLADERF_COMPATIBILITY
   int status;
   bladerf_gain_mode mode;
   bool ok = false;
   struct bladerf_gain_modes const *modes = NULL;
-
 
   /* Get the list of AGC modes */
   status = bladerf_get_gain_modes(_dev.get(), BLADERF_CHANNEL_RX(0), &modes);
@@ -651,4 +651,5 @@ void bladerf_source_c::set_agc_mode(const std::string &agcmode)
       bladerf_common::set_gain_mode(true, BLADERF_CHANNEL_RX(i), _agcmode);
     }
   }
+#endif
 }

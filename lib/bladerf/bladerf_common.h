@@ -34,6 +34,8 @@
 #include "osmosdr/ranges.h"
 #include "arg_helpers.h"
 
+#include "bladerf_compat.h"
+
 #ifdef _MSC_VER
 #include <cstddef>
 typedef ptrdiff_t ssize_t;

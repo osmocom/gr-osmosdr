@@ -124,6 +124,10 @@ static bool _is_tx(bladerf_channel ch)
 
 size_t num_streams(bladerf_channel_layout layout)
 {
+#ifdef BLADERF_COMPATIBILITY
+  return 1;
+#else
+
   switch (layout) {
     case BLADERF_RX_X1:
     case BLADERF_TX_X1:
@@ -136,6 +140,7 @@ size_t num_streams(bladerf_channel_layout layout)
   assert(false);
 
   return 0;
+#endif
 }
 
 /******************************************************************************
@@ -527,8 +532,16 @@ bladerf_channel bladerf_common::chan2channel(bladerf_direction direction,
 
 osmosdr::meta_range_t bladerf_common::sample_rates(bladerf_channel ch)
 {
-  int status;
   osmosdr::meta_range_t sample_rates;
+
+#ifdef BLADERF_COMPATIBILITY
+  /* assuming the same for RX & TX */
+  sample_rates += osmosdr::range_t( 160e3, 200e3, 40e3 );
+  sample_rates += osmosdr::range_t( 300e3, 900e3, 100e3 );
+  sample_rates += osmosdr::range_t( 1e6, 40e6, 1e6 );
+#else
+
+  int status;
   bladerf_range brf_sample_rates;
 
   status = bladerf_get_sample_rate_range(_dev.get(), ch, &brf_sample_rates);
@@ -546,6 +559,7 @@ osmosdr::meta_range_t bladerf_common::sample_rates(bladerf_channel ch)
   sample_rates += osmosdr::range_t(brf_sample_rates.max / 2.0,
                                    brf_sample_rates.max,
                                    brf_sample_rates.max / 4.0);
+#endif
 
   return sample_rates;
 }
@@ -583,6 +597,11 @@ double bladerf_common::get_sample_rate(bladerf_channel ch)
 
 osmosdr::freq_range_t bladerf_common::freq_range(bladerf_channel ch)
 {
+#ifdef BLADERF_COMPATIBILITY
+  return osmosdr::freq_range_t( _is_xb_attached(_dev) ? 0 : 280e6,
+                                BLADERF_FREQUENCY_MAX );
+#else
+
   int status;
   struct bladerf_range range;
 
@@ -594,6 +613,7 @@ osmosdr::freq_range_t bladerf_common::freq_range(bladerf_channel ch)
   return osmosdr::freq_range_t(static_cast<double>(range.min),
                                static_cast<double>(range.max),
                                static_cast<double>(range.step));
+#endif
 }
 
 double bladerf_common::set_center_freq(double freq, bladerf_channel ch)
@@ -631,9 +651,19 @@ double bladerf_common::get_center_freq(bladerf_channel ch)
 
 osmosdr::freq_range_t bladerf_common::filter_bandwidths(bladerf_channel ch)
 {
-  /* the same for RX & TX according to the datasheet */
-  int status;
   osmosdr::freq_range_t bandwidths;
+
+#ifdef BLADERF_COMPATIBILITY
+  std::vector<double> half_bandwidths; /* in MHz */
+  half_bandwidths += \
+      0.75, 0.875, 1.25, 1.375, 1.5, 1.92, 2.5,
+      2.75, 3, 3.5, 4.375, 5, 6, 7, 10, 14;
+
+  BOOST_FOREACH( double half_bw, half_bandwidths )
+    bandwidths += osmosdr::range_t( half_bw * 2e6 );
+#else
+
+  int status;
   bladerf_range range;
 
   status = bladerf_get_bandwidth_range(_dev.get(), ch, &range);
@@ -642,6 +672,7 @@ osmosdr::freq_range_t bladerf_common::filter_bandwidths(bladerf_channel ch)
   }
 
   bandwidths += osmosdr::range_t(range.min, range.max, range.step);
+#endif
 
   return bandwidths;
 }
@@ -682,11 +713,15 @@ double bladerf_common::get_bandwidth(bladerf_channel ch)
 
 std::vector<std::string> bladerf_common::get_gain_names(bladerf_channel ch)
 {
-  const size_t max_count = 16;
   std::vector<std::string> names;
+
+#ifdef BLADERF_COMPATIBILITY
+  names += "LNA", "VGA1", "VGA2";
+#else
+
+  const size_t max_count = 16;
   char *gain_names[max_count];
   int count;
-
   names += SYSTEM_GAIN_NAME;
 
   count = bladerf_get_gain_stages(_dev.get(), ch,
@@ -700,6 +735,7 @@ std::vector<std::string> bladerf_common::get_gain_names(bladerf_channel ch)
     char *tmp = gain_names[i];
     names += std::string(tmp);
   };
+#endif
 
   return names;
 }
@@ -713,6 +749,19 @@ osmosdr::gain_range_t bladerf_common::get_gain_range(bladerf_channel ch)
 osmosdr::gain_range_t bladerf_common::get_gain_range(std::string const &name,
                                                      bladerf_channel ch)
 {
+#ifdef BLADERF_COMPATIBILITY
+  if( name == "LNA" ) {
+    return osmosdr::gain_range_t( 0, 6, 3 );
+  } else if( name == "VGA1" ) {
+    return osmosdr::gain_range_t( 5, 30, 1 );
+  } else if( name == "VGA2" ) {
+    return osmosdr::gain_range_t( 0, 30, 3 );
+  } else {
+    BLADERF_THROW_STATUS(BLADERF_ERR_UNSUPPORTED, boost::str(boost::format(
+                         "Failed to get gain range for stage '%s'") % name));
+  }
+#else
+
   int status;
   struct bladerf_range range;
 
@@ -728,6 +777,7 @@ osmosdr::gain_range_t bladerf_common::get_gain_range(std::string const &name,
   }
 
   return osmosdr::gain_range_t(range.min, range.max, range.step);
+#endif
 }
 
 bool bladerf_common::set_gain_mode(bool automatic, bladerf_channel ch,
@@ -772,12 +822,34 @@ double bladerf_common::set_gain(double gain,
 {
   int status;
 
+#ifdef BLADERF_COMPATIBILITY
+  if( name == "LNA" ) {
+    bladerf_lna_gain g;
+
+    if ( gain >= 6.0f )
+      g = BLADERF_LNA_GAIN_MAX;
+    else if ( gain >= 3.0f )
+      g = BLADERF_LNA_GAIN_MID;
+    else /* gain < 3.0f */
+      g = BLADERF_LNA_GAIN_BYPASS;
+
+    status = bladerf_set_lna_gain( _dev.get(), g );
+  } else if( name == "VGA1" ) {
+    status = bladerf_set_rxvga1( _dev.get(), (int)gain );
+  } else if( name == "VGA2" ) {
+    status = bladerf_set_rxvga2( _dev.get(), (int)gain );
+  } else {
+    status = BLADERF_ERR_UNSUPPORTED;
+  }
+#else
+
   if (name == SYSTEM_GAIN_NAME) {
     status = bladerf_set_gain(_dev.get(), ch, static_cast<int>(gain));
   } else {
     status = bladerf_set_gain_stage(_dev.get(), ch, name.c_str(),
                                     static_cast<int>(gain));
   }
+#endif
 
   /* Check for errors */
   if (BLADERF_ERR_UNSUPPORTED == status) {
@@ -802,11 +874,26 @@ double bladerf_common::get_gain(std::string const &name, bladerf_channel ch)
   int status;
   int g = 0;
 
+#ifdef BLADERF_COMPATIBILITY
+  if( name == "LNA" ) {
+    bladerf_lna_gain lna_g;
+    status = bladerf_get_lna_gain( _dev.get(), &lna_g );
+    g = lna_g == BLADERF_LNA_GAIN_BYPASS ? 0 : lna_g == BLADERF_LNA_GAIN_MID ? 3 : 6;
+  } else if( name == "VGA1" ) {
+    status = bladerf_get_rxvga1( _dev.get(), &g );
+  } else if( name == "VGA2" ) {
+    status = bladerf_get_rxvga2( _dev.get(), &g );
+  } else {
+    status = BLADERF_ERR_UNSUPPORTED;
+  }
+#else
+
   if (name == SYSTEM_GAIN_NAME) {
     status = bladerf_get_gain(_dev.get(), ch, &g);
   } else {
     status = bladerf_get_gain_stage(_dev.get(), ch, name.c_str(), &g);
   }
+#endif
 
   /* Check for errors */
   if (status != 0) {
