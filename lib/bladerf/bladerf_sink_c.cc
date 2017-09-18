@@ -35,22 +35,18 @@
 #include <boost/lexical_cast.hpp>
 
 #include <gnuradio/io_signature.h>
-#include <gnuradio/tags.h>
-#include <gnuradio/sync_block.h>
 
 #include <volk/volk.h>
 
 #include "arg_helpers.h"
 #include "bladerf_sink_c.h"
-
-//#define DEBUG_BLADERF_SINK
-#ifdef DEBUG_BLADERF_SINK
-#define DBG(input)  std::cerr << _pfx << input << std::endl
-#else
-#define DBG(input)
-#endif
+#include "osmosdr/sink.h"
 
 using namespace boost::assign;
+
+/******************************************************************************
+ * Functions
+ ******************************************************************************/
 
 /*
  * Create a new instance of bladerf_sink_c and return
@@ -61,54 +57,233 @@ bladerf_sink_c_sptr make_bladerf_sink_c(const std::string &args)
   return gnuradio::get_initial_sptr(new bladerf_sink_c(args));
 }
 
+/******************************************************************************
+ * Private methods
+ ******************************************************************************/
+
 /*
  * The private constructor
  */
-bladerf_sink_c::bladerf_sink_c(const std::string &args)
-  :gr::sync_block("bladerf_sink_c",
+bladerf_sink_c::bladerf_sink_c(const std::string &args) :
+  gr::sync_block( "bladerf_sink_c",
                   args_to_io_signature(args),
-                  gr::io_signature::make(0, 0, 0))
+                  gr::io_signature::make(0, 0, 0)),
+  _16icbuf(NULL),
+  _32fcbuf(NULL),
+  _in_burst(false),
+  _running(false)
 {
   dict_t dict = params_to_dict(args);
 
   /* Perform src/sink agnostic initializations */
   init(dict, BLADERF_TX);
 
-  /* Bounds-checking input signature depending on our underlying hardware */
-  size_t max_nchan = 1;
-
-  if (get_board_type(_dev.get()) == BLADERF_REV_2) {
-    max_nchan = 2;
+  /* Check for RX-only params */
+  if (dict.count("loopback")) {
+    BLADERF_WARNING("Warning: 'loopback' has been specified on a bladeRF "
+                    "sink, and will have no effect. This parameter should be "
+                    "specified on the associated bladeRF source.");
   }
 
-  if (get_num_channels() > max_nchan) {
-    std::cerr << _pfx
-              << "Warning: number of channels specified on command line ("
-              << get_num_channels() << ") is greater than the maximum number "
-              << "supported by this device (" << max_nchan << "). Resetting "
-              << "to " << max_nchan << "."
-              << std::endl;
-
-    set_input_signature( gr::io_signature::make(max_nchan, max_nchan, sizeof(gr_complex) ) );
+  if (dict.count("rxmux")) {
+    BLADERF_WARNING("Warning: 'rxmux' has been specified on a bladeRF sink, "
+                    "and will have no effect.");
   }
 
-  _use_mimo = get_num_channels() > 1;
+  /* Initialize channel <-> antenna map */
+  BOOST_FOREACH(std::string ant, get_antennas()) {
+    _chanmap[str2channel(ant)] = -1;
+  }
+
+  /* Bounds-checking output signature depending on our underlying hardware */
+  if (get_num_channels() > get_max_channels()) {
+    BLADERF_WARNING("Warning: number of channels specified on command line ("
+                    << get_num_channels() << ") is greater than the maximum "
+                    "number supported by this device (" << get_max_channels()
+                    << "). Resetting to " << get_max_channels() << ".");
+
+    set_input_signature(gr::io_signature::make(get_max_channels(),
+                                               get_max_channels(),
+                                               sizeof(gr_complex)));
+  }
+
+  /* Set up constraints */
+  int const alignment_multiple = volk_get_alignment() / sizeof(gr_complex);
+  set_alignment(std::max(1,alignment_multiple));
+  set_max_noutput_items(_samples_per_buffer);
+  set_output_multiple(get_num_channels());
+
+  /* Set channel layout */
+  _layout = (get_num_channels() > 1) ? BLADERF_TX_X2 : BLADERF_TX_X1;
+
+  /* Initial wiring of antennas to channels */
+  for (size_t ch = 0; ch < get_num_channels(); ++ch) {
+    set_channel_enable(BLADERF_CHANNEL_TX(ch), true);
+    _chanmap[BLADERF_CHANNEL_TX(ch)] = ch;
+  }
+
+  BLADERF_DEBUG("initialization complete");
+}
+
+
+/******************************************************************************
+ * Public methods
+ ******************************************************************************/
+
+std::string bladerf_sink_c::name()
+{
+  return "bladeRF transmitter";
+}
+
+std::vector<std::string> bladerf_sink_c::get_devices()
+{
+  return bladerf_common::devices();
+}
+
+size_t bladerf_sink_c::get_max_channels()
+{
+  return bladerf_common::get_max_channels(BLADERF_TX);
+}
+
+size_t bladerf_sink_c::get_num_channels()
+{
+  return input_signature()->max_streams();
 }
 
 bool bladerf_sink_c::start()
 {
+  int status;
+
+  BLADERF_DEBUG("starting sink");
+
+  gr::thread::scoped_lock guard(d_mutex);
+
   _in_burst = false;
-  return bladerf_common::start(BLADERF_TX);
+
+  status = bladerf_sync_config(_dev.get(), _layout, _format, _num_buffers,
+                               _samples_per_buffer, _num_transfers,
+                               _stream_timeout);
+  if (status != 0) {
+    BLADERF_THROW_STATUS(status, "bladerf_sync_config failed");
+  }
+
+  for (size_t ch = 0; ch < get_max_channels(); ++ch) {
+    bladerf_channel brfch = BLADERF_CHANNEL_TX(ch);
+    if (get_channel_enable(brfch)) {
+      status = bladerf_enable_module(_dev.get(), brfch, true);
+      if (status != 0) {
+        BLADERF_THROW_STATUS(status, "bladerf_enable_module failed");
+      }
+    }
+  }
+
+  /* Allocate memory for conversions in work() */
+  size_t alignment = volk_get_alignment();
+
+  _16icbuf = reinterpret_cast<int16_t *>(volk_malloc(2*_samples_per_buffer*sizeof(int16_t), alignment));
+  _32fcbuf = reinterpret_cast<gr_complex *>(volk_malloc(_samples_per_buffer*sizeof(gr_complex), alignment));
+
+  _running = true;
+
+  return true;
 }
 
 bool bladerf_sink_c::stop()
 {
-  return bladerf_common::stop(BLADERF_TX);
+  int status;
+
+  BLADERF_DEBUG("stopping sink");
+
+  gr::thread::scoped_lock guard(d_mutex);
+
+  if (!_running) {
+    BLADERF_WARNING("sink already stopped, nothing to do here");
+    return true;
+  }
+
+  _running = false;
+
+  for (size_t ch = 0; ch < get_max_channels(); ++ch) {
+    bladerf_channel brfch = BLADERF_CHANNEL_TX(ch);
+    if (get_channel_enable(brfch)) {
+      status = bladerf_enable_module(_dev.get(), brfch, false);
+      if (status != 0) {
+        BLADERF_THROW_STATUS(status, "bladerf_enable_module failed");
+      }
+    }
+  }
+
+  /* Deallocate conversion memory */
+  volk_free(_16icbuf);
+  volk_free(_32fcbuf);
+  _16icbuf = NULL;
+  _32fcbuf = NULL;
+
+  return true;
 }
 
-#define INVALID_IDX -1
+int bladerf_sink_c::work(int noutput_items,
+                          gr_vector_const_void_star &input_items,
+                          gr_vector_void_star &output_items)
+{
+  int status;
+  size_t nstreams = num_streams(_layout);
 
-int bladerf_sink_c::transmit_with_tags(int noutput_items)
+  gr::thread::scoped_lock guard(d_mutex);
+
+  // if we aren't running, nothing to do here
+  if (!_running) {
+    return 0;
+  }
+
+  // copy the samples from input_items
+  gr_complex const **in = reinterpret_cast<gr_complex const **>(&input_items[0]);
+
+  if (nstreams > 1) {
+    // we need to interleave the streams as we copy
+    gr_complex *intl_out = _32fcbuf;
+
+    for (size_t i = 0; i < (noutput_items/nstreams); ++i) {
+      for (size_t n = 0; n < nstreams; ++n) {
+        memcpy(intl_out++, in[n]++, sizeof(gr_complex));
+      }
+    }
+  } else {
+    // no interleaving to do: simply copy everything
+    memcpy(_32fcbuf, in[0], noutput_items * sizeof(gr_complex));
+  }
+
+  // convert floating point to fixed point and scale
+  // input_items is gr_complex (2x float), so num_points is 2*noutput_items
+  volk_32f_s32f_convert_16i(_16icbuf, reinterpret_cast<float const *>(_32fcbuf),
+                            SCALING_FACTOR, 2*noutput_items);
+
+  // transmit the samples from the temp buffer
+  if (BLADERF_FORMAT_SC16_Q11_META == _format) {
+    status = transmit_with_tags(_16icbuf, noutput_items);
+  } else {
+    status = bladerf_sync_tx(_dev.get(), static_cast<void const *>(_16icbuf),
+                             noutput_items, NULL, _stream_timeout);
+  }
+
+  // handle failure
+  if (status != 0) {
+    BLADERF_WARNING("bladerf_sync_tx error: " << bladerf_strerror(status));
+    ++_failures;
+
+    if (_failures >= MAX_CONSECUTIVE_FAILURES) {
+      BLADERF_WARNING("Consecutive error limit hit. Shutting down.");
+      return WORK_DONE;
+    }
+  } else {
+    _failures = 0;
+  }
+
+  return noutput_items;
+}
+
+int bladerf_sink_c::transmit_with_tags(int16_t const *samples,
+                                        int noutput_items)
 {
   int status;
   int count = 0;
@@ -120,13 +295,14 @@ int bladerf_sink_c::transmit_with_tags(int noutput_items)
   int end_idx = (noutput_items - 1);
 
   struct bladerf_metadata meta;
-  std::vector < gr::tag_t > tags;
+  std::vector<gr::tag_t> tags;
 
-  int16_t zeros[8] = { 0 };
+  int const INVALID_IDX = -1;
+  int16_t const zeros[8] = { 0 };
 
   memset(&meta, 0, sizeof(meta));
 
-  DBG("transmit_with_tags(" << noutput_items << ")");
+  BLADERF_DEBUG("transmit_with_tags(" << noutput_items << ")");
 
   // Important Note: We assume that these tags are ordered by their offsets.
   // This is true for GNU Radio 3.7.7.x, since the GR runtime libs store
@@ -138,57 +314,56 @@ int bladerf_sink_c::transmit_with_tags(int noutput_items)
 
   if (tags.size() == 0) {
     if (_in_burst) {
-      DBG("TX'ing " << noutput_items << " samples in within a burst...");
+      BLADERF_DEBUG("TX'ing " << noutput_items << " samples within a burst...");
 
-      return bladerf_sync_tx(_dev.get(),
-                             static_cast < void *>(_conv_buf),
-                             noutput_items, &meta, _stream_timeout_ms);
+      return bladerf_sync_tx(_dev.get(), samples, noutput_items,
+                             &meta, _stream_timeout);
     } else {
-      std::cerr << _pfx
-                << "Dropping " << noutput_items << " samples not in a burst."
-                << std::endl;
+      BLADERF_WARNING("Dropping " << noutput_items
+                      << " samples not in a burst.");
     }
   }
 
   BOOST_FOREACH(gr::tag_t tag, tags) {
-
     // Upon seeing an SOB tag, update our offset. We'll TX the start of the
     // burst when we see an EOB or at the end of this function - whichever
     // occurs first.
     if (pmt::symbol_to_string(tag.key) == "tx_sob") {
       if (_in_burst) {
-        std::cerr << ("Got SOB while already within a burst") << std::endl;
+        BLADERF_WARNING("Got SOB while already within a burst");
+
         return BLADERF_ERR_INVAL;
       } else {
-        start_idx = static_cast < int >(tag.offset - nitems_read(0));
-        DBG("Got SOB " << start_idx << " samples into work payload");
+        start_idx = static_cast<int>(tag.offset - nitems_read(0));
 
-        meta.flags |=
-          (BLADERF_META_FLAG_TX_NOW | BLADERF_META_FLAG_TX_BURST_START);
+        BLADERF_DEBUG("Got SOB " << start_idx << " samples into work payload");
+
+        meta.flags |= (BLADERF_META_FLAG_TX_NOW | BLADERF_META_FLAG_TX_BURST_START);
         _in_burst = true;
-
       }
+
     } else if (pmt::symbol_to_string(tag.key) == "tx_eob") {
       if (!_in_burst) {
-        std::cerr << _pfx << "Got EOB while not in burst" << std::endl;
+        BLADERF_WARNING("Got EOB while not in burst");
         return BLADERF_ERR_INVAL;
       }
+
       // Upon seeing an EOB, transmit what we have and reset our state
-      end_idx = static_cast < int >(tag.offset - nitems_read(0));
-      DBG("Got EOB " << end_idx << " samples into work payload");
+      end_idx = static_cast<int>(tag.offset - nitems_read(0));
+      BLADERF_DEBUG("Got EOB " << end_idx << " samples into work payload");
 
       if ((start_idx == INVALID_IDX) || (start_idx > end_idx)) {
-        DBG("Buffer indicies are in an invalid state!");
+        BLADERF_DEBUG("Buffer indicies are in an invalid state!");
         return BLADERF_ERR_INVAL;
       }
 
       count = end_idx - start_idx + 1;
 
-      DBG("TXing @ EOB [" << start_idx << ":" << end_idx << "]");
+      BLADERF_DEBUG("TXing @ EOB [" << start_idx << ":" << end_idx << "]");
 
       status = bladerf_sync_tx(_dev.get(),
-                               static_cast < void *>(&_conv_buf[2 * start_idx]),
-                               count, &meta, _stream_timeout_ms);
+                               static_cast<void const *>(&samples[2 * start_idx]),
+                               count, &meta, _stream_timeout);
       if (status != 0) {
         return status;
       }
@@ -197,16 +372,15 @@ int bladerf_sink_c::transmit_with_tags(int noutput_items)
        *       as of the libbladeRF version that includes the
        *       TX_UPDATE_TIMESTAMP flag.  Verify this potentially remove this.
        *       (The meta.flags changes would then be applied to the previous
-       *        bladerf_sync_tx() call.)
+       *       bladerf_sync_tx() call.)
        */
-      DBG("TXing Zeros with burst end flag");
+      BLADERF_DEBUG("TXing Zeros with burst end flag");
 
       meta.flags &= ~(BLADERF_META_FLAG_TX_NOW | BLADERF_META_FLAG_TX_BURST_START);
       meta.flags |= BLADERF_META_FLAG_TX_BURST_END;
 
-      status = bladerf_sync_tx(_dev.get(),
-                               static_cast < void *>(zeros),
-                               4, &meta, _stream_timeout_ms);
+      status = bladerf_sync_tx(_dev.get(), static_cast<void const *>(zeros),
+                               4, &meta, _stream_timeout);
 
       /* Reset our state */
       start_idx = INVALID_IDX;
@@ -215,7 +389,7 @@ int bladerf_sink_c::transmit_with_tags(int noutput_items)
       _in_burst = false;
 
       if (status != 0) {
-        DBG("Failed to send zero samples to flush EOB");
+        BLADERF_DEBUG("Failed to send zero samples to flush EOB");
         return status;
       }
     }
@@ -225,113 +399,51 @@ int bladerf_sink_c::transmit_with_tags(int noutput_items)
   if (_in_burst) {
     count = end_idx - start_idx + 1;
 
-    DBG("TXing SOB [" << start_idx << ":" << end_idx << "]");
+    BLADERF_DEBUG("TXing SOB [" << start_idx << ":" << end_idx << "]");
 
     status = bladerf_sync_tx(_dev.get(),
-                             static_cast < void *>(&_conv_buf[2 * start_idx]),
-                             count, &meta, _stream_timeout_ms);
+                             static_cast<void const *>(&samples[2 * start_idx]),
+                             count, &meta, _stream_timeout);
   }
 
   return status;
 }
 
-int bladerf_sink_c::work(int noutput_items,
-                         gr_vector_const_void_star &input_items,
-                         gr_vector_void_star &output_items)
-{
-  const gr_complex *in = (const gr_complex *) input_items[0];
-  const float scaling = 2000.0f;
-  int status;
-
-  if (noutput_items > _conv_buf_size) {
-    void *tmp;
-
-    _conv_buf_size = noutput_items;
-    tmp = realloc(_conv_buf, _conv_buf_size * 2 * sizeof(int16_t));
-    if (tmp == NULL) {
-      throw std::runtime_error(_pfx + "Failed to realloc _conv_buf");
-    } else {
-      DBG("Resized _conv_buf to " << _conv_buf_size << " samples");
-    }
-
-    _conv_buf = static_cast < int16_t * >(tmp);
-  }
-
-  /* Convert floating point samples into fixed point */
-  volk_32f_s32f_convert_16i(_conv_buf, (float *) in, scaling,
-                            2 * noutput_items);
-
-  if (_use_metadata) {
-    status = transmit_with_tags(noutput_items);
-  } else {
-    status = bladerf_sync_tx(_dev.get(), static_cast < void *>(_conv_buf),
-                             noutput_items, NULL, _stream_timeout_ms);
-  }
-
-  if (status != 0) {
-    std::cerr << _pfx
-              << "bladerf_sync_tx error: " << bladerf_strerror(status)
-              << std::endl;
-
-    _consecutive_failures++;
-
-    if (_consecutive_failures >= MAX_CONSECUTIVE_FAILURES) {
-      noutput_items = WORK_DONE;
-      std::cerr << _pfx
-                << "Consecutive error limit hit. Shutting down."
-                << std::endl;
-    }
-  } else {
-    _consecutive_failures = 0;
-  }
-
-  return noutput_items;
-}
-
-std::vector < std::string > bladerf_sink_c::get_devices()
-{
-  return bladerf_common::devices();
-}
-
-size_t bladerf_sink_c::get_num_channels()
-{
-  return input_signature()->max_streams();
-}
-
 osmosdr::meta_range_t bladerf_sink_c::get_sample_rates()
 {
-  return sample_rates();
+  return sample_rates(chan2channel(BLADERF_TX, 0));
 }
 
 double bladerf_sink_c::set_sample_rate(double rate)
 {
-  return bladerf_common::set_sample_rate(BLADERF_TX, rate);
+  return bladerf_common::set_sample_rate(rate, chan2channel(BLADERF_TX, 0));
 }
 
 double bladerf_sink_c::get_sample_rate()
 {
-  return bladerf_common::get_sample_rate(BLADERF_TX);
+  return bladerf_common::get_sample_rate(chan2channel(BLADERF_TX, 0));
 }
 
 osmosdr::freq_range_t bladerf_sink_c::get_freq_range(size_t chan)
 {
-  return bladerf_common::get_freq_range(BLADERF_CHANNEL_TX(chan));
+  return bladerf_common::freq_range(chan2channel(BLADERF_TX, chan));
 }
 
 double bladerf_sink_c::set_center_freq(double freq, size_t chan)
 {
-  return bladerf_common::set_center_freq(freq, BLADERF_CHANNEL_TX(chan));
+  return bladerf_common::set_center_freq(freq, chan2channel(BLADERF_TX, chan));
 }
 
 double bladerf_sink_c::get_center_freq(size_t chan)
 {
-  return bladerf_common::get_center_freq(BLADERF_CHANNEL_TX(chan));
+  return bladerf_common::get_center_freq(chan2channel(BLADERF_TX, chan));
 }
 
 double bladerf_sink_c::set_freq_corr(double ppm, size_t chan)
 {
   /* TODO: Write the VCTCXO with a correction value (also changes RX ppm value!) */
-  return get_freq_corr(BLADERF_CHANNEL_TX(chan));
+  BLADERF_WARNING("Frequency correction is not implemented.");
+  return get_freq_corr(chan2channel(BLADERF_TX, chan));
 }
 
 double bladerf_sink_c::get_freq_corr(size_t chan)
@@ -340,77 +452,80 @@ double bladerf_sink_c::get_freq_corr(size_t chan)
   return 0;
 }
 
-std::vector < std::string > bladerf_sink_c::get_gain_names(size_t chan)
+std::vector<std::string> bladerf_sink_c::get_gain_names(size_t chan)
 {
-  return bladerf_common::get_gain_names(BLADERF_CHANNEL_TX(chan));
+  return bladerf_common::get_gain_names(chan2channel(BLADERF_TX, chan));
 }
 
 osmosdr::gain_range_t bladerf_sink_c::get_gain_range(size_t chan)
 {
-  return bladerf_common::get_gain_range(BLADERF_CHANNEL_TX(chan));
+  return bladerf_common::get_gain_range(chan2channel(BLADERF_TX, chan));
 }
 
 osmosdr::gain_range_t bladerf_sink_c::get_gain_range(const std::string &name,
                                                      size_t chan)
 {
-  return bladerf_common::get_gain_range(name, BLADERF_CHANNEL_TX(chan));
+  return bladerf_common::get_gain_range(name, chan2channel(BLADERF_TX, chan));
 }
 
 bool bladerf_sink_c::set_gain_mode(bool automatic, size_t chan)
 {
-  return bladerf_common::set_gain_mode(automatic, BLADERF_CHANNEL_TX(chan));
+  return bladerf_common::set_gain_mode(automatic,
+                                       chan2channel(BLADERF_TX, chan));
 }
 
 bool bladerf_sink_c::get_gain_mode(size_t chan)
 {
-  return bladerf_common::get_gain_mode(BLADERF_CHANNEL_TX(chan));
+  return bladerf_common::get_gain_mode(chan2channel(BLADERF_TX, chan));
 }
 
 double bladerf_sink_c::set_gain(double gain, size_t chan)
 {
-  return bladerf_common::set_gain(gain, BLADERF_CHANNEL_TX(chan));
+  return bladerf_common::set_gain(gain, chan2channel(BLADERF_TX, chan));
 }
 
 double bladerf_sink_c::set_gain(double gain, const std::string &name,
                                 size_t chan)
 {
-  return bladerf_common::set_gain(gain, name, BLADERF_CHANNEL_TX(chan));
+  return bladerf_common::set_gain(gain, name, chan2channel(BLADERF_TX, chan));
 }
 
 double bladerf_sink_c::get_gain(size_t chan)
 {
-  return bladerf_common::get_gain(BLADERF_CHANNEL_TX(chan));
+  return bladerf_common::get_gain(chan2channel(BLADERF_TX, chan));
 }
 
 double bladerf_sink_c::get_gain(const std::string &name, size_t chan)
 {
-  return bladerf_common::get_gain(name, BLADERF_CHANNEL_TX(chan));
+  return bladerf_common::get_gain(name, chan2channel(BLADERF_TX, chan));
 }
 
-std::vector < std::string > bladerf_sink_c::get_antennas(size_t chan)
+std::vector<std::string> bladerf_sink_c::get_antennas(size_t chan)
 {
-  std::vector < std::string > antennas;
-
-  antennas += "TX0";
-
-  if (BLADERF_REV_2 == get_board_type(_dev.get())) {
-    antennas += "TX1";
-  }
-
-  return antennas;
+  return bladerf_common::get_antennas(BLADERF_TX);
 }
 
 std::string bladerf_sink_c::set_antenna(const std::string &antenna,
                                         size_t chan)
 {
-  return get_antenna(BLADERF_CHANNEL_TX(chan));
+  bool _was_running = _running;
+
+  if (_was_running) {
+    stop();
+  }
+
+  bladerf_common::set_antenna(BLADERF_TX, chan, antenna);
+
+  if (_was_running) {
+    start();
+  }
+
+  return get_antenna(chan);
 }
 
 std::string bladerf_sink_c::get_antenna(size_t chan)
 {
-  /* We only have a single transmit antenna here */
-  // TODO: the above is a lie
-  return "TX0";
+  return channel2str(chan2channel(BLADERF_TX, chan));
 }
 
 void bladerf_sink_c::set_dc_offset(const std::complex < double > &offset,
@@ -418,11 +533,10 @@ void bladerf_sink_c::set_dc_offset(const std::complex < double > &offset,
 {
   int status;
 
-  status = bladerf_common::set_dc_offset(BLADERF_TX, offset, chan);
+  status = bladerf_common::set_dc_offset(offset, chan2channel(BLADERF_TX, chan));
 
   if (status != 0) {
-    throw std::runtime_error(_pfx + "could not set dc offset: " +
-                             bladerf_strerror(status));
+    BLADERF_THROW_STATUS(status, "could not set dc offset");
   }
 }
 
@@ -431,66 +545,40 @@ void bladerf_sink_c::set_iq_balance(const std::complex < double > &balance,
 {
   int status;
 
-  status = bladerf_common::set_iq_balance(BLADERF_TX, balance, chan);
+  status = bladerf_common::set_iq_balance(balance, chan2channel(BLADERF_TX, chan));
 
   if (status != 0) {
-    throw std::runtime_error(_pfx + "could not set iq balance: " +
-                             bladerf_strerror(status));
+    BLADERF_THROW_STATUS(status, "could not set iq balance");
   }
-}
-
-double bladerf_sink_c::set_bandwidth(double bandwidth, size_t chan)
-{
-  int status;
-  uint32_t actual;
-
-  if (bandwidth == 0.0) {
-    /* bandwidth of 0 means automatic filter selection */
-    /* select narrower filters to prevent aliasing */
-    bandwidth = get_sample_rate() * 0.75;
-  }
-
-  status = bladerf_set_bandwidth(_dev.get(), BLADERF_TX, (uint32_t) bandwidth,
-                                 &actual);
-  if (status != 0) {
-    throw std::runtime_error(_pfx + "could not set bandwidth:" +
-                             bladerf_strerror(status));
-  }
-
-  return get_bandwidth();
-}
-
-double bladerf_sink_c::get_bandwidth(size_t chan)
-{
-  int status;
-  uint32_t bandwidth;
-
-  status = bladerf_get_bandwidth(_dev.get(), BLADERF_TX, &bandwidth);
-  if (status != 0) {
-    throw std::runtime_error(_pfx + "could not get bandwidth: " +
-                             bladerf_strerror(status));
-  }
-
-  return (double) bandwidth;
 }
 
 osmosdr::freq_range_t bladerf_sink_c::get_bandwidth_range(size_t chan)
 {
-  return filter_bandwidths();
+  return filter_bandwidths(chan2channel(BLADERF_TX, chan));
+}
+
+double bladerf_sink_c::set_bandwidth(double bandwidth, size_t chan)
+{
+  return bladerf_common::set_bandwidth(bandwidth, chan2channel(BLADERF_TX, chan));
+}
+
+double bladerf_sink_c::get_bandwidth(size_t chan)
+{
+  return bladerf_common::get_bandwidth(chan2channel(BLADERF_TX, chan));
+}
+
+std::vector < std::string > bladerf_sink_c::get_clock_sources(size_t mboard)
+{
+  return bladerf_common::get_clock_sources(mboard);
 }
 
 void bladerf_sink_c::set_clock_source(const std::string &source,
-                                      const size_t mboard)
+                                      size_t mboard)
 {
   bladerf_common::set_clock_source(source, mboard);
 }
 
-std::string bladerf_sink_c::get_clock_source(const size_t mboard)
+std::string bladerf_sink_c::get_clock_source(size_t mboard)
 {
   return bladerf_common::get_clock_source(mboard);
-}
-
-std::vector < std::string > bladerf_sink_c::get_clock_sources(const size_t mboard)
-{
-  return bladerf_common::get_clock_sources(mboard);
 }
