@@ -423,15 +423,11 @@ bladerf_board_type bladerf_common::get_board_type()
 
 size_t bladerf_common::get_max_channels(bladerf_direction direction)
 {
-  if (BLADERF_RX == direction) {
-    return _max_chans.find(get_board_type())->second.first;
-  }
-
-  if (BLADERF_TX == direction) {
-    return _max_chans.find(get_board_type())->second.second;
-  }
-
-  return 0;
+#ifdef BLADERF_COMPATIBILITY
+  return 1;
+#else
+  return bladerf_get_channel_count(_dev.get(), (BLADERF_TX == direction));
+#endif
 }
 
 void bladerf_common::set_channel_enable(bladerf_channel ch, bool enable)
