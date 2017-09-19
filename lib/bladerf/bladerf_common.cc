@@ -56,18 +56,6 @@ std::list<boost::weak_ptr<struct bladerf>> bladerf_common::_devs;
 /* name for system-wide gain (which is not its own libbladeRF gain stage) */
 static const char *SYSTEM_GAIN_NAME = "system";
 
-typedef std::pair<size_t,size_t> bladerf_rxtx_pair;
-typedef std::pair<bladerf_board_type, bladerf_rxtx_pair> bladerf_chan_rxtx_pair;
-typedef std::map<bladerf_board_type, bladerf_rxtx_pair> bladerf_chan_rxtx_map;
-
-/* Mapping of bladeRF board model to maximum supported channels for (rx, tx) */
-static bladerf_chan_rxtx_map const _max_chans = {
-  bladerf_chan_rxtx_pair(BOARD_TYPE_UNKNOWN,    bladerf_rxtx_pair(1,1)),
-  bladerf_chan_rxtx_pair(BOARD_TYPE_NONE,       bladerf_rxtx_pair(0,0)),
-  bladerf_chan_rxtx_pair(BOARD_TYPE_BLADERF_1,  bladerf_rxtx_pair(1,1)),
-  bladerf_chan_rxtx_pair(BOARD_TYPE_BLADERF_2,  bladerf_rxtx_pair(2,2)),
-};
-
 /* Determines if bladerf_version is greater or equal to major.minor.patch */
 static bool _version_greater_or_equal(const struct bladerf_version *version,
                                       unsigned int major,
