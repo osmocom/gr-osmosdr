@@ -80,6 +80,7 @@ uhd_sink_c::uhd_sink_c(const std::string &args) :
          "nchan" == entry.first ||
          "subdev" == entry.first ||
          "lo_offset" == entry.first ||
+         "clock_source" == entry.first ||
          "uhd" == entry.first )
       continue;
 
@@ -108,6 +109,9 @@ uhd_sink_c::uhd_sink_c(const std::string &args) :
 
   if (dict.count("subdev"))
     _snk->set_subdev_spec( dict["subdev"] );
+
+  if (dict.count("clock_source"))
+    _snk->set_clock_source( dict["clock_source"] );
 
   std::cerr << "-- Using subdev spec '" << _snk->get_subdev_spec() << "'."
             << std::endl;
