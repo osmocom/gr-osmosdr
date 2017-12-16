@@ -1,5 +1,6 @@
 /* -*- c++ -*- */
 /*
+ * Copyright 2018 Jeff Long <willcode4@gmail.com>
  * Copyright 2015 SDRplay Ltd <support@sdrplay.com>
  * Copyright 2012 Dimitri Stolnikov <horiz0n@gmx.net>
  *
@@ -22,17 +23,21 @@
 #define INCLUDED_SDRPLAY_SOURCE_C_H
 
 #include <gnuradio/sync_block.h>
-
 #include <gnuradio/thread/thread.h>
-#include <boost/thread/mutex.hpp>
-#include <boost/thread/condition_variable.hpp>
 
 #include "osmosdr/ranges.h"
 
 #include "source_iface.h"
 
+#include <mirsdrapi-rsp.h>
+
 class sdrplay_source_c;
-typedef struct sdrplay_dev sdrplay_dev_t;
+
+template <typename T>
+struct Range {
+  T min;
+  T max;
+};
 
 /*
  * We use boost::shared_ptr's instead of raw pointers for all access
@@ -118,19 +123,45 @@ public:
    osmosdr::freq_range_t get_bandwidth_range( size_t chan = 0 );
 
 private:
-   void reinit_device(void);
-   void set_gain_limits(double freq);
+  void startDevice(void);
+  void stopDevice(void);
+  void reallocateBuffers(int size, int num);
+  void reinitDevice(int reason);
+  int grForGainAndFreq( double gain, double freq );
+  void streamCallback(short *xi, short *xq, unsigned int firstSampleNum,
+                      int grChanged, int rfChanged, int fsChanged,
+                      unsigned int numSamples, unsigned int reset,
+                      void *cbContext);
+  void gainChangeCallback(unsigned int gRdB, unsigned int lnaGRdB, void *cbContext);
 
-   sdrplay_dev_t *_dev;
+  static void streamCallbackWrap(short *xi, short *xq, unsigned int firstSampleNum,
+                                 int grChanged, int rfChanged, int fsChanged,
+                                 unsigned int numSamples, unsigned int reset,
+                                 void *cbContext);
+  static void gainChangeCallbackWrap(unsigned int gRdB, unsigned int lnaGRdB, void *cbContext);
 
-   std::vector< short > _bufi;
-   std::vector< short > _bufq;
-   int _buf_offset;
-   boost::mutex _buf_mutex;
+  bool _auto_gain;
+
+   double _gain;
+   double _fsHz;
+   double _rfHz;
+   mir_sdr_Bw_MHzT _bwType;
+   mir_sdr_If_kHzT _ifType;
+   int _samplesPerPacket;
+   int _dcMode;
+   std::vector<Range<double>> _bands;
+   unsigned char _hwVer;
+   std::string _antenna;
+
+   gr_complex *_buffer;
+   int _bufferOffset;
+   int _bufferSpaceRemaining;
+   boost::mutex _bufferMutex;
+   boost::condition_variable _bufferReady;  // work() signals streamer that a new buffer is ready
+   boost::condition_variable _bufferFull;   // streamer signals work() that current buffer is full
 
    bool _running;
-   bool _uninit;
-   bool _auto_gain;
+   bool _reinit;  // signal streamer to return after a reinit
 };
 
 #endif /* INCLUDED_SDRPLAY_SOURCE_C_H */
