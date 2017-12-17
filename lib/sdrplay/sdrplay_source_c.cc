@@ -162,7 +162,7 @@ int sdrplay_source_c::work(int noutput_items,
     _bufferReady.notify_one();
 
     while (_buffer && _running) {
-      _bufferFull.wait_for(lock, boost::chrono::milliseconds(100));
+      _bufferReady.wait_for(lock, boost::chrono::milliseconds(100));
     }
   }
 
@@ -212,7 +212,7 @@ void sdrplay_source_c::streamCallback(short *xi, short *xq,
     if (_bufferSpaceRemaining == 0) {
       boost::mutex::scoped_lock lock(_bufferMutex);
       _buffer = NULL;
-      _bufferFull.notify_one();
+      _bufferReady.notify_one();
     }
   }
 }

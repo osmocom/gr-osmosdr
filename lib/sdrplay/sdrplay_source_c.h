@@ -157,8 +157,7 @@ private:
    int _bufferOffset;
    int _bufferSpaceRemaining;
    boost::mutex _bufferMutex;
-   boost::condition_variable _bufferReady;  // work() signals streamer that a new buffer is ready
-   boost::condition_variable _bufferFull;   // streamer signals work() that current buffer is full
+   boost::condition_variable _bufferReady;  // buffer is ready to move to other thread
 
    bool _running;
    bool _reinit;  // signal streamer to return after a reinit
