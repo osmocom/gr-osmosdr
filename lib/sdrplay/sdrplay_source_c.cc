@@ -451,12 +451,14 @@ osmosdr::gain_range_t sdrplay_source_c::get_gain_range(const std::string & name,
 bool sdrplay_source_c::set_gain_mode(bool automatic, size_t chan)
 {
   _auto_gain = automatic;
-  if (automatic) {
-    mir_sdr_AgcControl(mir_sdr_AGC_5HZ, -20, 0, 0, 0, 0, 0);
-  }
-  else {
-    mir_sdr_AgcControl(mir_sdr_AGC_DISABLE, 0, 0, 0, 0, 0, 0);
-    set_gain(get_gain(0));
+  if (_running) {
+    if (automatic) {
+      mir_sdr_AgcControl(mir_sdr_AGC_5HZ, -20, 0, 0, 0, 0, 0);
+    }
+    else {
+      mir_sdr_AgcControl(mir_sdr_AGC_DISABLE, 0, 0, 0, 0, 0, 0);
+      set_gain(get_gain(0));
+    }
   }
 
   return get_gain_mode(chan);
@@ -469,12 +471,12 @@ bool sdrplay_source_c::get_gain_mode(size_t chan)
 
 double sdrplay_source_c::set_gain(double gain, size_t chan)
 {
+  _gain = gain;
+
   if (_running) {
     int gRdB = grForGainAndFreq(gain, _rfHz);
     mir_sdr_SetGr(gRdB, 1, 0);
   }
-
-  _gain = gain;
 
   return gain;
 }
@@ -527,24 +529,26 @@ std::vector< std::string > sdrplay_source_c::get_antennas(size_t chan)
 
 std::string sdrplay_source_c::set_antenna(const std::string & antenna, size_t chan)
 {
-  if (_hwVer == 2) {
-    // HIGHZ is ANTENNA_B with AmPortSelect
-    if (antenna == "HIGHZ") {
-      mir_sdr_RSPII_AntennaControl(mir_sdr_RSPII_ANTENNA_B);
-      mir_sdr_AmPortSelect(1);
-    }
-    else {
-      if (antenna == "A")
-        mir_sdr_RSPII_AntennaControl(mir_sdr_RSPII_ANTENNA_A);
-      else
-        mir_sdr_RSPII_AntennaControl(mir_sdr_RSPII_ANTENNA_B);
-      mir_sdr_AmPortSelect(0);
-    }
-
-    reinitDevice((int)mir_sdr_CHANGE_AM_PORT);
-  }
-
   _antenna = antenna;
+
+  if (_running) {
+    if (_hwVer == 2) {
+      // HIGHZ is ANTENNA_B with AmPortSelect
+      if (antenna == "HIGHZ") {
+        mir_sdr_RSPII_AntennaControl(mir_sdr_RSPII_ANTENNA_B);
+        mir_sdr_AmPortSelect(1);
+      }
+      else {
+        if (antenna == "A")
+          mir_sdr_RSPII_AntennaControl(mir_sdr_RSPII_ANTENNA_A);
+        else
+          mir_sdr_RSPII_AntennaControl(mir_sdr_RSPII_ANTENNA_B);
+        mir_sdr_AmPortSelect(0);
+      }
+
+      reinitDevice((int)mir_sdr_CHANGE_AM_PORT);
+    }
+  }
 
   return antenna;
 }
