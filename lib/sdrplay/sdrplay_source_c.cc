@@ -167,7 +167,7 @@ int sdrplay_source_c::work(int noutput_items,
   }
 
   if (!_running) {
-    return 0;
+    return WORK_DONE;
   }
 
   return noutput_items - _bufferSpaceRemaining;
