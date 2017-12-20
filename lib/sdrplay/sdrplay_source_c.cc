@@ -7,7 +7,7 @@
  * the Free Software Foundation; either version 3, or (at your option)
  * any later version.
  *
- * GNU Radio is distributed in the hope that it will be useful,
+ * Gnu Radio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -52,6 +52,22 @@ static std::vector<Range<double>> rsp1bands = {
 };
 
 // Indexed by mir_sdr_RSPII_BandT
+static std::vector<Range<double>> rsp1abands = {
+  {0, 0},           // Unknown
+  {0, 2e6},        // AM Lo
+  {2, 12e6},        // AM Lo
+  {12e6, 30e6},     // AM Mid
+  {30e6, 60e6},     // AM Hi
+  {60e6, 120e6},    // VHF
+  {120e6, 250e6},   // Band 3
+  {250e6, 300e6},   // Band X Lo
+  {300e6, 380e6},   // Band X Mid
+  {380e6, 420e6},   // Band X Hi
+  {420e6, 1000e6},  // Band 4/5
+  {1000e6, 2000e6}  // Band L
+};
+
+// Indexed by mir_sdr_RSPII_BandT
 static std::vector<Range<double>> rsp2bands = {
   {0, 0},           // Unknown
   {0, 12e6},        // AM Lo
@@ -83,10 +99,6 @@ static std::vector<double> bandwidths = {
 #define SDRPLAY_FREQ_MIN 0
 #define SDRPLAY_FREQ_MAX 2000e6
 
-// TODO - wrong but simple for now
-#define MIN_GAIN 0.0
-#define MAX_GAIN 102.0
-
 sdrplay_source_c_sptr
 make_sdrplay_source_c (const std::string &args)
 {
@@ -104,6 +116,9 @@ sdrplay_source_c::sdrplay_source_c (const std::string &args)
                     gr::io_signature::make(MIN_IN, MAX_IN, sizeof (gr_complex)),
                     gr::io_signature::make(MIN_OUT, MAX_OUT, sizeof (gr_complex))),
   _auto_gain(false),
+  _gain(40),
+  _gRdB(40),
+  _lna(0),
   _fsHz(2e6),
   _rfHz(100e6),
   _bwType(mir_sdr_BW_1_536),
@@ -123,18 +138,22 @@ sdrplay_source_c::sdrplay_source_c (const std::string &args)
   mir_sdr_SetDeviceIdx(0);
   _hwVer = mirDevices[0].hwVer;
 
-  std::cerr << "HW version " << (int)_hwVer << std::endl;
+  std::cerr << "Found SDRplay serial " << mirDevices[0].SerNo << " ";
   if (_hwVer == 2) {
-       _bands = rsp2bands;
-       _antenna = "A";
+    std::cerr << "RSP2" << std::endl;
+    _bands = rsp2bands;
+    _antenna = "A";
+  }
+  else if (_hwVer == 255) {
+    std::cerr << "RSP1A" << std::endl;
+    _bands = rsp1abands;
+    _antenna = "RX";
   }
   else {
+    std::cerr << "RSP1" << std::endl;
     _bands = rsp1bands;
     _antenna = "RX";
   }
-
-  // Start with something reasonable
-  set_gain(30);
 }
 
 sdrplay_source_c::~sdrplay_source_c ()
@@ -167,7 +186,8 @@ int sdrplay_source_c::work(int noutput_items,
   }
 
   if (!_running) {
-    return WORK_DONE;
+    //return WORK_DONE;
+    return 0;
   }
 
   return noutput_items - _bufferSpaceRemaining;
@@ -181,8 +201,20 @@ void sdrplay_source_c::streamCallback(short *xi, short *xq,
                                       void *cbContext)
 {
   unsigned int i = 0;
-
+  double bitScale;
   _reinit = false;
+
+  if (_hwVer == 16)
+    if (_fsHz >= 9216000)
+      bitScale = 1.0f / 256;
+    else if (_fsHz >= 8064000)
+      bitScale = 1.0f / 1024;
+    else if (_fsHz >= 6048000)
+      bitScale = 1.0f / 2048;
+    else
+      bitScale = 1.0f / 8192;
+  else
+    bitScale = 1.0f / 2048;
 
   while (i < numSamples) {
     // Wait for work() to make buffer ready
@@ -202,7 +234,7 @@ void sdrplay_source_c::streamCallback(short *xi, short *xq,
       boost::mutex::scoped_lock lock(_bufferMutex);
       _buffer[_bufferOffset] =
         // TODO - handle 14-bit and 16-bit samples for RSP1A
-        gr_complex(float(xi[i]) * (1.0f/2048.0f), float(xq[i]) * (1.0f/2048.0f));
+        gr_complex(float(xi[i]) * bitScale, float(xq[i]) * bitScale);
 
       i++;
       _bufferOffset++;
@@ -253,9 +285,8 @@ void sdrplay_source_c::gainChangeCallbackWrap(unsigned int gRdB,
 
 void sdrplay_source_c::startDevice(void)
 {
-  int lnaState = 0;
-  int gRdBsystem;
-  int gRdB = grForGainAndFreq(_gain, _rfHz);
+  int gRdBsystem = 0;
+  int gRdB = _gRdB;
 
   if (_running) {
     std::cerr << "Already running." << std::endl;
@@ -268,9 +299,9 @@ void sdrplay_source_c::startDevice(void)
                      _rfHz / 1e6,
                      _bwType,
                      _ifType,
-                     lnaState,
+                     _lna,
                      &gRdBsystem,
-                     mir_sdr_USE_SET_GR,
+                     mir_sdr_USE_RSP_SET_GR,
                      &_samplesPerPacket,
                      &streamCallbackWrap,
                      &gainChangeCallbackWrap,
@@ -279,7 +310,9 @@ void sdrplay_source_c::startDevice(void)
   // Note that gqrx never calls set_dc_offset_mode() if the IQ balance
   // module is available.
   set_dc_offset_mode(osmosdr::source::DCOffsetOff, 0);
-  set_antenna(get_antenna(), 0);
+
+  if (_hwVer == 2)
+    set_antenna(get_antenna(), 0);
 }
 
 void sdrplay_source_c::stopDevice(void)
@@ -306,8 +339,11 @@ void sdrplay_source_c::reinitDevice(int reason)
               mir_sdr_CHANGE_LO_MODE |
               mir_sdr_CHANGE_AM_PORT);
 
-  int gRdB = grForGainAndFreq( _gain, _rfHz );
+  int gRdB;
   int gRdBsystem; // Returned overall system gain reduction
+
+  updateGains();
+  gRdB = _gRdB;
 
   // Tell stream CB to return
   _reinit = true;
@@ -318,12 +354,14 @@ void sdrplay_source_c::reinitDevice(int reason)
                  _bwType,
                  _ifType,
                  mir_sdr_LO_Auto,
-                 0, // LNAstate ignored for mir_sdr_USE_SET_GR
+                 _lna,
                  &gRdBsystem,
-                 mir_sdr_USE_SET_GR,
+                 mir_sdr_USE_RSP_SET_GR,
                  &_samplesPerPacket,
                  (mir_sdr_ReasonForReinitT)reason
                  );
+
+  _bufferReady.notify_one();
 }
 
 std::vector<std::string> sdrplay_source_c::get_devices()
@@ -352,7 +390,7 @@ osmosdr::meta_range_t sdrplay_source_c::get_sample_rates()
 {
   osmosdr::meta_range_t range;
 
-  // TODO - different for RSP1/1A?
+  // TODO - different for RSP1?
   // TODO - gqrx doesn't pay any attention, has own sdrplay values (wrong)
   range += osmosdr::range_t( 2000e3, 10000e3 );
 
@@ -384,24 +422,17 @@ osmosdr::freq_range_t sdrplay_source_c::get_freq_range(size_t chan)
 
 double sdrplay_source_c::set_center_freq(double freq, size_t chan)
 {
-  // Determine whether new freq is in same band as current freq.
-  int sameBand = 0;
-  for (Range<double> band : _bands) {
-    if (freq < band.max) {
-      if (_rfHz >= band.min && _rfHz < band.max) {
-        sameBand = 1;
-      }
-      break;
-    }
-  }
+  int oldBand;
 
   _rfHz = freq;
 
   if (_running) {
+    oldBand = _band;
+    updateGains();
     // reinitDevice() is required only if band changes
     // mir_sdr_SetRf() is faster if band has not changed
-    if (sameBand)
-        mir_sdr_SetRf(_rfHz, 1, 0);
+    if (_band == oldBand)
+      mir_sdr_SetRf(_rfHz, 1 /*absolute*/, 0 /*immediate*/);
     else
       reinitDevice((int)mir_sdr_CHANGE_RF_FREQ);
   }
@@ -428,7 +459,8 @@ std::vector<std::string> sdrplay_source_c::get_gain_names(size_t chan)
 {
   std::vector< std::string > gains;
 
-  gains += "LNA_MIX_BB";
+  gains += "LNA_REDUCTION";
+  gains += "SYS_REDUCTION";
 
   return gains;
 }
@@ -437,7 +469,7 @@ osmosdr::gain_range_t sdrplay_source_c::get_gain_range(size_t chan)
 {
   osmosdr::gain_range_t range;
 
-  for (int i = MIN_GAIN; i <= MAX_GAIN; i++)
+  for (int i = 20; i <= 59; i++)
     range += osmosdr::range_t((float)i);
 
   return range;
@@ -445,7 +477,25 @@ osmosdr::gain_range_t sdrplay_source_c::get_gain_range(size_t chan)
 
 osmosdr::gain_range_t sdrplay_source_c::get_gain_range(const std::string & name, size_t chan)
 {
-  return get_gain_range(chan);
+  osmosdr::gain_range_t range;
+  int maxLnaState;
+
+  if (name == "LNA_REDUCTION") {
+    if (_hwVer == 2)
+      maxLnaState = 8;
+    else if (_hwVer == 255)
+      maxLnaState = 9;
+    else
+      maxLnaState = 4;
+    for (int i = 0; i <= maxLnaState; i++)
+      range += osmosdr::range_t((float)i);
+  }
+  else {
+    for (int i = 20; i <= 59; i++)
+      range += osmosdr::range_t((float)i);
+  }
+
+  return range;
 }
 
 bool sdrplay_source_c::set_gain_mode(bool automatic, size_t chan)
@@ -453,7 +503,7 @@ bool sdrplay_source_c::set_gain_mode(bool automatic, size_t chan)
   _auto_gain = automatic;
   if (_running) {
     if (automatic) {
-      mir_sdr_AgcControl(mir_sdr_AGC_5HZ, -20, 0, 0, 0, 0, 0);
+      mir_sdr_AgcControl(mir_sdr_AGC_5HZ, -30, 0, 0, 0, 0, 0);
     }
     else {
       mir_sdr_AgcControl(mir_sdr_AGC_DISABLE, 0, 0, 0, 0, 0, 0);
@@ -469,21 +519,41 @@ bool sdrplay_source_c::get_gain_mode(size_t chan)
   return _auto_gain;
 }
 
+void sdrplay_source_c::updateGains(void)
+{
+  //mir_sdr_BandT band;
+  int gRdBsystem = 0;
+  _gRdB = _gain;
+  int gRdB = _gRdB;
+
+  // TODO - clip _lna
+  mir_sdr_GetGrByFreq(_rfHz/1e6, (mir_sdr_BandT *)&_band, &gRdB, _lna, &gRdBsystem,
+                      mir_sdr_USE_RSP_SET_GR);
+  if (_running)
+    mir_sdr_RSP_SetGr(gRdB, _lna, 1 /*absolute*/, 0 /*immediate*/);
+}
+
 double sdrplay_source_c::set_gain(double gain, size_t chan)
 {
-  _gain = gain;
+  _gain = (int)gain;
 
-  if (_running) {
-    int gRdB = grForGainAndFreq(gain, _rfHz);
-    mir_sdr_SetGr(gRdB, 1, 0);
-  }
+  if (_running)
+    updateGains();
 
   return gain;
 }
 
 double sdrplay_source_c::set_gain(double gain, const std::string & name, size_t chan)
 {
-  return set_gain(gain, chan);
+  if (name == "LNA_REDUCTION")
+    _lna = int(gain);
+  else
+    _gain = int(gain);
+
+  if (_running)
+    updateGains();
+
+  return gain;
 }
 
 double sdrplay_source_c::get_gain(size_t chan)
@@ -493,22 +563,10 @@ double sdrplay_source_c::get_gain(size_t chan)
 
 double sdrplay_source_c::get_gain(const std::string & name, size_t chan)
 {
-  return get_gain(chan);
-}
-
-int sdrplay_source_c::grForGainAndFreq(double gain, double freq)
-{
-  int gRdB;
-  Range<double> band45 = _bands[mir_sdr_BAND_4_5];
-
-  // Clip gain reduction for higher bands
-  gRdB = (int)(MAX_GAIN - gain);
-  if (freq > band45.max)
-    gRdB = std::min(gRdB, 83);
-  else if (freq > band45.min)
-    gRdB = std::min(gRdB, 85);
-
-  return gRdB;
+  if (name == "LNA_REDUCTION")
+    return _lna;
+  else
+    return _gain;
 }
 
 std::vector< std::string > sdrplay_source_c::get_antennas(size_t chan)
@@ -564,8 +622,8 @@ void sdrplay_source_c::set_dc_offset_mode(int mode, size_t chan)
   if (osmosdr::source::DCOffsetOff == mode) {
     _dcMode = 0;
     if (_running) {
-      mir_sdr_SetDcMode(0, 1);
-      mir_sdr_DCoffsetIQimbalanceControl(0, 1);
+      mir_sdr_SetDcMode(0, 0);
+      mir_sdr_DCoffsetIQimbalanceControl(0, 0);
     }
   }
   else if (osmosdr::source::DCOffsetManual == mode) {
@@ -578,7 +636,7 @@ void sdrplay_source_c::set_dc_offset_mode(int mode, size_t chan)
   else if (osmosdr::source::DCOffsetAutomatic == mode) {
     _dcMode = 1;
     if (_running) {
-      mir_sdr_SetDcMode(1, 1);
+      mir_sdr_SetDcMode(4, 1);
       mir_sdr_DCoffsetIQimbalanceControl(1, 1);
       mir_sdr_SetDcTrackTime(63);
     }

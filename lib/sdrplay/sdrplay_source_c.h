@@ -127,7 +127,8 @@ private:
   void stopDevice(void);
   void reallocateBuffers(int size, int num);
   void reinitDevice(int reason);
-  int grForGainAndFreq( double gain, double freq );
+  //int grForGainAndFreq( double gain, double freq );
+  void updateGains(void);
   void streamCallback(short *xi, short *xq, unsigned int firstSampleNum,
                       int grChanged, int rfChanged, int fsChanged,
                       unsigned int numSamples, unsigned int reset,
@@ -142,7 +143,10 @@ private:
 
   bool _auto_gain;
 
-   double _gain;
+   int _gain;
+   int _gRdB;
+   int _lna;
+   int _band;
    double _fsHz;
    double _rfHz;
    mir_sdr_Bw_MHzT _bwType;
