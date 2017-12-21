@@ -154,8 +154,7 @@ private:
    mir_sdr_If_kHzT _ifType;
    int _samplesPerPacket;
    int _dcMode;
-   std::vector<Range<double>> _bands;
-   unsigned char _hwVer;
+    unsigned char _hwVer;
    std::string _antenna;
 
    gr_complex *_buffer;

@@ -39,49 +39,6 @@
 
 using namespace boost::assign;
 
-// Index by mir_sdr_BandT
-static std::vector<Range<double>> rsp1bands = {
-  {0, 12e6},        // AM Lo
-  {12e6, 30e6},     // AM Mid
-  {30e6, 60e6},     // AM Hi
-  {60e6, 120e6},    // VHF
-  {120e6, 250e6},   // Band 3
-  {250e6, 420e6},   // Band X
-  {420e6, 1000e6},  // Band 4/5
-  {1000e6, 2000e6}  // Band L
-};
-
-// Indexed by mir_sdr_RSPII_BandT
-static std::vector<Range<double>> rsp1abands = {
-  {0, 0},           // Unknown
-  {0, 2e6},        // AM Lo
-  {2, 12e6},        // AM Lo
-  {12e6, 30e6},     // AM Mid
-  {30e6, 60e6},     // AM Hi
-  {60e6, 120e6},    // VHF
-  {120e6, 250e6},   // Band 3
-  {250e6, 300e6},   // Band X Lo
-  {300e6, 380e6},   // Band X Mid
-  {380e6, 420e6},   // Band X Hi
-  {420e6, 1000e6},  // Band 4/5
-  {1000e6, 2000e6}  // Band L
-};
-
-// Indexed by mir_sdr_RSPII_BandT
-static std::vector<Range<double>> rsp2bands = {
-  {0, 0},           // Unknown
-  {0, 12e6},        // AM Lo
-  {12e6, 30e6},     // AM Mid
-  {30e6, 60e6},     // AM Hi
-  {60e6, 120e6},    // VHF
-  {120e6, 250e6},   // Band 3
-  {250e6, 300e6},   // Band X Lo
-  {300e6, 380e6},   // Band X Mid
-  {380e6, 420e6},   // Band X Hi
-  {420e6, 1000e6},  // Band 4/5
-  {1000e6, 2000e6}  // Band L
-};
-
 // Index by mir_sdr_Bw_MHzT
 static std::vector<double> bandwidths = {
   0,     // Dummy
@@ -119,6 +76,7 @@ sdrplay_source_c::sdrplay_source_c (const std::string &args)
   _gain(40),
   _gRdB(40),
   _lna(0),
+  _band(0),
   _fsHz(8e6),
   _bitScale(1.0f/4096),
   _rfHz(100e6),
@@ -129,7 +87,7 @@ sdrplay_source_c::sdrplay_source_c (const std::string &args)
   _running(false),
   _reinit(false)
 {
-  mir_sdr_DebugEnable(1);
+  mir_sdr_DebugEnable(0);
 
   unsigned int numDevices;
   mir_sdr_DeviceT mirDevices[MAX_SUPPORTED_DEVICES];
@@ -142,17 +100,14 @@ sdrplay_source_c::sdrplay_source_c (const std::string &args)
   std::cerr << "Found SDRplay serial " << mirDevices[0].SerNo << " ";
   if (_hwVer == 2) {
     std::cerr << "RSP2" << std::endl;
-    _bands = rsp2bands;
     _antenna = "A";
   }
   else if (_hwVer == 255) {
     std::cerr << "RSP1A" << std::endl;
-    _bands = rsp1abands;
     _antenna = "RX";
   }
   else {
     std::cerr << "RSP1" << std::endl;
-    _bands = rsp1bands;
     _antenna = "RX";
   }
 }
@@ -256,7 +211,8 @@ void sdrplay_source_c::gainChangeCallback(unsigned int gRdB,
                                           unsigned int lnaGRdB,
                                           void *cbContext)
 {
-  std::cerr << "GR change, BB+MIX -" << gRdB << "dB, LNA -" << lnaGRdB << "dB" << std::endl;
+  std::cerr << "GR change, BB+MIX -" << gRdB << "dB, LNA -" << lnaGRdB
+            << "dB, band " << _band << std::endl;
 }
 
 // Callback wrapper
@@ -427,19 +383,23 @@ osmosdr::freq_range_t sdrplay_source_c::get_freq_range(size_t chan)
 
 double sdrplay_source_c::set_center_freq(double freq, size_t chan)
 {
-  int oldBand;
+  // Using mir_sdr_CHANGE_RF_FREQ, reinit is fast
+  // enough. Commented-out code speeds up tuning, but sometimes gains
+  // are not adusted correctly.
+
+  //int oldBand;
 
   _rfHz = freq;
 
   if (_running) {
-    oldBand = _band;
+    //oldBand = _band;
     updateGains();
     // reinitDevice() is required only if band changes
     // mir_sdr_SetRf() is faster if band has not changed
-    if (_band == oldBand)
-      mir_sdr_SetRf(_rfHz, 1 /*absolute*/, 0 /*immediate*/);
-    else
-      reinitDevice((int)mir_sdr_CHANGE_RF_FREQ);
+    //if (_band == oldBand)
+    //mir_sdr_SetRf(_rfHz, 1 /*absolute*/, 0 /*immediate*/);
+    //else
+    reinitDevice((int)mir_sdr_CHANGE_RF_FREQ);
   }
 
   return get_center_freq( chan );
