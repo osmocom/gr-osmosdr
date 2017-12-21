@@ -393,7 +393,7 @@ double sdrplay_source_c::set_center_freq(double freq, size_t chan)
 
   if (_running) {
     //oldBand = _band;
-    updateGains();
+    //updateGains();
     // reinitDevice() is required only if band changes
     // mir_sdr_SetRf() is faster if band has not changed
     //if (_band == oldBand)
