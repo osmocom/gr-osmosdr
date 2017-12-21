@@ -119,16 +119,17 @@ sdrplay_source_c::sdrplay_source_c (const std::string &args)
   _gain(40),
   _gRdB(40),
   _lna(0),
-  _fsHz(2e6),
+  _fsHz(8e6),
+  _bitScale(1.0f/4096),
   _rfHz(100e6),
-  _bwType(mir_sdr_BW_1_536),
+  _bwType(mir_sdr_BW_6_000),
   _ifType(mir_sdr_IF_Zero),
   _dcMode(1),
   _buffer(NULL),
   _running(false),
   _reinit(false)
 {
-  mir_sdr_DebugEnable(0);
+  mir_sdr_DebugEnable(1);
 
   unsigned int numDevices;
   mir_sdr_DeviceT mirDevices[MAX_SUPPORTED_DEVICES];
@@ -158,6 +159,7 @@ sdrplay_source_c::sdrplay_source_c (const std::string &args)
 
 sdrplay_source_c::~sdrplay_source_c ()
 {
+  std::cerr << "*** destructor" << std::endl;
   if (_running) {
     stopDevice();
   }
@@ -186,6 +188,7 @@ int sdrplay_source_c::work(int noutput_items,
   }
 
   if (!_running) {
+    std::cerr << "*** work() !_running" << std::endl;
     //return WORK_DONE;
     return 0;
   }
@@ -201,25 +204,12 @@ void sdrplay_source_c::streamCallback(short *xi, short *xq,
                                       void *cbContext)
 {
   unsigned int i = 0;
-  double bitScale;
   _reinit = false;
 
-  if (_hwVer == 16)
-    if (_fsHz >= 9216000)
-      bitScale = 1.0f / 256;
-    else if (_fsHz >= 8064000)
-      bitScale = 1.0f / 1024;
-    else if (_fsHz >= 6048000)
-      bitScale = 1.0f / 2048;
-    else
-      bitScale = 1.0f / 8192;
-  else
-    bitScale = 1.0f / 2048;
-
   while (i < numSamples) {
+    boost::mutex::scoped_lock lock(_bufferMutex);
     // Wait for work() to make buffer ready
     {
-      boost::mutex::scoped_lock lock(_bufferMutex);
       while (!_buffer && _running && !_reinit) {
         _bufferReady.wait_for(lock, boost::chrono::milliseconds(100));
       }
@@ -231,10 +221,8 @@ void sdrplay_source_c::streamCallback(short *xi, short *xq,
 
     // Copy until out of samples or buffer is full
     while ((i < numSamples) && (_bufferSpaceRemaining > 0)) {
-      boost::mutex::scoped_lock lock(_bufferMutex);
       _buffer[_bufferOffset] =
-        // TODO - handle 14-bit and 16-bit samples for RSP1A
-        gr_complex(float(xi[i]) * bitScale, float(xq[i]) * bitScale);
+        gr_complex(float(xi[i]) * _bitScale, float(xq[i]) * _bitScale);
 
       i++;
       _bufferOffset++;
@@ -242,7 +230,6 @@ void sdrplay_source_c::streamCallback(short *xi, short *xq,
     }
 
     if (_bufferSpaceRemaining == 0) {
-      boost::mutex::scoped_lock lock(_bufferMutex);
       _buffer = NULL;
       _bufferReady.notify_one();
     }
@@ -329,6 +316,8 @@ void sdrplay_source_c::stopDevice(void)
 
 void sdrplay_source_c::reinitDevice(int reason)
 {
+  std::cerr << "*** reinitDevice" << std::endl;
+
   // If no reason given, reinit everything
   if (reason == (int)mir_sdr_CHANGE_NONE)
     reason = (mir_sdr_CHANGE_GR |
@@ -401,6 +390,22 @@ double sdrplay_source_c::set_sample_rate(double rate)
 {
   rate = std::min( std::max(rate,2e6), 10e6 );
   _fsHz = rate;
+
+  // RSP1A sample resolution depends on sample rate
+  if (_hwVer == 255)
+    if (_fsHz >= 9216000)
+      _bitScale = 1.0f / 256;    // 8-bit
+    else if (_fsHz >= 8064000)
+      _bitScale = 1.0f / 1024;   // 10-bit
+    else if (_fsHz >= 6048000)
+      _bitScale = 1.0f / 4096;   // 12-bit
+    else
+      _bitScale = 1.0f / 16384;   // 14-bit
+
+  // RSP1 and RSP2 are fixed 12-bit
+  else
+    _bitScale = 1.0f / 4096;     //12-bit
+
   if (_running)
     reinitDevice((int)mir_sdr_CHANGE_FS_FREQ);
 
