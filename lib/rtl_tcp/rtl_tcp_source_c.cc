@@ -298,17 +298,17 @@ rtl_tcp_source_c::rtl_tcp_source_c(const std::string &args) :
   // set direct sampling
   struct command cmd;
 
-  cmd = { 0x09, htonl(direct_samp) };
+  cmd = (struct command){ 0x09, htonl(direct_samp) };
   send(d_socket, (const char*)&cmd, sizeof(cmd), 0);
   if (direct_samp)
     _no_tuner = true;
 
   // set offset tuning
-  cmd = { 0x0a, htonl(offset_tune) };
+  cmd = (struct command){ 0x0a, htonl(offset_tune) };
   send(d_socket, (const char*)&cmd, sizeof(cmd), 0);
 
   // set bias tee
-  cmd = { 0x0e, htonl(bias_tee) };
+  cmd = (struct command){ 0x0e, htonl(bias_tee) };
   send(d_socket, (const char*)&cmd, sizeof(cmd), 0);
 }
 
@@ -567,7 +567,7 @@ bool rtl_tcp_source_c::set_gain_mode( bool automatic, size_t chan )
   send(d_socket, (const char*)&cmd, sizeof(cmd), 0);
 
   // AGC mode
-  cmd = { 0x08, htonl(automatic) };
+  cmd = (struct command){ 0x08, htonl(automatic) };
   send(d_socket, (const char*)&cmd, sizeof(cmd), 0);
 
   _auto_gain = automatic;
