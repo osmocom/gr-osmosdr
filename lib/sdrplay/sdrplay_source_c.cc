@@ -427,8 +427,8 @@ std::vector<std::string> sdrplay_source_c::get_gain_names(size_t chan)
 {
   std::vector< std::string > gains;
 
-  gains += "LNA_REDUCTION";
-  gains += "SYS_REDUCTION";
+  gains += "LNA REDUCTION";
+  gains += "SYS REDUCTION";
 
   return gains;
 }
@@ -448,7 +448,7 @@ osmosdr::gain_range_t sdrplay_source_c::get_gain_range(const std::string & name,
   osmosdr::gain_range_t range;
   int maxLnaState;
 
-  if (name == "LNA_REDUCTION") {
+  if (name == "LNA REDUCTION") {
     if (_hwVer == 2)
       maxLnaState = 8;
     else if (_hwVer == 255)
@@ -513,7 +513,7 @@ double sdrplay_source_c::set_gain(double gain, size_t chan)
 
 double sdrplay_source_c::set_gain(double gain, const std::string & name, size_t chan)
 {
-  if (name == "LNA_REDUCTION")
+  if (name == "LNA REDUCTION")
     _lna = int(gain);
   else
     _gain = int(gain);
@@ -531,7 +531,7 @@ double sdrplay_source_c::get_gain(size_t chan)
 
 double sdrplay_source_c::get_gain(const std::string & name, size_t chan)
 {
-  if (name == "LNA_REDUCTION")
+  if (name == "LNA REDUCTION")
     return _lna;
   else
     return _gain;
