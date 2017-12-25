@@ -114,7 +114,6 @@ sdrplay_source_c::sdrplay_source_c (const std::string &args)
 
 sdrplay_source_c::~sdrplay_source_c ()
 {
-  std::cerr << "*** destructor" << std::endl;
   if (_running) {
     stopDevice();
   }
@@ -138,13 +137,12 @@ int sdrplay_source_c::work(int noutput_items,
     _bufferReady.notify_one();
 
     while (_buffer && _running) {
-      _bufferReady.wait_for(lock, boost::chrono::milliseconds(100));
+      //_bufferReady.wait_for(lock, boost::chrono::milliseconds(250));
+      _bufferReady.wait(lock);
     }
   }
 
   if (!_running) {
-    std::cerr << "*** work() !_running" << std::endl;
-    //return WORK_DONE;
     return 0;
   }
 
@@ -166,7 +164,14 @@ void sdrplay_source_c::streamCallback(short *xi, short *xq,
     // Wait for work() to make buffer ready
     {
       while (!_buffer && _running && !_reinit) {
-        _bufferReady.wait_for(lock, boost::chrono::milliseconds(100));
+        // Give up and drop samples after timeout, otherwise things
+        // seem to deadlock unpredictably when the flowgraph is
+        // reconfigured or stops/starts.
+        if (boost::cv_status::timeout ==
+            _bufferReady.wait_for(lock, boost::chrono::milliseconds(250))) {
+          //std::cerr << "stream() wait timeout" << std::endl;
+          return;
+        }
       }
     }
 
@@ -232,7 +237,7 @@ void sdrplay_source_c::startDevice(void)
   int gRdB = _gRdB;
 
   if (_running) {
-    std::cerr << "Already running." << std::endl;
+    std::cerr << "startDevice(): already running." << std::endl;
     return;
   }
   _running = true;
@@ -261,7 +266,7 @@ void sdrplay_source_c::startDevice(void)
 void sdrplay_source_c::stopDevice(void)
 {
   if (!_running) {
-    std::cerr << "Already stopped." << std::endl;
+    std::cerr << "stopDevice(): already stopped." << std::endl;
     return;
   }
 
@@ -272,8 +277,6 @@ void sdrplay_source_c::stopDevice(void)
 
 void sdrplay_source_c::reinitDevice(int reason)
 {
-  std::cerr << "*** reinitDevice" << std::endl;
-
   // If no reason given, reinit everything
   if (reason == (int)mir_sdr_CHANGE_NONE)
     reason = (mir_sdr_CHANGE_GR |
@@ -336,7 +339,7 @@ osmosdr::meta_range_t sdrplay_source_c::get_sample_rates()
   osmosdr::meta_range_t range;
 
   // TODO - different for RSP1?
-  // TODO - gqrx doesn't pay any attention, has own sdrplay values (wrong)
+  // TODO - gqrx doesn't pay any attention, has own (wrong) sdrplay values
   range += osmosdr::range_t( 2000e3, 10000e3 );
 
   return range;
@@ -610,7 +613,7 @@ void sdrplay_source_c::set_dc_offset_mode(int mode, size_t chan)
 
 void sdrplay_source_c::set_dc_offset(const std::complex<double> &offset, size_t chan)
 {
-  std::cerr << "Manual DC correction mode is not implemented." << std::endl;
+  std::cerr << "set_dc_offset(): not implemented" << std::endl;
 }
 
 double sdrplay_source_c::set_bandwidth(double bandwidth, size_t chan)
@@ -625,7 +628,7 @@ double sdrplay_source_c::set_bandwidth(double bandwidth, size_t chan)
   }
 
   int actual = get_bandwidth(chan);
-  std::cerr << "set_bandwidth requested=" << bandwidth
+  std::cerr << "set_bandwidth(): requested=" << bandwidth
             << " actual=" << actual << std::endl;
 
   if (_running) {
