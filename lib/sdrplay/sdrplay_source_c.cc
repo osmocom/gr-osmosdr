@@ -52,8 +52,8 @@ static std::vector<double> bandwidths = {
   8000e3
 };
 
-// TODO - switch for RSP1/2
-#define SDRPLAY_FREQ_MIN 0
+// TODO - RSP1 lower freq is 10e3.
+#define SDRPLAY_FREQ_MIN 1e3
 #define SDRPLAY_FREQ_MAX 2000e6
 
 sdrplay_source_c_sptr
@@ -78,7 +78,6 @@ sdrplay_source_c::sdrplay_source_c (const std::string &args)
   _lna(0),
   _band(0),
   _fsHz(8e6),
-  _bitScale(1.0f/4096),
   _rfHz(100e6),
   _bwType(mir_sdr_BW_6_000),
   _ifType(mir_sdr_IF_Zero),
@@ -182,7 +181,7 @@ void sdrplay_source_c::streamCallback(short *xi, short *xq,
     // Copy until out of samples or buffer is full
     while ((i < numSamples) && (_bufferSpaceRemaining > 0)) {
       _buffer[_bufferOffset] =
-        gr_complex(float(xi[i]) * _bitScale, float(xq[i]) * _bitScale);
+        gr_complex(float(xi[i]) / 32768.0, float(xq[i]) / 32768.0);
 
       i++;
       _bufferOffset++;
@@ -258,6 +257,7 @@ void sdrplay_source_c::startDevice(void)
   // Note that gqrx never calls set_dc_offset_mode() if the IQ balance
   // module is available.
   set_dc_offset_mode(osmosdr::source::DCOffsetOff, 0);
+  updateGains();
 
   if (_hwVer == 2)
     set_antenna(get_antenna(), 0);
@@ -337,11 +337,7 @@ size_t sdrplay_source_c::get_num_channels()
 osmosdr::meta_range_t sdrplay_source_c::get_sample_rates()
 {
   osmosdr::meta_range_t range;
-
-  // TODO - different for RSP1?
-  // TODO - gqrx doesn't pay any attention, has own (wrong) sdrplay values
   range += osmosdr::range_t( 2000e3, 10000e3 );
-
   return range;
 }
 
@@ -349,21 +345,6 @@ double sdrplay_source_c::set_sample_rate(double rate)
 {
   rate = std::min( std::max(rate,2e6), 10e6 );
   _fsHz = rate;
-
-  // RSP1A sample resolution depends on sample rate
-  if (_hwVer == 255)
-    if (_fsHz >= 9216000)
-      _bitScale = 1.0f / 256;    // 8-bit
-    else if (_fsHz >= 8064000)
-      _bitScale = 1.0f / 1024;   // 10-bit
-    else if (_fsHz >= 6048000)
-      _bitScale = 1.0f / 4096;   // 12-bit
-    else
-      _bitScale = 1.0f / 16384;   // 14-bit
-
-  // RSP1 and RSP2 are fixed 12-bit
-  else
-    _bitScale = 1.0f / 4096;     //12-bit
 
   if (_running)
     reinitDevice((int)mir_sdr_CHANGE_FS_FREQ);
@@ -379,7 +360,6 @@ double sdrplay_source_c::get_sample_rate()
 osmosdr::freq_range_t sdrplay_source_c::get_freq_range(size_t chan)
 {
   osmosdr::freq_range_t range;
-  // TODO - different for RSP1/1A?
   range += osmosdr::range_t(SDRPLAY_FREQ_MIN,  SDRPLAY_FREQ_MAX);
   return range;
 }
@@ -427,8 +407,8 @@ std::vector<std::string> sdrplay_source_c::get_gain_names(size_t chan)
 {
   std::vector< std::string > gains;
 
-  gains += "LNA REDUCTION";
-  gains += "SYS REDUCTION";
+  gains += "LNA_ATTEN_STEP";
+  gains += "SYS_ATTEN_DB";
 
   return gains;
 }
@@ -448,7 +428,7 @@ osmosdr::gain_range_t sdrplay_source_c::get_gain_range(const std::string & name,
   osmosdr::gain_range_t range;
   int maxLnaState;
 
-  if (name == "LNA REDUCTION") {
+  if (name == "LNA_ATTEN_STEP") {
     if (_hwVer == 2)
       maxLnaState = 8;
     else if (_hwVer == 255)
@@ -489,12 +469,11 @@ bool sdrplay_source_c::get_gain_mode(size_t chan)
 
 void sdrplay_source_c::updateGains(void)
 {
-  //mir_sdr_BandT band;
   int gRdBsystem = 0;
   _gRdB = _gain;
   int gRdB = _gRdB;
 
-  // TODO - clip _lna
+  // TODO - available LNA steps vary by band
   mir_sdr_GetGrByFreq(_rfHz/1e6, (mir_sdr_BandT *)&_band, &gRdB, _lna, &gRdBsystem,
                       mir_sdr_USE_RSP_SET_GR);
   if (_running)
@@ -513,7 +492,7 @@ double sdrplay_source_c::set_gain(double gain, size_t chan)
 
 double sdrplay_source_c::set_gain(double gain, const std::string & name, size_t chan)
 {
-  if (name == "LNA REDUCTION")
+  if (name == "LNA_ATTEN_STEP")
     _lna = int(gain);
   else
     _gain = int(gain);
@@ -531,7 +510,7 @@ double sdrplay_source_c::get_gain(size_t chan)
 
 double sdrplay_source_c::get_gain(const std::string & name, size_t chan)
 {
-  if (name == "LNA REDUCTION")
+  if (name == "LNA_ATTEN_STEP")
     return _lna;
   else
     return _gain;

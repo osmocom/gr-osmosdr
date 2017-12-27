@@ -148,7 +148,6 @@ private:
    int _lna;
    int _band;
    double _fsHz;
-   double _bitScale;
    double _rfHz;
    mir_sdr_Bw_MHzT _bwType;
    mir_sdr_If_kHzT _ifType;
