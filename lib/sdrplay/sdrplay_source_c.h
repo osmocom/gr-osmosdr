@@ -146,6 +146,8 @@ private:
    int _gain;
    int _gRdB;
    int _lna;
+   int _bcastNotch;
+   int _dabNotch;
    int _band;
    double _fsHz;
    double _rfHz;

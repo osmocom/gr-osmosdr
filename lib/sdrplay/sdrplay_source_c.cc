@@ -76,6 +76,8 @@ sdrplay_source_c::sdrplay_source_c (const std::string &args)
   _gain(40),
   _gRdB(40),
   _lna(0),
+  _bcastNotch(0),
+  _dabNotch(0),
   _band(0),
   _fsHz(8e6),
   _rfHz(100e6),
@@ -93,7 +95,6 @@ sdrplay_source_c::sdrplay_source_c (const std::string &args)
   mir_sdr_GetDevices(mirDevices, &numDevices, MAX_SUPPORTED_DEVICES);
 
   // TODO: use selected device
-  mir_sdr_SetDeviceIdx(0);
   _hwVer = mirDevices[0].hwVer;
 
   std::cerr << "Found SDRplay serial " << mirDevices[0].SerNo << " ";
@@ -116,7 +117,6 @@ sdrplay_source_c::~sdrplay_source_c ()
   if (_running) {
     stopDevice();
   }
-  mir_sdr_ReleaseDeviceIdx();
 }
 
 int sdrplay_source_c::work(int noutput_items,
@@ -232,14 +232,17 @@ void sdrplay_source_c::gainChangeCallbackWrap(unsigned int gRdB,
 
 void sdrplay_source_c::startDevice(void)
 {
-  int gRdBsystem = 0;
-  int gRdB = _gRdB;
-
   if (_running) {
     std::cerr << "startDevice(): already running." << std::endl;
     return;
   }
+
+  // TODO - use selected device
+  mir_sdr_SetDeviceIdx(0);
   _running = true;
+
+  int gRdBsystem = 0;
+  int gRdB = _gRdB;
 
   mir_sdr_StreamInit(&gRdB,
                      _fsHz / 1e6,
@@ -273,6 +276,7 @@ void sdrplay_source_c::stopDevice(void)
   _running = false;
 
   mir_sdr_StreamUninit();
+  mir_sdr_ReleaseDeviceIdx();
 }
 
 void sdrplay_source_c::reinitDevice(int reason)
@@ -321,7 +325,11 @@ std::vector<std::string> sdrplay_source_c::get_devices()
   mir_sdr_GetDevices(mirDevices, &numDevices, MAX_SUPPORTED_DEVICES);
 
   for (unsigned int i=0; i<numDevices; i++) {
-    std::string args = boost::str(boost::format("sdrplay=%d,label='SDRplay RSP'") % (i+1) );
+    mir_sdr_DeviceT *dev = &mirDevices[i];
+    if (!dev->devAvail)
+      continue;
+    std::string args = boost::str(boost::format("sdrplay=%d,label='SDRplay RSP S/N:%s'")
+                                  % i % dev->SerNo );
     std::cerr << args << std::endl;
     devices.push_back( args );
   }
@@ -410,6 +418,13 @@ std::vector<std::string> sdrplay_source_c::get_gain_names(size_t chan)
   gains += "LNA_ATTEN_STEP";
   gains += "SYS_ATTEN_DB";
 
+  // RSP1A and RSP2 have notch filters.
+  // TODO - separate setting for RSP1A broadcast vs DAB notch filter?
+  if (_hwVer == 255 || _hwVer == 2)
+    gains += "BCAST_NOTCH";
+  if (_hwVer == 255)
+    gains += "DAB_NOTCH";
+
   return gains;
 }
 
@@ -437,6 +452,14 @@ osmosdr::gain_range_t sdrplay_source_c::get_gain_range(const std::string & name,
       maxLnaState = 4;
     for (int i = 0; i <= maxLnaState; i++)
       range += osmosdr::range_t((float)i);
+  }
+  else if (name == "BCAST_NOTCH") {
+    range += osmosdr::range_t((float)0);
+    range += osmosdr::range_t((float)1);
+  }
+  else if (name == "DAB_NOTCH") {
+    range += osmosdr::range_t((float)0);
+    range += osmosdr::range_t((float)1);
   }
   else {
     for (int i = 20; i <= 59; i++)
@@ -492,13 +515,41 @@ double sdrplay_source_c::set_gain(double gain, size_t chan)
 
 double sdrplay_source_c::set_gain(double gain, const std::string & name, size_t chan)
 {
-  if (name == "LNA_ATTEN_STEP")
+  int bcastNotchChanged = 0;
+  int dabNotchChanged = 0;
+
+  if (name == "LNA_ATTEN_STEP") {
     _lna = int(gain);
-  else
+  }
+  else if (name == "BCAST_NOTCH") {
+    if (int(gain) != _bcastNotch)
+      bcastNotchChanged = 1;
+    _bcastNotch = int(gain);
+  }
+  else if (name == "DAB_NOTCH") {
+    if (int(gain) != _dabNotch)
+      dabNotchChanged = 1;
+    _dabNotch = int(gain);
+  }
+  else {
     _gain = int(gain);
+  }
 
   if (_running)
     updateGains();
+
+  if (bcastNotchChanged) {
+    if (_hwVer == 255 ) {
+      mir_sdr_rsp1a_BroadcastNotch(_bcastNotch);
+    }
+    else if (_hwVer == 2) {
+      mir_sdr_RSPII_RfNotchEnable(_bcastNotch);
+    }
+  }
+
+  if (dabNotchChanged) {
+    mir_sdr_rsp1a_DabNotch(_dabNotch);
+  }
 
   return gain;
 }
@@ -512,6 +563,10 @@ double sdrplay_source_c::get_gain(const std::string & name, size_t chan)
 {
   if (name == "LNA_ATTEN_STEP")
     return _lna;
+  else if (name == "BCAST_NOTCH")
+    return _bcastNotch;
+  else if (name == "DAB_NOTCH")
+    return _dabNotch;
   else
     return _gain;
 }
