@@ -155,7 +155,8 @@ private:
    mir_sdr_If_kHzT _ifType;
    int _samplesPerPacket;
    int _dcMode;
-    unsigned char _hwVer;
+   unsigned char _hwVer;
+   int _devIndex;
    std::string _antenna;
 
    gr_complex *_buffer;

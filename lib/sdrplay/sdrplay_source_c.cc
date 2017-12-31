@@ -25,6 +25,7 @@
 #include "sdrplay_source_c.h"
 #include <gnuradio/io_signature.h>
 #include "osmosdr/source.h"
+#include "arg_helpers.h"
 
 #include <boost/assign.hpp>
 #include <boost/format.hpp>
@@ -90,14 +91,22 @@ sdrplay_source_c::sdrplay_source_c (const std::string &args)
 {
   mir_sdr_DebugEnable(0);
 
+  dict_t dict = params_to_dict(args);
+  if (dict.count("sdrplay")) {
+    _devIndex = boost::lexical_cast<unsigned int>(dict["sdrplay"]);
+  }
+  else {
+    _devIndex = 0;
+  }
+
   unsigned int numDevices;
   mir_sdr_DeviceT mirDevices[MAX_SUPPORTED_DEVICES];
   mir_sdr_GetDevices(mirDevices, &numDevices, MAX_SUPPORTED_DEVICES);
 
   // TODO: use selected device
-  _hwVer = mirDevices[0].hwVer;
+  _hwVer = mirDevices[_devIndex].hwVer;
 
-  std::cerr << "Found SDRplay serial " << mirDevices[0].SerNo << " ";
+  std::cerr << "Using SDRplay serial " << mirDevices[_devIndex].SerNo << " ";
   if (_hwVer == 2) {
     std::cerr << "RSP2" << std::endl;
     _antenna = "A";
@@ -238,7 +247,7 @@ void sdrplay_source_c::startDevice(void)
   }
 
   // TODO - use selected device
-  mir_sdr_SetDeviceIdx(0);
+  mir_sdr_SetDeviceIdx(_devIndex);
   _running = true;
 
   int gRdBsystem = 0;
