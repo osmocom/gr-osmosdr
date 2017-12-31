@@ -103,7 +103,6 @@ sdrplay_source_c::sdrplay_source_c (const std::string &args)
   mir_sdr_DeviceT mirDevices[MAX_SUPPORTED_DEVICES];
   mir_sdr_GetDevices(mirDevices, &numDevices, MAX_SUPPORTED_DEVICES);
 
-  // TODO: use selected device
   _hwVer = mirDevices[_devIndex].hwVer;
 
   std::cerr << "Using SDRplay serial " << mirDevices[_devIndex].SerNo << " ";
@@ -246,7 +245,6 @@ void sdrplay_source_c::startDevice(void)
     return;
   }
 
-  // TODO - use selected device
   mir_sdr_SetDeviceIdx(_devIndex);
   _running = true;
 
@@ -428,7 +426,6 @@ std::vector<std::string> sdrplay_source_c::get_gain_names(size_t chan)
   gains += "SYS_ATTEN_DB";
 
   // RSP1A and RSP2 have notch filters.
-  // TODO - separate setting for RSP1A broadcast vs DAB notch filter?
   if (_hwVer == 255 || _hwVer == 2)
     gains += "BCAST_NOTCH";
   if (_hwVer == 255)
