@@ -57,6 +57,17 @@ static std::vector<double> bandwidths = {
 #define SDRPLAY_FREQ_MIN 1e3
 #define SDRPLAY_FREQ_MAX 2000e6
 
+static std::string hwName(int hwVer)
+{
+  if (hwVer == 1)
+    return "RSP1";
+  if (hwVer == 2)
+    return "RSP2";
+  if (hwVer ==255)
+    return "RSP1A";
+  return "UNK";
+}
+
 sdrplay_source_c_sptr
 make_sdrplay_source_c (const std::string &args)
 {
@@ -89,8 +100,6 @@ sdrplay_source_c::sdrplay_source_c (const std::string &args)
   _running(false),
   _reinit(false)
 {
-  mir_sdr_DebugEnable(0);
-
   dict_t dict = params_to_dict(args);
   if (dict.count("sdrplay")) {
     _devIndex = boost::lexical_cast<unsigned int>(dict["sdrplay"]);
@@ -99,25 +108,14 @@ sdrplay_source_c::sdrplay_source_c (const std::string &args)
     _devIndex = 0;
   }
 
-  unsigned int numDevices;
-  mir_sdr_DeviceT mirDevices[MAX_SUPPORTED_DEVICES];
-  mir_sdr_GetDevices(mirDevices, &numDevices, MAX_SUPPORTED_DEVICES);
-
-  _hwVer = mirDevices[_devIndex].hwVer;
-
-  std::cerr << "Using SDRplay serial " << mirDevices[_devIndex].SerNo << " ";
   if (_hwVer == 2) {
-    std::cerr << "RSP2" << std::endl;
     _antenna = "A";
   }
-  else if (_hwVer == 255) {
-    std::cerr << "RSP1A" << std::endl;
-    _antenna = "RX";
-  }
   else {
-    std::cerr << "RSP1" << std::endl;
     _antenna = "RX";
   }
+
+  mir_sdr_DebugEnable(1);
 }
 
 sdrplay_source_c::~sdrplay_source_c ()
@@ -144,7 +142,6 @@ int sdrplay_source_c::work(int noutput_items,
     _bufferReady.notify_one();
 
     while (_buffer && _running) {
-      //_bufferReady.wait_for(lock, boost::chrono::milliseconds(250));
       _bufferReady.wait(lock);
     }
   }
@@ -173,10 +170,10 @@ void sdrplay_source_c::streamCallback(short *xi, short *xq,
       while (!_buffer && _running && !_reinit) {
         // Give up and drop samples after timeout, otherwise things
         // seem to deadlock unpredictably when the flowgraph is
-        // reconfigured or stops/starts.
+        // reconfigured or stops/starts. Print out "O" for "overflow".
         if (boost::cv_status::timeout ==
             _bufferReady.wait_for(lock, boost::chrono::milliseconds(250))) {
-          //std::cerr << "stream() wait timeout" << std::endl;
+          std::cerr << "O" << std::flush;
           return;
         }
       }
@@ -245,7 +242,16 @@ void sdrplay_source_c::startDevice(void)
     return;
   }
 
+  unsigned int numDevices;
+  mir_sdr_DeviceT mirDevices[MAX_SUPPORTED_DEVICES];
+  mir_sdr_GetDevices(mirDevices, &numDevices, MAX_SUPPORTED_DEVICES);
   mir_sdr_SetDeviceIdx(_devIndex);
+
+  _hwVer = mirDevices[_devIndex].hwVer;
+
+  std::cerr << "Using SDRplay " << hwName(_hwVer) << " "
+            << mirDevices[_devIndex].SerNo << std::endl;
+
   _running = true;
 
   int gRdBsystem = 0;
@@ -269,8 +275,16 @@ void sdrplay_source_c::startDevice(void)
   set_dc_offset_mode(osmosdr::source::DCOffsetOff, 0);
   updateGains();
 
-  if (_hwVer == 2)
+  // Model-specific initialization
+  if (_hwVer == 2) {
     set_antenna(get_antenna(), 0);
+    mir_sdr_RSPII_RfNotchEnable(_bcastNotch);
+  }
+
+  else if (_hwVer == 255) {
+    mir_sdr_rsp1a_BroadcastNotch(_bcastNotch);
+    mir_sdr_rsp1a_DabNotch(_dabNotch);
+  }
 }
 
 void sdrplay_source_c::stopDevice(void)
@@ -335,8 +349,8 @@ std::vector<std::string> sdrplay_source_c::get_devices()
     mir_sdr_DeviceT *dev = &mirDevices[i];
     if (!dev->devAvail)
       continue;
-    std::string args = boost::str(boost::format("sdrplay=%d,label='SDRplay RSP S/N:%s'")
-                                  % i % dev->SerNo );
+    std::string args = boost::str(boost::format("sdrplay=%d,label='SDRplay %s %s'")
+                                  % i % hwName((int)dev->hwVer) % dev->SerNo );
     std::cerr << args << std::endl;
     devices.push_back( args );
   }
@@ -381,22 +395,9 @@ osmosdr::freq_range_t sdrplay_source_c::get_freq_range(size_t chan)
 
 double sdrplay_source_c::set_center_freq(double freq, size_t chan)
 {
-  // Using mir_sdr_CHANGE_RF_FREQ, reinit is fast
-  // enough. Commented-out code speeds up tuning, but sometimes gains
-  // are not adusted correctly.
-
-  //int oldBand;
-
   _rfHz = freq;
 
   if (_running) {
-    //oldBand = _band;
-    //updateGains();
-    // reinitDevice() is required only if band changes
-    // mir_sdr_SetRf() is faster if band has not changed
-    //if (_band == oldBand)
-    //mir_sdr_SetRf(_rfHz, 1 /*absolute*/, 0 /*immediate*/);
-    //else
     reinitDevice((int)mir_sdr_CHANGE_RF_FREQ);
   }
 
@@ -425,11 +426,12 @@ std::vector<std::string> sdrplay_source_c::get_gain_names(size_t chan)
   gains += "LNA_ATTEN_STEP";
   gains += "SYS_ATTEN_DB";
 
-  // RSP1A and RSP2 have notch filters.
-  if (_hwVer == 255 || _hwVer == 2)
-    gains += "BCAST_NOTCH";
-  if (_hwVer == 255)
-    gains += "DAB_NOTCH";
+  // RSP1A and RSP2 have broadcast notch filters, and RSP1A has a DAB
+  // notch filter. Show all controls for all models, mainly because
+  // gqrx gets confused when switching between sources with different
+  // sets of gains.
+  gains += "BCAST_NOTCH";
+  gains += "DAB_NOTCH";
 
   return gains;
 }
@@ -527,12 +529,14 @@ double sdrplay_source_c::set_gain(double gain, const std::string & name, size_t 
   if (name == "LNA_ATTEN_STEP") {
     _lna = int(gain);
   }
-  else if (name == "BCAST_NOTCH") {
+  // RSP1A, RSP2
+  else if (name == "BCAST_NOTCH" && (_hwVer == 2 || _hwVer == 255)) {
     if (int(gain) != _bcastNotch)
       bcastNotchChanged = 1;
     _bcastNotch = int(gain);
   }
-  else if (name == "DAB_NOTCH") {
+  // RSP1A
+  else if (name == "DAB_NOTCH" && _hwVer == 255) {
     if (int(gain) != _dabNotch)
       dabNotchChanged = 1;
     _dabNotch = int(gain);
@@ -541,20 +545,21 @@ double sdrplay_source_c::set_gain(double gain, const std::string & name, size_t 
     _gain = int(gain);
   }
 
-  if (_running)
+  if (_running) {
     updateGains();
 
-  if (bcastNotchChanged) {
-    if (_hwVer == 255 ) {
-      mir_sdr_rsp1a_BroadcastNotch(_bcastNotch);
+    if (bcastNotchChanged) {
+      if (_hwVer == 255 ) {
+        mir_sdr_rsp1a_BroadcastNotch(_bcastNotch);
+      }
+      else if (_hwVer == 2) {
+        mir_sdr_RSPII_RfNotchEnable(_bcastNotch);
+      }
     }
-    else if (_hwVer == 2) {
-      mir_sdr_RSPII_RfNotchEnable(_bcastNotch);
-    }
-  }
 
-  if (dabNotchChanged) {
-    mir_sdr_rsp1a_DabNotch(_dabNotch);
+    if (dabNotchChanged) {
+      mir_sdr_rsp1a_DabNotch(_dabNotch);
+    }
   }
 
   return gain;
@@ -668,7 +673,7 @@ double sdrplay_source_c::set_bandwidth(double bandwidth, size_t chan)
   }
 
   int actual = get_bandwidth(chan);
-  std::cerr << "set_bandwidth(): requested=" << bandwidth
+  std::cerr << "SDRplay bandwidth requested=" << bandwidth
             << " actual=" << actual << std::endl;
 
   if (_running) {
