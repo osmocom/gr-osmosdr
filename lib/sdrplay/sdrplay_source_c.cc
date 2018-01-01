@@ -108,6 +108,12 @@ sdrplay_source_c::sdrplay_source_c (const std::string &args)
     _devIndex = 0;
   }
 
+  unsigned int numDevices;
+  mir_sdr_DeviceT mirDevices[MAX_SUPPORTED_DEVICES];
+  mir_sdr_GetDevices(mirDevices, &numDevices, MAX_SUPPORTED_DEVICES);
+  mir_sdr_SetDeviceIdx(_devIndex);
+  _hwVer = mirDevices[_devIndex].hwVer;
+
   if (_hwVer == 2) {
     _antenna = "A";
   }
@@ -246,8 +252,6 @@ void sdrplay_source_c::startDevice(void)
   mir_sdr_DeviceT mirDevices[MAX_SUPPORTED_DEVICES];
   mir_sdr_GetDevices(mirDevices, &numDevices, MAX_SUPPORTED_DEVICES);
   mir_sdr_SetDeviceIdx(_devIndex);
-
-  _hwVer = mirDevices[_devIndex].hwVer;
 
   std::cerr << "Using SDRplay " << hwName(_hwVer) << " "
             << mirDevices[_devIndex].SerNo << std::endl;
@@ -421,7 +425,7 @@ double sdrplay_source_c::get_freq_corr(size_t chan)
 
 std::vector<std::string> sdrplay_source_c::get_gain_names(size_t chan)
 {
-  std::vector< std::string > gains;
+  std::vector<std::string> gains;
 
   gains += "LNA_ATTEN_STEP";
   gains += "SYS_ATTEN_DB";
@@ -582,9 +586,9 @@ double sdrplay_source_c::get_gain(const std::string & name, size_t chan)
     return _gain;
 }
 
-std::vector< std::string > sdrplay_source_c::get_antennas(size_t chan)
+std::vector<std::string> sdrplay_source_c::get_antennas(size_t chan)
 {
-  std::vector< std::string > antennas;
+  std::vector<std::string> antennas;
 
   if (_hwVer == 2) {
     antennas += "A";
