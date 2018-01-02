@@ -670,6 +670,9 @@ double sdrplay_source_c::set_bandwidth(double bandwidth, size_t chan)
   _bwType = mir_sdr_BW_8_000;
 
   for (double bw : bandwidths) {
+    // Skip dummy value at index 0
+    if (bw == 0)
+      continue;
     if (bandwidth <= bw) {
       _bwType = (mir_sdr_Bw_MHzT)(bw/1e3);
       break;
