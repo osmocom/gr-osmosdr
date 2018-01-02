@@ -266,7 +266,7 @@ void sdrplay_source_c::startDevice(void)
                      _rfHz / 1e6,
                      _bwType,
                      _ifType,
-                     _lna,
+                     checkLNA(_lna),
                      &gRdBsystem,
                      mir_sdr_USE_RSP_SET_GR,
                      &_samplesPerPacket,
@@ -331,7 +331,7 @@ void sdrplay_source_c::reinitDevice(int reason)
                  _bwType,
                  _ifType,
                  mir_sdr_LO_Auto,
-                 _lna,
+                 checkLNA(_lna),
                  &gRdBsystem,
                  mir_sdr_USE_RSP_SET_GR,
                  &_samplesPerPacket,
@@ -502,17 +502,43 @@ bool sdrplay_source_c::get_gain_mode(size_t chan)
   return _auto_gain;
 }
 
+int sdrplay_source_c::checkLNA(int lna)
+{
+  // Clip LNA reduction step. See table in API section 5.3.
+  if (_hwVer == 1) {
+    lna = std::min(3, lna);
+  }
+  else if (_hwVer == 255) {
+    if (_rfHz < 60000000)
+      lna = std::min(6, lna);
+    else if (_rfHz >= 1000000000)
+      lna = std::min(8, lna);
+    else
+      lna = std::min(9, lna);
+  }
+  else if (_hwVer == 2) {
+    if (_rfHz >= 420000000)
+      lna = std::min(5, lna);
+    else if (_rfHz < 60000000 && _antenna == "HIGHZ")
+      lna = std::min(4, lna);
+    else
+      lna = std::min(8, lna);
+  }
+
+  return lna;
+}
+
 void sdrplay_source_c::updateGains(void)
 {
   int gRdBsystem = 0;
   _gRdB = _gain;
   int gRdB = _gRdB;
+  int lna = checkLNA(_lna);
 
-  // TODO - available LNA steps vary by band
-  mir_sdr_GetGrByFreq(_rfHz/1e6, (mir_sdr_BandT *)&_band, &gRdB, _lna, &gRdBsystem,
+  mir_sdr_GetGrByFreq(_rfHz/1e6, (mir_sdr_BandT *)&_band, &gRdB, lna, &gRdBsystem,
                       mir_sdr_USE_RSP_SET_GR);
   if (_running)
-    mir_sdr_RSP_SetGr(gRdB, _lna, 1 /*absolute*/, 0 /*immediate*/);
+    mir_sdr_RSP_SetGr(gRdB, lna, 1 /*absolute*/, 0 /*immediate*/);
 }
 
 double sdrplay_source_c::set_gain(double gain, size_t chan)

@@ -127,7 +127,7 @@ private:
   void stopDevice(void);
   void reallocateBuffers(int size, int num);
   void reinitDevice(int reason);
-  //int grForGainAndFreq( double gain, double freq );
+  int checkLNA(int lna);
   void updateGains(void);
   void streamCallback(short *xi, short *xq, unsigned int firstSampleNum,
                       int grChanged, int rfChanged, int fsChanged,
