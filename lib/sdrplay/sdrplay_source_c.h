@@ -158,6 +158,7 @@ private:
    unsigned char _hwVer;
    int _devIndex;
    std::string _antenna;
+   int _biasT;
 
    gr_complex *_buffer;
    int _bufferOffset;
