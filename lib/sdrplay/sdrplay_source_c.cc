@@ -189,7 +189,8 @@ void sdrplay_source_c::streamCallback(short *xi, short *xq,
         // reconfigured or stops/starts. Print out "O" for "overflow".
         if (boost::cv_status::timeout ==
             _bufferReady.wait_for(lock, boost::chrono::milliseconds(250))) {
-          std::cerr << "O" << std::flush;
+          // Or maybe don't bother users with OOOOOOO ...
+          //std::cerr << "O" << std::flush;
           return;
         }
       }
