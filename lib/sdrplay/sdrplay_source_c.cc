@@ -108,6 +108,8 @@ sdrplay_source_c::sdrplay_source_c (const std::string &args)
     _devIndex = 0;
   }
 
+  mir_sdr_DebugEnable(1);
+
   unsigned int numDevices;
   mir_sdr_DeviceT mirDevices[MAX_SUPPORTED_DEVICES];
   mir_sdr_GetDevices(mirDevices, &numDevices, MAX_SUPPORTED_DEVICES);
@@ -120,7 +122,16 @@ sdrplay_source_c::sdrplay_source_c (const std::string &args)
     _antenna = "RX";
   }
 
-  mir_sdr_DebugEnable(1);
+  // If bias voltage is requested, turn on, otherwise turn off (RSP1A/RSP2)
+  bool bias = false;
+  if ( dict.count("bias") ) {
+    bias = boost::lexical_cast<bool>( dict["bias"] );
+  }
+  std::cerr << "Bias voltage: " << bias << std::endl;
+  if (_hwVer == 2)
+    mir_sdr_RSPII_BiasTControl(bias);
+  else if (_hwVer == 255)
+    mir_sdr_rsp1a_BiasT(bias);
 }
 
 sdrplay_source_c::~sdrplay_source_c ()
