@@ -474,7 +474,7 @@ osmosdr::gain_range_t sdrplay_source_c::get_gain_range(const std::string & name,
     else if (_hwVer == 255)
       maxLnaState = 9;
     else
-      maxLnaState = 4;
+      maxLnaState = 3;
     for (int i = 0; i <= maxLnaState; i++)
       range += osmosdr::range_t((float)i);
   }
