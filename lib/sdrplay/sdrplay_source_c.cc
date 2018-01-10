@@ -478,13 +478,17 @@ osmosdr::gain_range_t sdrplay_source_c::get_gain_range(const std::string & name,
     for (int i = 0; i <= maxLnaState; i++)
       range += osmosdr::range_t((float)i);
   }
+  // RSP1A, RSP2
   else if (name == "BCAST_NOTCH") {
     range += osmosdr::range_t((float)0);
-    range += osmosdr::range_t((float)1);
+    if (_hwVer == 2 || _hwVer == 255)
+      range += osmosdr::range_t((float)1);
   }
+  // RSP1A
   else if (name == "DAB_NOTCH") {
     range += osmosdr::range_t((float)0);
-    range += osmosdr::range_t((float)1);
+    if (_hwVer == 255)
+      range += osmosdr::range_t((float)1);
   }
   else {
     for (int i = 20; i <= 59; i++)
