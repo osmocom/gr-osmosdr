@@ -150,6 +150,7 @@ private:
    int _dabNotch;
    int _band;
    double _fsHz;
+   int _decim;
    double _rfHz;
    mir_sdr_Bw_MHzT _bwType;
    mir_sdr_If_kHzT _ifType;

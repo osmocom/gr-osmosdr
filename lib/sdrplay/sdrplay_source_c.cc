@@ -92,6 +92,7 @@ sdrplay_source_c::sdrplay_source_c (const std::string &args)
   _dabNotch(0),
   _band(0),
   _fsHz(8e6),
+  _decim(1),
   _rfHz(100e6),
   _bwType(mir_sdr_BW_6_000),
   _ifType(mir_sdr_IF_Zero),
@@ -287,6 +288,9 @@ void sdrplay_source_c::startDevice(void)
                      &gainChangeCallbackWrap,
                      this);
 
+  // Set decimation with halfband filter
+  mir_sdr_DecimateControl(_decim != 1, _decim, 1);
+
   // Note that gqrx never calls set_dc_offset_mode() if the IQ balance
   // module is available.
   set_dc_offset_mode(osmosdr::source::DCOffsetOff, 0);
@@ -351,6 +355,9 @@ void sdrplay_source_c::reinitDevice(int reason)
                  (mir_sdr_ReasonForReinitT)reason
                  );
 
+  // Set decimation with halfband filter
+  mir_sdr_DecimateControl(_decim != 1, _decim, 1);
+
   _bufferReady.notify_one();
 }
 
@@ -383,14 +390,21 @@ size_t sdrplay_source_c::get_num_channels()
 osmosdr::meta_range_t sdrplay_source_c::get_sample_rates()
 {
   osmosdr::meta_range_t range;
-  range += osmosdr::range_t( 2000e3, 10000e3 );
+  range += osmosdr::range_t( 62.5e3, 10e6 );
   return range;
 }
 
 double sdrplay_source_c::set_sample_rate(double rate)
 {
-  rate = std::min( std::max(rate,2e6), 10e6 );
+  rate = std::min( std::max(rate,62.5e3), 10e6 );
   _fsHz = rate;
+
+  // Decimation is required for rates below 2MS/s
+  _decim = 1;
+  while (_fsHz < 2e6) {
+    _decim *= 2;
+    _fsHz *= 2;
+  }
 
   if (_running)
     reinitDevice((int)mir_sdr_CHANGE_FS_FREQ);
@@ -400,7 +414,7 @@ double sdrplay_source_c::set_sample_rate(double rate)
 
 double sdrplay_source_c::get_sample_rate()
 {
-  return _fsHz;
+  return _fsHz/_decim;
 }
 
 osmosdr::freq_range_t sdrplay_source_c::get_freq_range(size_t chan)
