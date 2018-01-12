@@ -133,7 +133,7 @@ sdrplay_source_c::sdrplay_source_c (const std::string &args)
 sdrplay_source_c::~sdrplay_source_c ()
 {
   if (_streaming) {
-    stopDevice();
+    stopStreaming();
   }
 }
 
@@ -156,7 +156,7 @@ int sdrplay_source_c::work(int noutput_items,
   gr_complex *out = (gr_complex *)output_items[0];
 
   if (!_streaming)
-    startDevice();
+    startStreaming();
 
   {
     boost::mutex::scoped_lock lock(_bufferMutex);
@@ -253,10 +253,10 @@ void sdrplay_source_c::gainChangeCallbackWrap(unsigned int gRdB,
                           cbContext);
 }
 
-void sdrplay_source_c::startDevice(void)
+void sdrplay_source_c::startStreaming(void)
 {
   if (_streaming) {
-    std::cerr << "startDevice(): already streaming." << std::endl;
+    std::cerr << "startStreaming(): already streaming." << std::endl;
     return;
   }
 
@@ -314,10 +314,10 @@ void sdrplay_source_c::startDevice(void)
   }
 }
 
-void sdrplay_source_c::stopDevice(void)
+void sdrplay_source_c::stopStreaming(void)
 {
   if (!_streaming) {
-    std::cerr << "stopDevice(): already stopped." << std::endl;
+    std::cerr << "stopStreaming(): already stopped." << std::endl;
     return;
   }
 

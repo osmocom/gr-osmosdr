@@ -126,8 +126,8 @@ public:
    osmosdr::freq_range_t get_bandwidth_range( size_t chan = 0 );
 
 private:
-  void startDevice(void);
-  void stopDevice(void);
+  void startStreaming(void);
+  void stopStreaming(void);
   void reallocateBuffers(int size, int num);
   void reinitDevice(int reason);
   int checkLNA(int lna);
