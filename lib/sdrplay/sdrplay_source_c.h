@@ -87,6 +87,9 @@ public:
             gr_vector_const_void_star &input_items,
             gr_vector_void_star &output_items );
 
+   bool start( void );
+   bool stop( void );
+
    static std::vector< std::string > get_devices();
 
    size_t get_num_channels( void );
@@ -167,7 +170,8 @@ private:
    boost::mutex _bufferMutex;
    boost::condition_variable _bufferReady;  // buffer is ready to move to other thread
 
-   bool _running;
+   bool _streaming;
+   bool _flowgraphRunning;
    bool _reinit;  // signal streamer to return after a reinit
 };
 

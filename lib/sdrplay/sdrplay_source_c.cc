@@ -98,7 +98,8 @@ sdrplay_source_c::sdrplay_source_c (const std::string &args)
   _ifType(mir_sdr_IF_Zero),
   _dcMode(1),
   _buffer(NULL),
-  _running(false),
+  _streaming(false),
+  _flowgraphRunning(false),
   _reinit(false)
 {
   dict_t dict = params_to_dict(args);
@@ -131,9 +132,21 @@ sdrplay_source_c::sdrplay_source_c (const std::string &args)
 
 sdrplay_source_c::~sdrplay_source_c ()
 {
-  if (_running) {
+  if (_streaming) {
     stopDevice();
   }
+}
+
+bool sdrplay_source_c::start(void)
+{
+  _flowgraphRunning = true;
+  return true;
+}
+
+bool sdrplay_source_c::stop(void)
+{
+  _flowgraphRunning = false;
+  return true;
 }
 
 int sdrplay_source_c::work(int noutput_items,
@@ -142,7 +155,7 @@ int sdrplay_source_c::work(int noutput_items,
 {
   gr_complex *out = (gr_complex *)output_items[0];
 
-  if (!_running)
+  if (!_streaming)
     startDevice();
 
   {
@@ -152,12 +165,12 @@ int sdrplay_source_c::work(int noutput_items,
     _bufferOffset = 0;
     _bufferReady.notify_one();
 
-    while (_buffer && _running) {
+    while (_buffer && _streaming) {
       _bufferReady.wait(lock);
     }
   }
 
-  if (!_running) {
+  if (!_streaming) {
     return 0;
   }
 
@@ -176,23 +189,16 @@ void sdrplay_source_c::streamCallback(short *xi, short *xq,
 
   while (i < numSamples) {
     boost::mutex::scoped_lock lock(_bufferMutex);
-    // Wait for work() to make buffer ready
     {
-      while (!_buffer && _running && !_reinit) {
-        // Give up and drop samples after timeout, otherwise things
-        // seem to deadlock unpredictably when the flowgraph is
-        // reconfigured or stops/starts. Print out "O" for "overflow".
-        if (boost::cv_status::timeout ==
-            _bufferReady.wait_for(lock, boost::chrono::milliseconds(250))) {
-          // Or maybe don't bother users with OOOOOOO ...
-          //std::cerr << "O" << std::flush;
-          return;
-        }
-      }
-    }
+      // Discard samples if not streaming, if flowgraph not running, or reinit needed.
+      if (!_streaming || _reinit || !_flowgraphRunning)
+        return;
 
-    if (!_running || _reinit) {
-      return;
+      // If buffer is not ready for write, wait a short time. Discard samples on timeout.
+      if (!_buffer)
+        if (boost::cv_status::timeout ==
+            _bufferReady.wait_for(lock, boost::chrono::milliseconds(250)))
+          return;
     }
 
     // Copy until out of samples or buffer is full
@@ -249,8 +255,8 @@ void sdrplay_source_c::gainChangeCallbackWrap(unsigned int gRdB,
 
 void sdrplay_source_c::startDevice(void)
 {
-  if (_running) {
-    std::cerr << "startDevice(): already running." << std::endl;
+  if (_streaming) {
+    std::cerr << "startDevice(): already streaming." << std::endl;
     return;
   }
 
@@ -270,7 +276,7 @@ void sdrplay_source_c::startDevice(void)
   else if (_hwVer == 255)
     mir_sdr_rsp1a_BiasT(_biasT);
 
-  _running = true;
+  _streaming = true;
 
   int gRdBsystem = 0;
   int gRdB = _gRdB;
@@ -310,12 +316,12 @@ void sdrplay_source_c::startDevice(void)
 
 void sdrplay_source_c::stopDevice(void)
 {
-  if (!_running) {
+  if (!_streaming) {
     std::cerr << "stopDevice(): already stopped." << std::endl;
     return;
   }
 
-  _running = false;
+  _streaming = false;
 
   mir_sdr_StreamUninit();
   mir_sdr_ReleaseDeviceIdx();
@@ -406,7 +412,7 @@ double sdrplay_source_c::set_sample_rate(double rate)
     _fsHz *= 2;
   }
 
-  if (_running)
+  if (_streaming)
     reinitDevice((int)mir_sdr_CHANGE_FS_FREQ);
 
   return get_sample_rate();
@@ -428,7 +434,7 @@ double sdrplay_source_c::set_center_freq(double freq, size_t chan)
 {
   _rfHz = freq;
 
-  if (_running) {
+  if (_streaming) {
     reinitDevice((int)mir_sdr_CHANGE_RF_FREQ);
   }
 
@@ -515,7 +521,7 @@ osmosdr::gain_range_t sdrplay_source_c::get_gain_range(const std::string & name,
 bool sdrplay_source_c::set_gain_mode(bool automatic, size_t chan)
 {
   _auto_gain = automatic;
-  if (_running) {
+  if (_streaming) {
     if (automatic) {
       mir_sdr_AgcControl(mir_sdr_AGC_5HZ, -30, 0, 0, 0, 0, 0);
     }
@@ -568,7 +574,7 @@ void sdrplay_source_c::updateGains(void)
 
   mir_sdr_GetGrByFreq(_rfHz/1e6, (mir_sdr_BandT *)&_band, &gRdB, lna, &gRdBsystem,
                       mir_sdr_USE_RSP_SET_GR);
-  if (_running)
+  if (_streaming)
     mir_sdr_RSP_SetGr(gRdB, lna, 1 /*absolute*/, 0 /*immediate*/);
 }
 
@@ -576,7 +582,7 @@ double sdrplay_source_c::set_gain(double gain, size_t chan)
 {
   _gain = (int)gain;
 
-  if (_running)
+  if (_streaming)
     updateGains();
 
   return gain;
@@ -606,7 +612,7 @@ double sdrplay_source_c::set_gain(double gain, const std::string & name, size_t 
     _gain = int(gain);
   }
 
-  if (_running) {
+  if (_streaming) {
     updateGains();
 
     if (bcastNotchChanged) {
@@ -663,7 +669,7 @@ std::string sdrplay_source_c::set_antenna(const std::string & antenna, size_t ch
 {
   _antenna = antenna;
 
-  if (_running) {
+  if (_streaming) {
     if (_hwVer == 2) {
       // HIGHZ is ANTENNA_B with AmPortSelect
       if (antenna == "HIGHZ") {
@@ -695,21 +701,21 @@ void sdrplay_source_c::set_dc_offset_mode(int mode, size_t chan)
 {
   if (osmosdr::source::DCOffsetOff == mode) {
     _dcMode = 0;
-    if (_running) {
+    if (_streaming) {
       mir_sdr_SetDcMode(0, 0);
       mir_sdr_DCoffsetIQimbalanceControl(0, 0);
     }
   }
   else if (osmosdr::source::DCOffsetManual == mode) {
     _dcMode = 0;
-    if (_running) {
+    if (_streaming) {
       mir_sdr_SetDcMode(0, 1);
       mir_sdr_DCoffsetIQimbalanceControl(0, 1);
     }
   }
   else if (osmosdr::source::DCOffsetAutomatic == mode) {
     _dcMode = 1;
-    if (_running) {
+    if (_streaming) {
       mir_sdr_SetDcMode(4, 1);
       mir_sdr_DCoffsetIQimbalanceControl(1, 1);
       mir_sdr_SetDcTrackTime(63);
@@ -740,7 +746,7 @@ double sdrplay_source_c::set_bandwidth(double bandwidth, size_t chan)
   std::cerr << "SDRplay bandwidth requested=" << bandwidth
             << " actual=" << actual << std::endl;
 
-  if (_running) {
+  if (_streaming) {
     reinitDevice((int)mir_sdr_CHANGE_BW_TYPE);
   }
 
