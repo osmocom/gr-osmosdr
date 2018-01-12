@@ -278,8 +278,10 @@ void sdrplay_source_c::startStreaming(void)
 
   _streaming = true;
 
-  int gRdBsystem = 0;
+  updateGains();
+
   int gRdB = _gRdB;
+  int gRdBsystem = 0;
 
   mir_sdr_StreamInit(&gRdB,
                      _fsHz / 1e6,
@@ -300,7 +302,6 @@ void sdrplay_source_c::startStreaming(void)
   // Note that gqrx never calls set_dc_offset_mode() if the IQ balance
   // module is available.
   set_dc_offset_mode(osmosdr::source::DCOffsetOff, 0);
-  updateGains();
 
   // Model-specific initialization
   if (_hwVer == 2) {
