@@ -187,19 +187,19 @@ void sdrplay_source_c::streamCallback(short *xi, short *xq,
   unsigned int i = 0;
   _reinit = false;
 
-  while (i < numSamples) {
-    boost::mutex::scoped_lock lock(_bufferMutex);
-    {
-      // Discard samples if not streaming, if flowgraph not running, or reinit needed.
-      if (!_streaming || _reinit || !_flowgraphRunning)
-        return;
+  boost::mutex::scoped_lock lock(_bufferMutex);
 
-      // If buffer is not ready for write, wait a short time. Discard samples on timeout.
-      if (!_buffer)
-        if (boost::cv_status::timeout ==
-            _bufferReady.wait_for(lock, boost::chrono::milliseconds(250)))
-          return;
-    }
+  while (i < numSamples) {
+
+    // Discard samples if not streaming, if flowgraph not running, or reinit needed.
+    if (!_streaming || _reinit || !_flowgraphRunning)
+      return;
+
+    // If buffer is not ready for write, wait a short time. Discard samples on timeout.
+    if (!_buffer)
+      if (boost::cv_status::timeout ==
+          _bufferReady.wait_for(lock, boost::chrono::milliseconds(250)))
+        return;
 
     // Copy until out of samples or buffer is full
     while ((i < numSamples) && (_bufferSpaceRemaining > 0)) {
