@@ -87,7 +87,8 @@ pluto_source_c::pluto_source_c (const std::string &args)
     _buf(NULL),
     _running(false),
     _auto_gain(true),
-    _skipped(0)
+    _skipped(0),
+    freq_cache(0)
 {
   int ret;
   int index;
@@ -263,7 +264,7 @@ int pluto_source_c::work( int noutput_items,
     const int nout = std::min(noutput_items, _samp_avail);
     const short *buf = _buf[_buf_head] + _buf_offset * 2;
 
-	volk_16i_s32f_convert_32f((float*)out, buf, scaling, 2 * noutput_items);
+	volk_16i_s32f_convert_32f((float*)out, buf, scaling, 2 * nout);
 	out += nout;
 
     noutput_items -= nout;
@@ -290,12 +291,9 @@ std::vector<std::string> pluto_source_c::get_devices()
 {
   std::vector<std::string> devices;
   std::string label;
-  char manufact[256];
-  char product[256];
-  char serial[256];
 
   for (unsigned int i = 0; i < plutosdr_get_device_count(); i++) {
-    std::string args = "pluto=" + boost::lexical_cast< std::string >( i );
+    std::string args = "pluto=" + boost::lexical_cast< std::string >( i ) + ",label='osmo-pluto-kernel'";
     devices.push_back( args );
   }
 
@@ -330,7 +328,7 @@ double pluto_source_c::set_sample_rate(double rate)
 {
   if (_dev) {
     plutosdr_set_sample_rate( _dev, (uint32_t)rate );
-  }
+	}
 
   return get_sample_rate();
 }
@@ -353,15 +351,17 @@ osmosdr::freq_range_t pluto_source_c::get_freq_range( size_t chan )
 
 double pluto_source_c::set_center_freq( double freq, size_t chan )
 {
-  if (_dev)
-    plutosdr_set_rxlo( _dev, (uint64_t)freq );
+  if (_dev){
+		plutosdr_set_rxlo( _dev, (uint64_t)freq );
+		freq_cache = freq;
+    }
 
   return get_center_freq( chan );
 }
 
 double pluto_source_c::get_center_freq( size_t chan )
 {
-  return 0;
+  return freq_cache;
 }
 
 
@@ -378,7 +378,7 @@ std::vector<std::string> pluto_source_c::get_gain_names( size_t chan )
 
 osmosdr::gain_range_t pluto_source_c::get_gain_range( size_t chan )
 {
-	return osmosdr::gain_range_t(-10, 60, 1);
+	return osmosdr::gain_range_t(-10, 77, 1);
 }
 
 osmosdr::gain_range_t pluto_source_c::get_gain_range( const std::string & name, size_t chan )
@@ -451,4 +451,15 @@ double pluto_source_c::set_freq_corr(double ppm, size_t chan)
 double pluto_source_c::get_freq_corr(size_t chan)
 {
 	return 0;
+}
+
+double pluto_source_c::set_bandwidth(double bandwidth, size_t chan) {
+	if (_dev) {
+		plutosdr_set_rfbw(_dev, (uint32_t)bandwidth);
+	}
+	return 0;
+}
+
+osmosdr::freq_range_t pluto_source_c::get_bandwidth_range(size_t chan) {
+	return osmosdr::freq_range_t(1000000, 20000000, 1000000);
 }

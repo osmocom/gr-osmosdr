@@ -313,7 +313,7 @@ source_impl::source_impl( const std::string &args )
     }
 #endif
 
-#ifdef ENABLE_RTL
+#ifdef ENABLE_OSMOPLUTO
 	if (dict.count("pluto")) {
 		pluto_source_c_sptr src = make_pluto_source_c(arg);
 		block = src; iface = src.get();
