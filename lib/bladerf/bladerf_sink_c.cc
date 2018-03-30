@@ -90,6 +90,11 @@ bladerf_sink_c::bladerf_sink_c(const std::string &args) :
                     "and will have no effect.");
   }
 
+  /* Bias tee */
+  if (dict.count("biastee")) {
+    set_biastee_mode(dict["biastee"]);
+  }
+
   /* Initialize channel <-> antenna map */
   BOOST_FOREACH(std::string ant, get_antennas()) {
     _chanmap[str2channel(ant)] = -1;
@@ -581,4 +586,24 @@ void bladerf_sink_c::set_clock_source(const std::string &source,
 std::string bladerf_sink_c::get_clock_source(size_t mboard)
 {
   return bladerf_common::get_clock_source(mboard);
+}
+
+void bladerf_sink_c::set_biastee_mode(const std::string &mode)
+{
+  int status;
+  bool enable;
+
+  if (mode == "on" || mode == "1" || mode == "rx") {
+    enable = true;
+  } else {
+    enable = false;
+  }
+
+  status = bladerf_set_bias_tee(_dev.get(), BLADERF_CHANNEL_TX(0), enable);
+  if (BLADERF_ERR_UNSUPPORTED == status) {
+    // unsupported, but not worth crashing out
+    BLADERF_WARNING("Bias-tee not supported by device");
+  } else if (status != 0) {
+    BLADERF_THROW_STATUS(status, "Failed to set bias-tee");
+  }
 }

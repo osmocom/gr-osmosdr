@@ -120,6 +120,8 @@ public:
   void set_clock_source(const std::string &source, size_t mboard = 0);
   std::string get_clock_source(size_t mboard);
 
+  void set_biastee_mode(const std::string &mode);
+
   void set_loopback_mode(const std::string &loopback);
   void set_rx_mux_mode(const std::string &rxmux);
   void set_agc_mode(const std::string &agcmode);
