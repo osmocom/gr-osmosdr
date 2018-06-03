@@ -1,0 +1,3 @@
+version=3
+opts="downloadurlmangle=s/refs\/tags/snapshot/,uversionmangle=s|(.*)git|1|" \
+ http://cgit.osmocom.org/gr-osmosdr/refs/tags /gr-osmosdr/snapshot/gr-osmosdr-(\d.*)\.tar\.xz

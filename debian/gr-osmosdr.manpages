@@ -1,0 +1,4 @@
+debian/osmocom_fft.1
+debian/osmocom_siggen.1
+debian/osmocom_siggen_nogui.1
+debian/osmocom_spectrum_sense.1

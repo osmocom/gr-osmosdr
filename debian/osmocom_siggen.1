@@ -1,0 +1,222 @@
+.TH osmocom_siggen "1" "October 2013" "OSMOCOM" "User Commands"
+.SH NAME
+osmocom_siggen \- Signal Generator Application with GUI controls
+.SH SYNOPSIS
+.B osmocom_siggen:
+[\fIoptions\fR]
+.SH DESCRIPTION
+Signal Generator Application with GUI controls
+.SH OPTIONS
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+show this help message and exit
+.TP
+\fB\-a\fR ARGS, \fB\-\-args\fR=\fIARGS\fR
+Device args, [default=]
+.TP
+\fB\-A\fR ANTENNA, \fB\-\-antenna\fR=\fIANTENNA\fR
+Select Rx Antenna where appropriate
+.TP
+\fB\-s\fR SAMP_RATE, \fB\-\-samp\-rate\fR=\fISAMP_RATE\fR
+Set sample rate (bandwidth), minimum by default
+.TP
+\fB\-g\fR GAIN, \fB\-\-gain\fR=\fIGAIN\fR
+Set gain in dB (default is midpoint)
+.TP
+\fB\-f\fR FREQ, \fB\-\-tx\-freq\fR=\fIFREQ\fR
+Set carrier frequency to FREQ [default=mid\-point]
+.TP
+\fB\-c\fR FREQ_CORR, \fB\-\-freq\-corr\fR=\fIFREQ_CORR\fR
+Set carrier frequency correction [default=0]
+.TP
+\fB\-x\fR WAVEFORM_FREQ, \fB\-\-waveform\-freq\fR=\fIWAVEFORM_FREQ\fR
+Set baseband waveform frequency to FREQ [default=0]
+.TP
+\fB\-y\fR WAVEFORM2_FREQ, \fB\-\-waveform2\-freq\fR=\fIWAVEFORM2_FREQ\fR
+Set 2nd waveform frequency to FREQ [default=none]
+.TP
+\fB\-\-sine\fR
+Generate a carrier modulated by a complex sine wave
+.TP
+\fB\-\-const\fR
+Generate a constant carrier
+.TP
+\fB\-\-offset\fR=\fIOFFSET\fR
+Set waveform phase offset to OFFSET [default=0]
+.TP
+\fB\-\-gaussian\fR
+Generate Gaussian random output
+.TP
+\fB\-\-uniform\fR
+Generate Uniform random output
+.TP
+\fB\-\-2tone\fR
+Generate Two Tone signal for IMD testing
+.TP
+\fB\-\-sweep\fR
+Generate a swept sine wave
+.TP
+\fB\-\-gsm\fR
+Generate GMSK modulated GSM Burst Sequence
+.TP
+\fB\-\-amplitude\fR=\fIAMPL\fR
+Set output amplitude to AMPL (0.1\-1.0) [default=0.3]
+.TP
+\fB\-v\fR, \fB\-\-verbose\fR
+Use verbose console output [default=False]
+.SH Device specification
+You can specify the source or sink device using a comma separated string of argument=value pairs. The always-up-to-date block documentation with examples is available ​right here.
+.SH FCD Source
+.TP
+Argument
+Notes
+.TP
+fcd=<device-index>
+0-based device identifier, optional
+.TP
+device=hw:2
+overrides the audio device
+.TP
+type=2
+selects the dongle type, 1 for Classic, 2 for Pro+
+.LP
+The "device" argument overrides the audio device used by the underlying driver to access the dongle's IQ sample stream.
+.LP
+The "type" argument selects the dongle type, 1 for Classic, 2 for Pro+.
+.SH OsmoSDR Source
+.TP
+Argument
+Notes
+.TP
+osmosdr=<device-index>
+0-based device identifier
+.TP
+buffers=<number-of-buffers>
+Default is 32
+.TP
+buflen=<length-of-buffer>
+Default is 256kB, must be multiple of 512
+.SH RTL-SDR Source
+.TP
+Argument
+Notes
+.TP
+rtl=<device-index>
+0-based device identifier OR serial number
+.TP
+rtl_xtal=<frequency>
+Frequency (Hz) used for the RTL chip, accepts eng notation
+.TP
+tuner_xtal=<frequency>
+Frequency (Hz) used for the tuner chip, accepts eng notation
+.TP
+buffers=<number-of-buffers>
+Default is 32
+.TP
+buflen=<length-of-buffer>
+Default is 256kB, must be multiple of 512
+.TP
+direct_samp=0|1|2
+Enable direct sampling mode on the RTL chip. 0: Disable, 1: use I channel, 2: use Q channel
+.TP
+offset_tune=0|1
+Enable offset tune mode for E4000 tuners
+.LP
+NOTE: use rtl_eeprom -s to program your own serial number to the device
+.LP
+NOTE: if you don't specify rtl_xtal/tuner_xtal, the underlying driver will use 28.0MHz
+.SH RTL-SDR TCP Source
+.TP
+Argument
+Notes
+.TP
+rtl_tcp=<hostname>:<port>
+hostname defaults to "localhost", port to "1234"
+.TP
+psize=<payload-size>
+Default is 16384 bytes
+.TP
+direct_samp=0|1|2
+Enable direct sampling mode on the RTL chip 0=Off, 1=I-ADC input enabled, 2=Q-ADC input enabled
+.TP
+offset_tune=0|1
+Enable offset tune mode for E4000 tuners 
+.SH Miri Source
+.TP
+Argument
+Notes
+.TP
+miri=<device-index>
+0-based device identifier
+.TP
+buffers=<number-of-buffers>
+Default is 32
+.SH UHD Source / Sink
+Argument
+Notes
+.TP
+uhd
+Use this argument without a value
+.TP
+nchan=<channel-count>
+For multichannel USRP configurations use the subdev parameter to specify stream mapping
+.TP
+subdev=<subdev-spec>
+Examples: "A:0", "B:0", "A:0 B:0" when nchan=2. Refer original ettus documentation on this
+.TP
+lo_offset=<frequency>
+Offset frequency in Hz, must be within daughterboard bandwidth. Accepts eng notation
+.LP
+Additional argument/value pairs will be passed to the underlying driver, for more information see ​specifying the subdevice and ​common device identifiers in the Ettus documentation.
+.SH bladeRF Source / Sink
+.TP
+Argument
+Notes
+.TP
+bladerf[=0]
+0-based device identifier (optional)
+.TP
+fw='/path/to/the/firmware.img'
+program MCU firmware from given file. usually not needed. power cycle required.
+.TP
+fpga='/path/to/the/bitstream.rbf'
+load FPGA bitstream from given file. required only at first run at the moment.
+.SH HackRF Source / Sink
+.TP
+Argument
+Notes
+.TP
+hackrf
+Use this argument without a value
+.TP
+buffers=<number-of-buffers>
+Default is 32
+.LP
+Only the first device found may be used at the moment because of libhackrf limitation.
+.LP
+Transmit support has been verified by using the crc-mmbTools DAB sdr transmitter.
+.SH IQ File Source
+.TP
+Argument
+Notes
+.TP
+file=<path-to-file-name>	
+.TP
+freq=<frequency>
+Center frequency in Hz, accepts eng notation
+.TP
+rate=<sampling-rate>
+Mandatory, in samples/s, accepts eng notation
+.TP
+repeat=true|false
+Default is true
+.TP
+throttle=true|false
+Throttle flow of samples, default is true
+.SH EXAMPLES
+.LP
+osmocom_siggen -a hackrf -f 100e6 --sine
+.LP
+osmocom_siggen -a hackrf -f 100e6 --sweep -x 2M -y 1 -c34
+.SH "SEE ALSO"
+osmocom_fft(1) osmocom_siggen(1) osmocom_spectrum_sense(1)
