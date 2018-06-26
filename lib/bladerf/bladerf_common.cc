@@ -414,7 +414,7 @@ size_t bladerf_common::get_max_channels(bladerf_direction direction)
 #ifdef BLADERF_COMPATIBILITY
   return 1;
 #else
-  return bladerf_get_channel_count(_dev.get(), (BLADERF_TX == direction));
+  return bladerf_get_channel_count(_dev.get(), direction);
 #endif
 }
 
@@ -526,7 +526,7 @@ osmosdr::meta_range_t bladerf_common::sample_rates(bladerf_channel ch)
 #else
 
   int status;
-  bladerf_range brf_sample_rates;
+  const bladerf_range *brf_sample_rates;
 
   status = bladerf_get_sample_rate_range(_dev.get(), ch, &brf_sample_rates);
   if (status != 0) {
@@ -534,15 +534,15 @@ osmosdr::meta_range_t bladerf_common::sample_rates(bladerf_channel ch)
   }
 
   /* Suggest a variety of sample rates */
-  sample_rates += osmosdr::range_t(brf_sample_rates.min,
-                                   brf_sample_rates.max / 4.0,
-                                   brf_sample_rates.max / 16.0);
-  sample_rates += osmosdr::range_t(brf_sample_rates.max / 4.0,
-                                   brf_sample_rates.max / 2.0,
-                                   brf_sample_rates.max / 8.0);
-  sample_rates += osmosdr::range_t(brf_sample_rates.max / 2.0,
-                                   brf_sample_rates.max,
-                                   brf_sample_rates.max / 4.0);
+  sample_rates += osmosdr::range_t(brf_sample_rates->min,
+                                   brf_sample_rates->max / 4.0,
+                                   brf_sample_rates->max / 16.0);
+  sample_rates += osmosdr::range_t(brf_sample_rates->max / 4.0,
+                                   brf_sample_rates->max / 2.0,
+                                   brf_sample_rates->max / 8.0);
+  sample_rates += osmosdr::range_t(brf_sample_rates->max / 2.0,
+                                   brf_sample_rates->max,
+                                   brf_sample_rates->max / 4.0);
 #endif
 
   return sample_rates;
@@ -587,16 +587,16 @@ osmosdr::freq_range_t bladerf_common::freq_range(bladerf_channel ch)
 #else
 
   int status;
-  struct bladerf_range range;
+  const struct bladerf_range *range;
 
   status = bladerf_get_frequency_range(_dev.get(), ch, &range);
   if (status != 0) {
     BLADERF_THROW_STATUS(status, "bladerf_get_frequency_range failed");
   };
 
-  return osmosdr::freq_range_t(static_cast<double>(range.min),
-                               static_cast<double>(range.max),
-                               static_cast<double>(range.step));
+  return osmosdr::freq_range_t(static_cast<double>(range->min),
+                               static_cast<double>(range->max),
+                               static_cast<double>(range->step));
 #endif
 }
 
@@ -648,14 +648,14 @@ osmosdr::freq_range_t bladerf_common::filter_bandwidths(bladerf_channel ch)
 #else
 
   int status;
-  bladerf_range range;
+  const bladerf_range *range;
 
   status = bladerf_get_bandwidth_range(_dev.get(), ch, &range);
   if (status != 0) {
     BLADERF_THROW_STATUS(status, "bladerf_get_bandwidth_range failed");
   }
 
-  bandwidths += osmosdr::range_t(range.min, range.max, range.step);
+  bandwidths += osmosdr::range_t(range->min, range->max, range->step);
 #endif
 
   return bandwidths;
@@ -717,6 +717,7 @@ std::vector<std::string> bladerf_common::get_gain_names(bladerf_channel ch)
 
   for (int i = 0; i < count; ++i) {
     char *tmp = gain_names[i];
+    printf("FOUND %s\n", tmp);
     names += std::string(tmp);
   };
 #endif
@@ -747,7 +748,7 @@ osmosdr::gain_range_t bladerf_common::get_gain_range(std::string const &name,
 #else
 
   int status;
-  struct bladerf_range range;
+  const bladerf_range *range;
 
   if (name == SYSTEM_GAIN_NAME) {
     status = bladerf_get_gain_range(_dev.get(), ch, &range);
@@ -760,7 +761,7 @@ osmosdr::gain_range_t bladerf_common::get_gain_range(std::string const &name,
                          "range for stage '%s'") % name));
   }
 
-  return osmosdr::gain_range_t(range.min, range.max, range.step);
+  return osmosdr::gain_range_t(range->min, range->max, range->step);
 #endif
 }
 
