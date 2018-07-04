@@ -43,7 +43,11 @@ GR_OSMOSDR_APPEND_SRCS(
     time_spec.cc
 )
 
-list(APPEND Boost_LIBRARIES pthread)
+#-pthread Adds support for multithreading with the pthreads library.
+#This option sets flags for both the preprocessor and linker. (man gcc)
+if(CMAKE_COMPILER_IS_GNUCXX)
+    list(APPEND Boost_LIBRARIES -pthread)
+endif()
 
 GR_OSMOSDR_APPEND_LIBS(
     ${Boost_LIBRARIES}
