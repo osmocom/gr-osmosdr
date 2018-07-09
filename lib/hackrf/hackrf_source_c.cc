@@ -123,17 +123,6 @@ hackrf_source_c::hackrf_source_c (const std::string &args)
 
   _samp_avail = _buf_len / BYTES_PER_SAMPLE;
 
-  // create a lookup table for gr_complex values
-  for (unsigned int i = 0; i <= 0xffff; i++) {
-#ifdef BOOST_LITTLE_ENDIAN
-    _lut.push_back( gr_complex( (float(int8_t(i & 0xff))) * (1.0f/128.0f),
-                                (float(int8_t(i >> 8))) * (1.0f/128.0f) ) );
-#else // BOOST_BIG_ENDIAN
-    _lut.push_back( gr_complex( (float(int8_t(i >> 8))) * (1.0f/128.0f),
-                                (float(int8_t(i & 0xff))) * (1.0f/128.0f) ) );
-#endif
-  }
-
   {
     boost::mutex::scoped_lock lock( _usage_mutex );
 
@@ -339,6 +328,19 @@ bool hackrf_source_c::stop()
   return true;
 }
 
+void convert_data(gr_complex* out, const uint16_t* in, int n)
+{
+  const int8_t* i_c = (const int8_t*) in;
+
+#ifdef BOOST_LITTLE_ENDIAN
+  for(int i=0;i<n;i++)
+    out[i] = gr_complex(i_c[2*i] / 128.f, i_c[2*i+1] / 128.f);
+#else // BOOST_BIG_ENDIAN
+  for(int i=0;i<n;i++)
+    out[i] = gr_complex(i_c[2*i+1] / 128.f, i_c[2*i] / 128.f);
+#endif
+}
+
 int hackrf_source_c::work( int noutput_items,
                         gr_vector_const_void_star &input_items,
                         gr_vector_void_star &output_items )
@@ -363,14 +365,12 @@ int hackrf_source_c::work( int noutput_items,
   unsigned short *buf = _buf[_buf_head] + _buf_offset;
 
   if (noutput_items <= _samp_avail) {
-    for (int i = 0; i < noutput_items; ++i)
-      *out++ = _lut[ *(buf + i) ];
+    convert_data(out, buf, noutput_items);
 
     _buf_offset += noutput_items;
     _samp_avail -= noutput_items;
   } else {
-    for (int i = 0; i < _samp_avail; ++i)
-      *out++ = _lut[ *(buf + i) ];
+    convert_data(out, buf, _samp_avail);
 
     {
       boost::mutex::scoped_lock lock( _buf_mutex );
@@ -383,8 +383,7 @@ int hackrf_source_c::work( int noutput_items,
 
     int remaining = noutput_items - _samp_avail;
 
-    for (int i = 0; i < remaining; ++i)
-      *out++ = _lut[ *(buf + i) ];
+    convert_data(out, buf, remaining);
 
     _buf_offset = remaining;
     _samp_avail = (_buf_len / BYTES_PER_SAMPLE) - remaining;
