@@ -43,6 +43,8 @@ GR_OSMOSDR_APPEND_SRCS(
     time_spec.cc
 )
 
+list(APPEND Boost_LIBRARIES pthread)
+
 GR_OSMOSDR_APPEND_LIBS(
     ${Boost_LIBRARIES}
     ${GNURADIO_ALL_LIBRARIES}
