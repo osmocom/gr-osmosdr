@@ -287,7 +287,7 @@ private:
    * Private members
    ****************************************************************************/
   static std::mutex _devs_mutex;  /**< mutex for access to _devs */
-  static std::list<std::weak_ptr<struct bladerf>> _devs;  /**< dev cache */
+  static std::list<std::weak_ptr<struct bladerf> > _devs;  /**< dev cache */
 };
 
 #endif
