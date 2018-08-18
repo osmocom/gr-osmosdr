@@ -51,7 +51,7 @@ static size_t const STREAM_TIMEOUT_MS = 3000;
 using namespace boost::assign;
 
 boost::mutex bladerf_common::_devs_mutex;
-std::list<boost::weak_ptr<struct bladerf>> bladerf_common::_devs;
+std::list<boost::weak_ptr<struct bladerf> > bladerf_common::_devs;
 
 /* name for system-wide gain (which is not its own libbladeRF gain stage) */
 static const char *SYSTEM_GAIN_NAME = "system";
@@ -135,7 +135,7 @@ size_t num_streams(bladerf_channel_layout layout)
  * Public methods
  ******************************************************************************/
 bladerf_common::bladerf_common() :
-  _dev(NULL),
+  _dev(boost::shared_ptr<struct bladerf>()),
   _pfx("[bladeRF common] "),
   _failures(0),
   _num_buffers(NUM_BUFFERS),
@@ -1109,7 +1109,7 @@ bladerf_sptr bladerf_common::open(std::string const &device_name)
   /* Add the device handle to our cache */
   bladerf_sptr dev = bladerf_sptr(raw_dev, bladerf_common::close);
 
-  _devs.push_back(static_cast<boost::weak_ptr<struct bladerf>>(dev));
+  _devs.push_back(static_cast<boost::weak_ptr<struct bladerf> >(dev));
 
   return dev;
 }
@@ -1117,7 +1117,7 @@ bladerf_sptr bladerf_common::open(std::string const &device_name)
 void bladerf_common::close(void *dev)
 {
   boost::unique_lock<boost::mutex> lock(_devs_mutex);
-  std::list<boost::weak_ptr<struct bladerf>>::iterator it(_devs.begin());
+  std::list<boost::weak_ptr<struct bladerf> >::iterator it(_devs.begin());
 
   /* Prune expired entries from device cache */
   while (it != _devs.end()) {

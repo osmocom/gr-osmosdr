@@ -288,7 +288,7 @@ private:
    * Private members
    ****************************************************************************/
   static boost::mutex _devs_mutex;  /**< mutex for access to _devs */
-  static std::list<boost::weak_ptr<struct bladerf>> _devs;  /**< dev cache */
+  static std::list<boost::weak_ptr<struct bladerf> > _devs;  /**< dev cache */
 };
 
 #endif
