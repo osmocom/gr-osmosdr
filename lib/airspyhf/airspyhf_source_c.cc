@@ -384,38 +384,132 @@ double airspyhf_source_c::get_freq_corr( size_t chan )
 
 std::vector<std::string> airspyhf_source_c::get_gain_names( size_t chan )
 {
-  return std::vector<std::string>();
+  std::vector<std::string> names;
+  names += "LNA";
+  names += "ATT";
+
+  return names;
 }
 
 osmosdr::gain_range_t airspyhf_source_c::get_gain_range( size_t chan )
 {
-  return osmosdr::gain_range_t();
+  // Based on libairspyhf +6db with LNA and 0 to -48dB with Attenuation
+  return osmosdr::gain_range_t(-48, 6, 6);
 }
 
 osmosdr::gain_range_t airspyhf_source_c::get_gain_range( const std::string & name, size_t chan )
 {
+  if ("LNA" == name) {
+    return osmosdr::gain_range_t(0, 6, 6);
+  } else if ("ATT" == name) {
+    return osmosdr::gain_range_t(-48, 0, 6);
+  }
   return osmosdr::gain_range_t();
 }
 
+bool airspyhf_source_c::set_gain_mode( bool automatic, size_t chan )
+{
+  if ( automatic ) {
+    airspyhf_set_hf_agc( _dev, 1 );
+  } else {
+    airspyhf_set_hf_agc( _dev, 0 );
+  }
+  _auto_gain = automatic;
+
+  return get_gain_mode(chan);
+}
+
+bool airspyhf_source_c::get_gain_mode( size_t chan )
+{
+  return _auto_gain;
+}
 
 double airspyhf_source_c::set_gain( double gain, size_t chan )
 {
+  osmosdr::gain_range_t gains = get_gain_range(chan);
+
+  if(_dev) {
+    double clip_gain = gains.clip(gain, true);
+
+    if (clip_gain > 0) {
+      if (set_lna_gain(clip_gain, chan) == clip_gain && set_att_gain(0, chan) == 0) {
+        _gain = clip_gain;
+      }
+    } else {
+      if (set_lna_gain(0, chan) == 0 && set_att_gain(clip_gain, chan) == 0) {
+        _gain = clip_gain;
+      }
+    }
+  }
+
   return gain;
 }
 
 double airspyhf_source_c::set_gain( double gain, const std::string & name, size_t chan)
 {
+  if ("LNA" == name) {
+    return set_lna_gain(gain, chan);
+  } else if ("ATT" == name) {
+    return set_att_gain(gain, chan);
+  }
+
   return gain;
 }
 
 double airspyhf_source_c::get_gain( size_t chan )
 {
-  return 0.0;
+  return _gain;
 }
 
 double airspyhf_source_c::get_gain( const std::string & name, size_t chan )
 {
-  return 0.0;
+  if ("LNA" == name) {
+    return _lna_gain;
+  } else if ("ATT" == name) {
+    return _att_gain;
+  }
+
+  return get_gain(chan);
+}
+
+double airspyhf_source_c::set_lna_gain( double gain, size_t chan )
+{
+  int ret = AIRSPYHF_SUCCESS;
+  osmosdr::gain_range_t gains = get_gain_range( "LNA", chan );
+
+  if (_dev) {
+    double clip_gain = gains.clip( gain, true );
+    uint8_t value = (uint8_t) ((clip_gain > 0) ? 1 : 0);
+
+    ret = airspyhf_set_hf_lna( _dev, value );
+    if ( AIRSPYHF_SUCCESS == ret ) {
+      _lna_gain = clip_gain;
+    } else {
+      AIRSPYHF_THROW_ON_ERROR( ret, AIRSPYHF_FUNC_STR( "airspyhf_set_lna_gain", value ) )
+    }
+  }
+
+  return _lna_gain;
+}
+
+double airspyhf_source_c::set_att_gain( double gain, size_t chan )
+{
+  int ret = AIRSPYHF_SUCCESS;
+  osmosdr::gain_range_t gains = get_gain_range( "LNA", chan );
+
+  if (_dev) {
+    double clip_gain = gains.clip( gain, true );
+    uint8_t value = (uint8_t) (clip_gain / -6);
+
+    ret = airspyhf_set_hf_att( _dev, value );
+    if ( AIRSPYHF_SUCCESS == ret ) {
+      _att_gain = clip_gain;
+    } else {
+      AIRSPYHF_THROW_ON_ERROR( ret, AIRSPYHF_FUNC_STR( "airspyhf_set_att_gain", value ) )
+    }
+  }
+
+  return _lna_gain;
 }
 
 std::vector< std::string > airspyhf_source_c::get_antennas( size_t chan )
