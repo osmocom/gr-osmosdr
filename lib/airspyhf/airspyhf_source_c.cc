@@ -495,7 +495,7 @@ double airspyhf_source_c::set_lna_gain( double gain, size_t chan )
 double airspyhf_source_c::set_att_gain( double gain, size_t chan )
 {
   int ret = AIRSPYHF_SUCCESS;
-  osmosdr::gain_range_t gains = get_gain_range( "LNA", chan );
+  osmosdr::gain_range_t gains = get_gain_range( "ATT", chan );
 
   if (_dev) {
     double clip_gain = gains.clip( gain, true );
