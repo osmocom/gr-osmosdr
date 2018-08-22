@@ -32,6 +32,7 @@ macro(GEN_BLOCK_XML _generator _xml_block)
     )
 endmacro(GEN_BLOCK_XML)
 
+GEN_BLOCK_XML(gen_airspyhf_blocks.py    airspyhf_source.xml)
 GEN_BLOCK_XML(gen_osmosdr_blocks.py    rtlsdr_source.xml)
 GEN_BLOCK_XML(gen_osmosdr_blocks.py    osmosdr_source.xml)
 GEN_BLOCK_XML(gen_osmosdr_blocks.py    osmosdr_sink.xml)
