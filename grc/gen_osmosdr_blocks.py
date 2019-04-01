@@ -474,15 +474,15 @@ if __name__ == '__main__':
     elif tail.startswith('osmosdr'):
       title = 'osmocom'
       prefix = 'osmosdr'
-    else: raise Exception, 'file %s has wrong syntax!'%tail
+    else: raise Exception("file {} has wrong syntax!".format(tail))
 
-    if tail.endswith ('source.xml'):
+    if tail.endswith ('source.yml'):
       sourk = 'source'
       dir = 'out'
-    elif tail.endswith ('sink.xml'):
+    elif tail.endswith ('sink.yml'):
       sourk = 'sink'
       dir = 'in'
-    else: raise Exception, 'is %s a source or sink?'%file
+    else: raise Exception("is {} a source or sink?".format(file))
 
     params = ''.join([parse_tmpl(PARAMS_TMPL, n=n, sourk=sourk) for n in range(max_num_channels)])
     open(file, 'w').write(parse_tmpl(MAIN_TMPL,

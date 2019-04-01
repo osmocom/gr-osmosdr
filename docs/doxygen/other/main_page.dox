@@ -1,5 +1,10 @@
 /*! \mainpage
 
-Welcome to the OsmoSDR GNUradio blocks
+Welcome to the GNU Radio OSMOSDR Block
+
+This is the intro page for the Doxygen manual generated for the OSMOSDR
+block (docs/doxygen/other/main_page.dox). Edit it to add more detailed
+documentation about the new GNU Radio modules contained in this
+project.
 
 */

@@ -1,0 +1,6 @@
+*~
+*.pyc
+*.pyo
+build*/
+cmake-*
+libosmo-dsp/*
