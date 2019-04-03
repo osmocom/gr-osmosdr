@@ -1,8 +1,6 @@
 While primarily being developed for the OsmoSDR hardware, this block
 as well supports:
 
- * FUNcube Dongle through libgnuradio-fcd
- * FUNcube Dongle Pro+ through gr-fcdproplus
  * sysmocom OsmoSDR Devices through libosmosdr
  * RTL2832U based DVB-T dongles through librtlsdr
  * RTL-TCP spectrum server (see librtlsdr project)
@@ -22,7 +20,7 @@ as well supports:
 By using the OsmoSDR block you can take advantage of a common software api in
 your application(s) independent of the underlying radio hardware.
 
-For installation and usage guidelines please read the documentation available
+Ftor installation and usage guidelines please read the documentation available
 at http://sdr.osmocom.org/trac/wiki/GrOsmoSDR
 
 For the impatient :) a short excerpt:
