@@ -32,9 +32,9 @@ macro(GEN_BLOCK_YAML _generator _yaml_block)
     )
 endmacro(GEN_BLOCK_YAML)
 
-GEN_BLOCK_YAML(gen_osmosdr_blocks.py    rtlsdr_source.yml)
-GEN_BLOCK_YAML(gen_osmosdr_blocks.py    osmosdr_source.yml)
-GEN_BLOCK_YAML(gen_osmosdr_blocks.py    osmosdr_sink.yml)
+GEN_BLOCK_YAML(gen_osmosdr_blocks.py    rtlsdr_source.block.yml)
+GEN_BLOCK_YAML(gen_osmosdr_blocks.py    osmosdr_source.block.yml)
+GEN_BLOCK_YAML(gen_osmosdr_blocks.py    osmosdr_sink.block.yml)
 
 add_custom_target(osmosdr_grc_yaml_blocks ALL DEPENDS ${yaml_blocks})
 

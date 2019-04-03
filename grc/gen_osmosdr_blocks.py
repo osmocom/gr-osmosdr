@@ -29,8 +29,8 @@ parameters:
   label: '${direction.title()}put Type'
   dtype: enum
   options: [fc32]
-  options_labels: [Complex Float32]
-  options_attributes:
+  option_labels: [Complex Float32]
+  option_attributes:
       type: [fc32]
   hide: part
 - id: dev_args
@@ -42,11 +42,11 @@ parameters:
   label: Sync
   dtype: enum
   options: [sync, pc_clock, none]
-  options_labels: [Unknown PPS, PC Clock, Don't Sync]
+  option_labels: [Unknown PPS, PC Clock, Don't Sync]
   hide: ${'$'}{ 'none' if sync else 'part'}
 - id: num_mboards
   label: 'Number MBoards'
-  type: int
+  dtype: int
   default: 1
   options: [ ${", ".join([str(n) for n in range(1, max_mboards+1)])} ]
   hide: part
@@ -55,18 +55,18 @@ parameters:
   label: 'MB${m}: Clock Source'
   dtype: string
   options: ['', internal, external, external_1pps, mimo, gpsdo]
-  options_labels: [Default, Internal, External, External 1PPS, MIMO Cable, O/B GPSDO]
+  option_labels: [Default, Internal, External, External 1PPS, MIMO Cable, O/B GPSDO]
   hide: ${'$'}{ 'all' if not (num_mboards > ${m}) else ( 'none' if clock_source${m} else 'part' )}
 - id: time_source${m}
   label: 'MB${m}: Time Source'
   dtype: string
   options: ['', external, mimo, gpsdo]
-  options_labels: [Default, External, MIMO Cable, O/B GPSDO]
+  option_labels: [Default, External, MIMO Cable, O/B GPSDO]
   hide: ${'$'}{ 'all' if not (num_mboards > ${m}) else ( 'none' if time_source${m} else 'part' )}  
 % endfor
 - id: nchan
   label: 'Number Channels'
-  type: int
+  dtype: int
   default: 1
   options: [ ${", ".join([str(n) for n in range(1, max_nchan+1)])} ]
 - id: sample_rate
@@ -303,21 +303,21 @@ PARAMS_TMPL = """
   dtype: int
   default: 0
   options: [0, 1, 2]
-  options_labels: [Off, Manual, Automatic]
+  option_labels: [Off, Manual, Automatic]
   hide: ${'$'}{'none' if (nchan > ${n}) else 'all'}
 - id: iq_balance_mode${n}
   label: 'Ch${n}: IQ Balance Mode'
   dtype: int
   default: 0
   options: [0, 1, 2]
-  options_labels: [Off, Manual, Automatic]
+  option_labels: [Off, Manual, Automatic]
   hide: ${'$'}{'none' if (nchan > ${n}) else 'all'}
 - id: gain_mode${n}
   label: 'Ch${n}: Gain Mode'
   dtype: bool
   default: False
   options: [False, True]
-  options_labels: [Manual, Automatic]
+  option_labels: [Manual, Automatic]
   hide: ${'$'}{'none' if (nchan > ${n}) else 'all'}
 % endif
 - id: gain${n}
@@ -339,12 +339,12 @@ PARAMS_TMPL = """
   label: 'Ch${n}: Antenna'
   dtype: string
   default: ""
-  hide: ${'$'}{'all' if not (nchan > ${n}) else ('none' if eval('ant' + str(n)) else 'part')}
+  hide: ${'$'}{'all' if not (nchan > ${n}) else ('none' if eval('ant' + str(${n})) else 'part')}
 - id: bw${n}
   label: 'Ch${n}: Bandwidth (Hz)'
   dtype: real
   default: 0
-  hide: ${'$'}{'all' if not (nchan > ${n}) else ('none' if eval('bw' + str(n)) else 'part')}
+  hide: ${'$'}{'all' if not (nchan > ${n}) else ('none' if eval('bw' + str(${n})) else 'part')}
 """
 
 # def parse_tmpl(_tmpl, **kwargs):
@@ -381,10 +381,10 @@ if __name__ == '__main__':
         else:
             raise Exception("file {} has wrong syntax!".format(tail))
 
-        if tail.endswith('source.yml'):
+        if tail.endswith('source.block.yml'):
             sourk = 'source'
             direction = 'out'
-        elif tail.endswith('sink.yml'):
+        elif tail.endswith('sink.block.yml'):
             sourk = 'sink'
             direction = 'in'
         else:
