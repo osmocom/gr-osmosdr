@@ -19,16 +19,17 @@
 # The presence of this file turns this directory into a Python package
 
 '''
-This is the GNU Radio OSMOSDR module. Place your Python package
-description here (python/__init__.py).
+This is the GNU Radio OsmoSDR module.
 '''
+
 from __future__ import unicode_literals
 
 # import swig generated symbols into the osmosdr namespace
 try:
     # this might fail if the module is python-only
     from .osmosdr_swig import *
-except ImportError:
+except ImportError as ie:
+    print(ie)
     pass
 
 # import any pure python here

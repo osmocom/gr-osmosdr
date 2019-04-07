@@ -33,11 +33,11 @@ parameters:
   option_attributes:
       type: [fc32]
   hide: part
-- id: dev_args
+- id: args
   label: 'Device Arguments'
   dtype: string
   default: '""'
-  hide: ${'$'}{ 'none' if dev_args else 'part'}
+  hide: ${'$'}{ 'none' if args else 'part'}
 - id: sync
   label: Sync
   dtype: enum
@@ -137,7 +137,7 @@ templates:
   callbacks:
     - set_sample_rate(${'$'}{sample_rate})
     % for n in range(max_nchan):
-    - set_centre_freq(${'$'}{${'freq' + str(n)}}, ${n})
+    - set_center_freq(${'$'}{${'freq' + str(n)}}, ${n})
     - set_freq_corr(${'$'}{${'corr' + str(n)}}, ${n})
     % if sourk == 'source':
     - set_dc_offset_mode(${'$'}{${'dc_offset_mode' + str(n)}}, ${n})

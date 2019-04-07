@@ -17,27 +17,38 @@
 # the Free Software Foundation, Inc., 51 Franklin Street,
 # Boston, MA 02110-1301, USA.
 
-########################################################################
-# Include python install macros
-########################################################################
-include(GrPython)
-if(NOT PYTHONINTERP_FOUND)
+if(DEFINED __INCLUDED_GR_PLATFORM_CMAKE)
     return()
+endif()
+set(__INCLUDED_GR_PLATFORM_CMAKE TRUE)
+
+########################################################################
+# Setup additional defines for OS types
+########################################################################
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    set(LINUX TRUE)
+endif()
+
+if(NOT CMAKE_CROSSCOMPILING AND LINUX AND EXISTS "/etc/debian_version")
+    set(DEBIAN TRUE)
+endif()
+
+if(NOT CMAKE_CROSSCOMPILING AND LINUX AND EXISTS "/etc/redhat-release")
+    set(REDHAT TRUE)
+endif()
+
+if(NOT CMAKE_CROSSCOMPILING AND LINUX AND EXISTS "/etc/slackware-version")
+    set(SLACKWARE TRUE)
 endif()
 
 ########################################################################
-# Install python sources
+# when the library suffix should be 64 (applies to redhat linux family)
 ########################################################################
-GR_PYTHON_INSTALL(
-    FILES
-    __init__.py
-    DESTINATION ${GR_PYTHON_DIR}/osmosdr
-)
+if (REDHAT OR SLACKWARE)
+    set(LIB64_CONVENTION TRUE)
+endif()
 
-########################################################################
-# Handle the unit tests
-########################################################################
-include(GrTest)
-
-set(GR_TEST_TARGET_DEPS gnuradio-osmosdr)
-set(GR_TEST_PYTHON_DIRS ${CMAKE_BINARY_DIR}/swig)
+if(NOT DEFINED LIB_SUFFIX AND LIB64_CONVENTION AND CMAKE_SYSTEM_PROCESSOR MATCHES "64$")
+    set(LIB_SUFFIX 64)
+endif()
+set(LIB_SUFFIX ${LIB_SUFFIX} CACHE STRING "lib directory suffix")

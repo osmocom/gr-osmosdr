@@ -21,7 +21,6 @@
 # Setup library
 ########################################################################
 INCLUDE(GrPlatform) #define LIB_SUFFIX
-INCLUDE(OsmoSDRMiscUtils)
 INCLUDE(GrMiscUtils)
 INCLUDE(GrComponent)
 
@@ -121,11 +120,11 @@ SET_SOURCE_FILES_PROPERTIES(
 ########################################################################
 # Setup IQBalance component
 ########################################################################
-GR_REGISTER_COMPONENT("Osmocom IQ Imbalance Correction" ENABLE_IQBALANCE gnuradio-iqbalance_FOUND)
+GR_REGISTER_COMPONENT("Osmocom IQ Imbalance Correction" ENABLE_IQBALANCE GNURADIO_IQBALANCE_FOUND)
 if(ENABLE_IQBALANCE)
 add_definitions(-DHAVE_IQBALANCE=1)
-include_directories(${IQBALANCE_INCLUDE_DIRS})
-GR_OSMOSDR_APPEND_LIBS(${IQBALANCE_LIBRARIES})
+include_directories(${GNURADIO_IQBALANCE_INCLUDE_DIRS})
+GR_OSMOSDR_APPEND_LIBS(${GNURADIO_IQBALANCE_LIBRARIES})
 endif(ENABLE_IQBALANCE)
 
 ########################################################################
@@ -139,7 +138,7 @@ endif(ENABLE_OSMOSDR)
 ########################################################################
 # Setup File component
 ########################################################################
-GR_REGISTER_COMPONENT("IQ File Source & Sink" ENABLE_FILE gnuradio-blocks_FOUND)
+GR_REGISTER_COMPONENT("IQ File Source & Sink" ENABLE_FILE GNURADIO_BLOCKS_FOUND)
 if(ENABLE_FILE)
 GR_INCLUDE_SUBDIRECTORY(file)
 endif(ENABLE_FILE)
@@ -155,7 +154,7 @@ endif(ENABLE_RTL)
 ########################################################################
 # Setup RTL_TCP component
 ########################################################################
-GR_REGISTER_COMPONENT("RTLSDR TCP Client" ENABLE_RTL_TCP gnuradio-blocks_FOUND)
+GR_REGISTER_COMPONENT("RTLSDR TCP Client" ENABLE_RTL_TCP GNURADIO_BLOCKS_FOUND)
 if(ENABLE_RTL_TCP)
 GR_INCLUDE_SUBDIRECTORY(rtl_tcp)
 endif(ENABLE_RTL_TCP)
@@ -163,7 +162,7 @@ endif(ENABLE_RTL_TCP)
 ########################################################################
 # Setup UHD component
 ########################################################################
-GR_REGISTER_COMPONENT("Ettus USRP Devices" ENABLE_UHD UHD_FOUND gnuradio-uhd_FOUND)
+GR_REGISTER_COMPONENT("Ettus USRP Devices" ENABLE_UHD UHD_FOUND GNURADIO_UHD_FOUND)
 if(ENABLE_UHD)
 GR_INCLUDE_SUBDIRECTORY(uhd)
 endif(ENABLE_UHD)
@@ -272,4 +271,4 @@ ENDIF(MSVC)
 ADD_LIBRARY(gnuradio-osmosdr SHARED ${gr_osmosdr_srcs})
 TARGET_LINK_LIBRARIES(gnuradio-osmosdr ${gr_osmosdr_libs})
 SET_TARGET_PROPERTIES(gnuradio-osmosdr PROPERTIES DEFINE_SYMBOL "gnuradio_osmosdr_EXPORTS")
-GR_LIBRARY_FOO_V2(gnuradio-osmosdr)
+GR_LIBRARY_FOO(gnuradio-osmosdr)
