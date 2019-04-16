@@ -347,9 +347,6 @@ PARAMS_TMPL = """
   hide: ${'$'}{'all' if not (nchan > ${n}) else ('none' if eval('bw' + str(${n})) else 'part')}
 """
 
-# def parse_tmpl(_tmpl, **kwargs):
-#     from Cheetah import Template
-#     return str(Template.Template(_tmpl, kwargs))
 
 def parse_tmpl(_tmpl, **kwargs):
     from mako.template import Template
