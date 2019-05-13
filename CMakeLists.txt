@@ -167,10 +167,10 @@ endif(APPLE)
 ########################################################################
 set(GR_REQUIRED_COMPONENTS RUNTIME PMT BLOCKS)
 
-#[[find_package(gnuradio-blocks PATHS ${GR_PREFIX}/lib/cmake/gnuradio/)
+find_package(gnuradio-blocks PATHS ${GR_PREFIX}/lib/cmake/gnuradio/)
 message(STATUS "Found Block Block: ${gnuradio-blocks_FOUND}")
 
-find_package(gnuradio-pmt PATHS ${GR_PREFIX}/lib/cmake/gnuradio/)
+#[[find_package(gnuradio-pmt PATHS ${GR_PREFIX}/lib/cmake/gnuradio/)
 message(STATUS "Found PMT Block: ${gnuradio-pmt_FOUND}")
 
 find_package(gnuradio-runtime PATHS ${GR_PREFIX}/lib/cmake/gnuradio/)
