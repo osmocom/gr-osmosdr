@@ -342,7 +342,7 @@ int bladerf_source_c::work(int noutput_items,
     memcpy(out[0], _32fcbuf, sizeof(gr_complex) * noutput_items);
   }
 
-  return noutput_items;
+  return noutput_items/(get_num_channels());
 }
 
 osmosdr::meta_range_t bladerf_source_c::get_sample_rates()
