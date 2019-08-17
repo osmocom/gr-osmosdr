@@ -174,11 +174,9 @@ bool bladerf_sink_c::start()
 
   for (size_t ch = 0; ch < get_max_channels(); ++ch) {
     bladerf_channel brfch = BLADERF_CHANNEL_TX(ch);
-    if (get_channel_enable(brfch)) {
-      status = bladerf_enable_module(_dev.get(), brfch, true);
-      if (status != 0) {
-        BLADERF_THROW_STATUS(status, "bladerf_enable_module failed");
-      }
+    status = bladerf_enable_module(_dev.get(), brfch, get_channel_enable(brfch));
+    if (status != 0) {
+      BLADERF_THROW_STATUS(status, "bladerf_enable_module failed");
     }
   }
 
@@ -210,11 +208,9 @@ bool bladerf_sink_c::stop()
 
   for (size_t ch = 0; ch < get_max_channels(); ++ch) {
     bladerf_channel brfch = BLADERF_CHANNEL_TX(ch);
-    if (get_channel_enable(brfch)) {
-      status = bladerf_enable_module(_dev.get(), brfch, false);
-      if (status != 0) {
-        BLADERF_THROW_STATUS(status, "bladerf_enable_module failed");
-      }
+    status = bladerf_enable_module(_dev.get(), brfch, get_channel_enable(brfch));
+    if (status != 0) {
+      BLADERF_THROW_STATUS(status, "bladerf_enable_module failed");
     }
   }
 
