@@ -191,6 +191,19 @@ source_impl::source_impl( const std::string &args )
     }
   }
 
+  bool force_arg = false;
+  int force_val = 0;
+
+  if (arg_list.size() <= 2) {
+     BOOST_FOREACH(std::string arg, arg_list) {
+       if ( arg.find( "numchan=" ) == 0 ) {
+         pair_t pair = param_to_pair( arg );
+         force_arg = true;
+         force_val = boost::lexical_cast<size_t>( pair.second );
+       }
+     }
+  }
+
   if ( ! device_specified ) {
     std::vector< std::string > dev_list;
 #ifdef ENABLE_OSMOSDR
@@ -257,6 +270,9 @@ source_impl::source_impl( const std::string &args )
   }
 
   BOOST_FOREACH(std::string arg, arg_list) {
+
+    if(force_arg)
+       arg += ",nchan=" + std::to_string(force_val);
 
     dict_t dict = params_to_dict(arg);
 

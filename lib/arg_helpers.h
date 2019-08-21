@@ -154,6 +154,8 @@ inline gr::io_signature::sptr args_to_io_signature( const std::string &args )
     }
   }
 
+  if (arg_list.size() <= 2 && max_nchan > dev_nchan)
+     dev_nchan = max_nchan;
   // if at least one nchan was given, perform a sanity check
   if ( max_nchan && dev_nchan && max_nchan != dev_nchan )
     throw std::runtime_error("Wrong device arguments specified. Missing nchan?");
