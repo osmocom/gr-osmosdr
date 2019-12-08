@@ -268,8 +268,7 @@ if(ENABLE_PYTHON)
     add_subdirectory(swig)
     add_subdirectory(python)
     add_subdirectory(grc)
-    #Apps not ported to Qt
-    #add_subdirectory(apps)
+    add_subdirectory(apps)
 endif(ENABLE_PYTHON)
 add_subdirectory(docs)
 

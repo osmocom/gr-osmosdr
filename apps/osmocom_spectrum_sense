@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # Copyright 2005,2007,2011 Free Software Foundation, Inc.
 #
@@ -71,13 +71,13 @@ class tune(gr.feval_dd):
             
             # wait until msgq is empty before continuing
             while(self.tb.msgq.full_p()):
-                #print "msgq full, holding.."
+                #print("msgq full, holding..")
                 time.sleep(0.1)
             
             return new_freq
 
-        except Exception, e:
-            print "tune: Exception: ", e
+        except Exception as e:
+            print("tune: Exception: ", e)
 
 
 class parse_msg(object):
@@ -147,7 +147,7 @@ class my_top_block(gr.top_block):
                 realtime = True
             else:
                 realtime = False
-                print "Note: failed to enable realtime scheduling"
+                print("Note: failed to enable realtime scheduling")
 
         # build graph
         self.u = osmosdr.source(options.args)
@@ -155,7 +155,7 @@ class my_top_block(gr.top_block):
         try:
             self.u.get_sample_rates().start()
         except RuntimeError:
-            print "Source has no sample rates (wrong device arguments?)."
+            print("Source has no sample rates (wrong device arguments?).")
             sys.exit(1)
 
         # Set the antenna
@@ -218,7 +218,7 @@ class my_top_block(gr.top_block):
             options.gain = float(g.start()+g.stop())/2.0
 
         self.set_gain(options.gain)
-        print "gain =", options.gain
+        print("gain =", options.gain)
 
     def set_next_freq(self):
         target_freq = self.next_freq
@@ -227,7 +227,7 @@ class my_top_block(gr.top_block):
             self.next_freq = self.min_center_freq
 
         if not self.set_freq(target_freq):
-            print "Failed to set frequency to", target_freq
+            print("Failed to set frequency to", target_freq)
             sys.exit(1)
 
         return target_freq
@@ -259,9 +259,9 @@ def main_loop(tb):
     def bin_freq(i_bin, center_freq):
         #hz_per_bin = tb.usrp_rate / tb.fft_size
         freq = center_freq - (tb.usrp_rate / 2) + (tb.channel_bandwidth * i_bin)
-        #print "freq original:",freq
+        #print("freq original:",freq)
         #freq = nearest_freq(freq, tb.channel_bandwidth)
-        #print "freq rounded:",freq
+        #print("freq rounded:",freq)
         return freq
     
     bin_start = int(tb.fft_size * ((1 - 0.75) / 2))
@@ -287,7 +287,7 @@ def main_loop(tb):
             power_db = 10*math.log10(m.data[i_bin]/tb.usrp_rate) - noise_floor_db
 
             if (power_db > tb.squelch_threshold) and (freq >= tb.min_freq) and (freq <= tb.max_freq):
-                print datetime.now(), "center_freq", center_freq, "freq", freq, "power_db", power_db, "noise_floor_db", noise_floor_db
+                print(datetime.now(), "center_freq", center_freq, "freq", freq, "power_db", power_db, "noise_floor_db", noise_floor_db)
 
 if __name__ == '__main__':
     t = ThreadClass()
