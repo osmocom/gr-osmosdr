@@ -21,17 +21,18 @@
 # This file included, use CMake directory variables
 ########################################################################
 
-include_directories(
+target_include_directories(gnuradio-osmosdr PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${LIBAIRSPY_INCLUDE_DIRS}
 )
 
-set(airspy_srcs
-    ${CMAKE_CURRENT_SOURCE_DIR}/airspy_source_c.cc
+target_link_libraries(gnuradio-osmosdr
+    gnuradio::filter
+    ${Gnuradio-blocks_LIBRARIES}
+    ${LIBAIRSPY_LIBRARIES}
 )
 
-########################################################################
-# Append gnuradio-osmosdr library sources
-########################################################################
-list(APPEND gr_osmosdr_srcs ${airspy_srcs})
-list(APPEND gr_osmosdr_libs ${LIBAIRSPY_LIBRARIES} ${GNURADIO_FILTER_LIBRARIES} ${GNURADIO_BLOCKS_LIBRARIES})
+list(APPEND gr_osmosdr_srcs
+    ${CMAKE_CURRENT_SOURCE_DIR}/airspy_source_c.cc
+)
+set(gr_osmosdr_srcs ${gr_osmosdr_srcs} PARENT_SCOPE)

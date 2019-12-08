@@ -21,20 +21,20 @@
 # This file included, use CMake directory variables
 ########################################################################
 
-include_directories(
+target_include_directories(gnuradio-osmosdr PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${LIBBLADERF_INCLUDE_DIRS}
-    ${VOLK_INCLUDE_DIRS}
+    ${Volk_INCLUDE_DIRS}
 )
 
-set(bladerf_srcs
+target_link_libraries(gnuradio-osmosdr
+    ${LIBBLADERF_LIBRARIES}
+    ${Volk_LIBRARIES}
+)
+
+list(APPEND gr_osmosdr_srcs
     ${CMAKE_CURRENT_SOURCE_DIR}/bladerf_source_c.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/bladerf_sink_c.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/bladerf_common.cc
 )
-
-########################################################################
-# Append gnuradio-osmosdr library sources
-########################################################################
-list(APPEND gr_osmosdr_srcs ${bladerf_srcs})
-list(APPEND gr_osmosdr_libs ${LIBBLADERF_LIBRARIES} ${VOLK_LIBRARIES})
+set(gr_osmosdr_srcs ${gr_osmosdr_srcs} PARENT_SCOPE)

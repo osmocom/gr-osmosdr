@@ -21,19 +21,18 @@
 # This file included, use CMake directory variables
 ########################################################################
 
-include_directories(
+target_include_directories(gnuradio-osmosdr PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${SoapySDR_INCLUDE_DIRS}
 )
 
-set(soapy_srcs
+target_link_libraries(gnuradio-osmosdr
+    ${SoapySDR_LIBRARIES}
+)
+
+list(APPEND gr_osmosdr_srcs
     ${CMAKE_CURRENT_SOURCE_DIR}/soapy_common.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/soapy_source_c.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/soapy_sink_c.cc
 )
-
-########################################################################
-# Append gnuradio-osmosdr library sources
-########################################################################
-list(APPEND gr_osmosdr_srcs ${soapy_srcs})
-list(APPEND gr_osmosdr_libs ${SoapySDR_LIBRARIES})
+set(gr_osmosdr_srcs ${gr_osmosdr_srcs} PARENT_SCOPE)

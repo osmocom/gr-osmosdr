@@ -21,17 +21,16 @@
 # This file included, use CMake directory variables
 ########################################################################
 
-include_directories(
+target_include_directories(gnuradio-osmosdr PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${LIBSDRPLAY_INCLUDE_DIRS}
 )
 
-set(sdrplay_srcs
-    ${CMAKE_CURRENT_SOURCE_DIR}/sdrplay_source_c.cc
+target_link_libraries(gnuradio-osmosdr
+    ${LIBSDRPLAY_LIBRARIES}
 )
 
-########################################################################
-# Append gnuradio-sdrplay library sources
-########################################################################
-list(APPEND gr_osmosdr_srcs ${sdrplay_srcs})
-list(APPEND gr_osmosdr_libs ${LIBSDRPLAY_LIBRARIES})
+list(APPEND gr_osmosdr_srcs
+    ${CMAKE_CURRENT_SOURCE_DIR}/sdrplay_source_c.cc
+)
+set(gr_osmosdr_srcs ${gr_osmosdr_srcs} PARENT_SCOPE)

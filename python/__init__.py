@@ -22,8 +22,4 @@
 This is the GNU Radio OsmoSDR module.
 '''
 
-# import swig generated symbols into the osmosdr namespace
-from osmosdr_swig import *
-
-# import any pure python here
-#
+from .osmosdr_swig import *
