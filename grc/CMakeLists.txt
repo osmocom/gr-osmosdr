@@ -18,28 +18,27 @@
 # Boston, MA 02110-1301, USA.
 
 ########################################################################
-# Rules for generating the source and sink xml wrappers
+# Rules for generating the source and sink yml wrappers
 ########################################################################
 include(GrPython)
 
-macro(GEN_BLOCK_XML _generator _xml_block)
+macro(GEN_BLOCK_YAML _generator _yaml_block)
     set(generator ${CMAKE_CURRENT_SOURCE_DIR}/${_generator})
-    set(xml_block ${CMAKE_CURRENT_BINARY_DIR}/${_xml_block})
-    list(APPEND xml_blocks ${xml_block})
+    set(yaml_block ${CMAKE_CURRENT_BINARY_DIR}/${_yaml_block})
+    list(APPEND yaml_blocks ${yaml_block})
     add_custom_command(
-        DEPENDS ${generator} OUTPUT ${xml_block}
-        COMMAND ${PYTHON_EXECUTABLE} ${generator} ${xml_block}
+        DEPENDS ${generator} OUTPUT ${yaml_block}
+        COMMAND ${PYTHON_EXECUTABLE} ${generator} ${yaml_block}
     )
-endmacro(GEN_BLOCK_XML)
+endmacro(GEN_BLOCK_YAML)
 
-GEN_BLOCK_XML(gen_osmosdr_blocks.py    rtlsdr_source.xml)
-GEN_BLOCK_XML(gen_osmosdr_blocks.py    osmosdr_source.xml)
-GEN_BLOCK_XML(gen_osmosdr_blocks.py    osmosdr_sink.xml)
+GEN_BLOCK_YAML(gen_osmosdr_blocks.py    rtlsdr_source.block.yml)
+GEN_BLOCK_YAML(gen_osmosdr_blocks.py    osmosdr_source.block.yml)
+GEN_BLOCK_YAML(gen_osmosdr_blocks.py    osmosdr_sink.block.yml)
 
-add_custom_target(osmosdr_grc_xml_blocks ALL DEPENDS ${xml_blocks})
+add_custom_target(osmosdr_grc_yaml_blocks ALL DEPENDS ${yaml_blocks})
 
 install(FILES
-    ${xml_blocks}
-#    DESTINATION ${GRC_BLOCKS_DIR}
+    ${yaml_blocks}
     DESTINATION share/gnuradio/grc/blocks
 )
