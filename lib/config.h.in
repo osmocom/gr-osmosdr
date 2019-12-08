@@ -16,6 +16,7 @@
 #cmakedefine ENABLE_BLADERF
 #cmakedefine ENABLE_RFSPACE
 #cmakedefine ENABLE_AIRSPY
+#cmakedefine ENABLE_AIRSPYHF
 #cmakedefine ENABLE_SOAPY
 #cmakedefine ENABLE_REDPITAYA
 #cmakedefine ENABLE_FREESRP

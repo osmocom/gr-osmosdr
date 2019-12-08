@@ -218,6 +218,14 @@ if(ENABLE_AIRSPY)
 endif(ENABLE_AIRSPY)
 
 ########################################################################
+# Setup AIRSPYHF component
+########################################################################
+GR_REGISTER_COMPONENT("AIRSPY HF+ Receiver" ENABLE_AIRSPYHF LIBAIRSPYHF_FOUND)
+if(ENABLE_AIRSPYHF)
+    add_subdirectory(airspyhf)
+endif(ENABLE_AIRSPYHF)
+
+########################################################################
 # Setup SoapySDR component
 ########################################################################
 GR_REGISTER_COMPONENT("SoapySDR support" ENABLE_SOAPY SoapySDR_FOUND)
