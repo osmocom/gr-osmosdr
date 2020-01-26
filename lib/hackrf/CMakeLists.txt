@@ -31,16 +31,8 @@ target_link_libraries(gnuradio-osmosdr
 )
 
 list(APPEND gr_osmosdr_srcs
+    ${CMAKE_CURRENT_SOURCE_DIR}/hackrf_common.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/hackrf_source_c.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/hackrf_sink_c.cc
 )
 set(gr_osmosdr_srcs ${gr_osmosdr_srcs} PARENT_SCOPE)
-
-include(CheckFunctionExists)
-set(CMAKE_REQUIRED_LIBRARIES ${LIBHACKRF_LIBRARIES})
-CHECK_FUNCTION_EXISTS(hackrf_device_list LIBHACKRF_HAVE_DEVICE_LIST)
-
-if(LIBHACKRF_HAVE_DEVICE_LIST)
-    message(STATUS "HackRF multiple device support enabled")
-    target_compile_definitions(gnuradio-osmosdr PRIVATE -DLIBHACKRF_HAVE_DEVICE_LIST)
-endif(LIBHACKRF_HAVE_DEVICE_LIST)
