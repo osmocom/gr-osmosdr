@@ -27,7 +27,7 @@ target_include_directories(gnuradio-osmosdr PRIVATE
 )
 
 target_link_libraries(gnuradio-osmosdr
-    gnuradio::filter
+    gnuradio::gnuradio-filter
     ${Gnuradio-blocks_LIBRARIES}
     ${LIBAIRSPY_LIBRARIES}
 )
