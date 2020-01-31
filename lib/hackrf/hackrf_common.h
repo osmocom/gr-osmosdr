@@ -20,6 +20,7 @@
 #ifndef INCLUDED_HACKRF_COMMON_H
 #define INCLUDED_HACKRF_COMMON_H
 
+#include <map>
 #include <memory>
 #include <mutex>
 #include <string>

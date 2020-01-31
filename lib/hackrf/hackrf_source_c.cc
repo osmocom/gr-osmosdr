@@ -31,7 +31,6 @@
 #include <stdexcept>
 #include <iostream>
 
-#include <boost/assign.hpp>
 #include <boost/detail/endian.hpp>
 
 #include <gnuradio/io_signature.h>
@@ -39,8 +38,6 @@
 #include "hackrf_source_c.h"
 
 #include "arg_helpers.h"
-
-using namespace boost::assign;
 
 hackrf_source_c_sptr make_hackrf_source_c (const std::string & args)
 {
@@ -306,13 +303,7 @@ double hackrf_source_c::get_freq_corr( size_t chan )
 
 std::vector<std::string> hackrf_source_c::get_gain_names( size_t chan )
 {
-  std::vector< std::string > names;
-
-  names += "RF";
-  names += "IF";
-  names += "BB";
-
-  return names;
+  return { "RF", "IF", "BB" };
 }
 
 osmosdr::gain_range_t hackrf_source_c::get_gain_range( size_t chan )

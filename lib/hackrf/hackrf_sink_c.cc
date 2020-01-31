@@ -38,15 +38,11 @@
 #include <emmintrin.h>
 #endif
 
-#include <boost/assign.hpp>
-
 #include <gnuradio/io_signature.h>
 
 #include "hackrf_sink_c.h"
 
 #include "arg_helpers.h"
-
-using namespace boost::assign;
 
 static inline bool cb_init(circular_buffer_t *cb, size_t capacity, size_t sz)
 {
@@ -449,12 +445,7 @@ double hackrf_sink_c::get_freq_corr( size_t chan )
 
 std::vector<std::string> hackrf_sink_c::get_gain_names( size_t chan )
 {
-  std::vector< std::string > names;
-
-  names += "RF";
-  names += "IF";
-
-  return names;
+  return { "RF", "IF" };
 }
 
 osmosdr::gain_range_t hackrf_sink_c::get_gain_range( size_t chan )

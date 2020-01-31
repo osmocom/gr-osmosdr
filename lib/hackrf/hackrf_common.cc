@@ -21,13 +21,9 @@
 #include "config.h"
 #endif
 
-#include <boost/assign.hpp>
-
 #include "hackrf_common.h"
 
 #include "arg_helpers.h"
-
-using namespace boost::assign;
 
 int hackrf_common::_usage = 0;
 std::mutex hackrf_common::_usage_mutex;
@@ -213,11 +209,11 @@ osmosdr::meta_range_t hackrf_common::get_sample_rates()
    * the user is allowed to request arbitrary (fractional) rates within these
    * boundaries. */
 
-  range += osmosdr::range_t( 8e6 );
-  range += osmosdr::range_t( 10e6 );
-  range += osmosdr::range_t( 12.5e6 );
-  range += osmosdr::range_t( 16e6 );
-  range += osmosdr::range_t( 20e6 ); /* confirmed to work on fast machines */
+  range.push_back(osmosdr::range_t( 8e6 ));
+  range.push_back(osmosdr::range_t( 10e6 ));
+  range.push_back(osmosdr::range_t( 12.5e6 ));
+  range.push_back(osmosdr::range_t( 16e6 ));
+  range.push_back(osmosdr::range_t( 20e6 )); /* confirmed to work on fast machines */
 
   return range;
 }
@@ -246,7 +242,7 @@ osmosdr::freq_range_t hackrf_common::get_freq_range( size_t chan )
 {
   osmosdr::freq_range_t range;
 
-  range += osmosdr::range_t( _sample_rate / 2, 7250e6 - _sample_rate / 2 );
+  range.push_back(osmosdr::range_t( _sample_rate / 2, 7250e6 - _sample_rate / 2 ));
 
   return range;
 }
@@ -325,11 +321,7 @@ double hackrf_common::get_gain( size_t chan )
 
 std::vector< std::string > hackrf_common::get_antennas( size_t chan )
 {
-  std::vector< std::string > antennas;
-
-  antennas += get_antenna( chan );
-
-  return antennas;
+  return { get_antenna( chan ) };
 }
 
 std::string hackrf_common::set_antenna( const std::string & antenna, size_t chan )
@@ -375,22 +367,22 @@ osmosdr::freq_range_t hackrf_common::get_bandwidth_range( size_t chan )
 
   // TODO: read out from libhackrf when an API is available
 
-  bandwidths += osmosdr::range_t( 1750000 );
-  bandwidths += osmosdr::range_t( 2500000 );
-  bandwidths += osmosdr::range_t( 3500000 );
-  bandwidths += osmosdr::range_t( 5000000 );
-  bandwidths += osmosdr::range_t( 5500000 );
-  bandwidths += osmosdr::range_t( 6000000 );
-  bandwidths += osmosdr::range_t( 7000000 );
-  bandwidths += osmosdr::range_t( 8000000 );
-  bandwidths += osmosdr::range_t( 9000000 );
-  bandwidths += osmosdr::range_t( 10000000 );
-  bandwidths += osmosdr::range_t( 12000000 );
-  bandwidths += osmosdr::range_t( 14000000 );
-  bandwidths += osmosdr::range_t( 15000000 );
-  bandwidths += osmosdr::range_t( 20000000 );
-  bandwidths += osmosdr::range_t( 24000000 );
-  bandwidths += osmosdr::range_t( 28000000 );
+  bandwidths.push_back(osmosdr::range_t( 1750000 ));
+  bandwidths.push_back(osmosdr::range_t( 2500000 ));
+  bandwidths.push_back(osmosdr::range_t( 3500000 ));
+  bandwidths.push_back(osmosdr::range_t( 5000000 ));
+  bandwidths.push_back(osmosdr::range_t( 5500000 ));
+  bandwidths.push_back(osmosdr::range_t( 6000000 ));
+  bandwidths.push_back(osmosdr::range_t( 7000000 ));
+  bandwidths.push_back(osmosdr::range_t( 8000000 ));
+  bandwidths.push_back(osmosdr::range_t( 9000000 ));
+  bandwidths.push_back(osmosdr::range_t( 10000000 ));
+  bandwidths.push_back(osmosdr::range_t( 12000000 ));
+  bandwidths.push_back(osmosdr::range_t( 14000000 ));
+  bandwidths.push_back(osmosdr::range_t( 15000000 ));
+  bandwidths.push_back(osmosdr::range_t( 20000000 ));
+  bandwidths.push_back(osmosdr::range_t( 24000000 ));
+  bandwidths.push_back(osmosdr::range_t( 28000000 ));
 
   return bandwidths;
 }
