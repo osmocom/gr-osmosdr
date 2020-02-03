@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # Copyright 2012 Free Software Foundation, Inc.
 #
@@ -20,45 +20,71 @@
 # Boston, MA 02110-1301, USA.
 #
 
-SAMP_RANGE_KEY = 'samp_range'
-SAMP_RATE_KEY = 'samp_rate'
-GAIN_KEY = lambda x: 'gain:'+x
-BWIDTH_KEY = 'bwidth'
-CENTER_FREQ_KEY = 'center_freq'
-FREQ_CORR_KEY = 'freq_corr'
-FREQ_RANGE_KEY = 'freq_range'
-GAIN_RANGE_KEY = lambda x: 'gain_range:'+x
-BWIDTH_RANGE_KEY = 'bwidth_range'
-
 import osmosdr
 from gnuradio import blocks
-from gnuradio import gr, gru
+from gnuradio import gr
 from gnuradio import eng_notation
-from gnuradio.gr.pubsub import pubsub
+from gnuradio.filter import firdes
 from gnuradio.eng_option import eng_option
 from optparse import OptionParser
+from functools import partial
 
 import sys
-import numpy
+import signal
 import time
 import datetime
 
 try:
-    from gnuradio.wxgui import stdgui2, form, slider
-    from gnuradio.wxgui import forms
-    from gnuradio.wxgui import fftsink2, waterfallsink2, scopesink2
-    import wx
+    from PyQt5 import Qt
+    from gnuradio import qtgui
+    import sip
+    from gnuradio.qtgui import Range, RangeWidget
 except ImportError:
-    sys.stderr.write("Error importing GNU Radio's wxgui. Please make sure gr-wxgui is installed.\n")
+    sys.stderr.write("Error importing GNU Radio's Qtgui.\n")
     sys.exit(1)
 
-class app_top_block(stdgui2.std_top_block, pubsub):
-    def __init__(self, frame, panel, vbox, argv):
-        stdgui2.std_top_block.__init__(self, frame, panel, vbox, argv)
-        pubsub.__init__(self)
 
-        self.frame = frame
-        self.panel = panel
+class CallEvent(Qt.QEvent):
+    """An event containing a request for a function call."""
+    EVENT_TYPE = Qt.QEvent.Type(Qt.QEvent.registerEventType())
+
+    def __init__(self, fn, *args, **kwargs):
+        Qt.QEvent.__init__(self, self.EVENT_TYPE)
+        self.fn = fn
+        self.args = args
+        self.kwargs = kwargs
+
+
+class freq_recv(gr.sync_block, Qt.QObject):
+    def __init__(self, callback):
+        gr.sync_block.__init__(self, name="freq_recv", in_sig=None, out_sig=None)
+        Qt.QObject.__init__(self)
+
+        self.set_freq=callback
+
+        # Advertise 'msg' port
+        self.message_port_register_in(gr.pmt.intern('msg'))
+        self.set_msg_handler(gr.pmt.intern('msg'), self.handle_msg)
+
+    def handle_msg(self, msg_pmt):
+        # Unpack message & call set_freq on main thread
+        meta = gr.pmt.to_python(gr.pmt.car(msg_pmt))
+        msg = gr.pmt.cdr(msg_pmt)
+        if meta=="freq":
+            freq = gr.pmt.to_double(msg)
+            Qt.QCoreApplication.postEvent(self, CallEvent(self.set_freq, freq))
+
+    def event(self, event):
+        event.accept()
+        result = event.fn(*event.args, **event.kwargs)
+        return True
+
+
+class app_top_block(gr.top_block, Qt.QMainWindow):
+    def __init__(self, argv, title):
+        gr.top_block.__init__(self, title)
+        Qt.QMainWindow.__init__(self)
+        self.setWindowTitle(title)
 
         parser = OptionParser(option_class=eng_option)
         parser.add_option("-a", "--args", type="string", default="",
@@ -89,6 +115,8 @@ class app_top_block(stdgui2.std_top_block, pubsub):
                           help="Enable fosphor display")
         parser.add_option("-S", "--oscilloscope", action="store_true", default=False,
                           help="Enable oscilloscope display")
+        parser.add_option("-Q", "--qtgui", action="store_true", default=False,
+                          help="Enable QTgui 'all-in-one' display")
         parser.add_option("", "--avg-alpha", type="eng_float", default=1e-1,
                           help="Set fftsink averaging factor, default=[%default]")
         parser.add_option("", "--averaging", action="store_true", default=False,
@@ -112,16 +140,20 @@ class app_top_block(stdgui2.std_top_block, pubsub):
 
         self._verbose = options.verbose
 
-        self.src = osmosdr.source(options.args)
+        try:
+            self.src = osmosdr.source(options.args)
+        except RuntimeError:
+            print("Couldn't instanciate source (no device present?).", file=sys.stderr)
+            sys.exit(1)
 
         try:
             self.src.get_sample_rates().start()
         except RuntimeError:
-            print "Source has no sample rates (wrong device arguments?)."
+            print("Source has no sample rates (wrong device arguments?).", file=sys.stderr)
             sys.exit(1)
 
         # Set the antenna
-        if(options.antenna):
+        if options.antenna:
             self.src.set_antenna(options.antenna)
 
         # Set the clock source:
@@ -140,7 +172,6 @@ class app_top_block(stdgui2.std_top_block, pubsub):
                     options.gain = float(r.start()+r.stop())/2
                 except RuntimeError:
                     options.gain = 0
-                    pass
             else:
                 options.gain = gain
 
@@ -149,19 +180,28 @@ class app_top_block(stdgui2.std_top_block, pubsub):
         if self._verbose:
             gain_names = self.src.get_gain_names()
             for name in gain_names:
-                range = self.src.get_gain_range(name)
-                print "%s gain range: start %d stop %d step %d" % (name, range.start(), range.stop(), range.step())
+                rg = self.src.get_gain_range(name)
+                print("%s gain range: start %g stop %g step %g" % (name, rg.start(), rg.stop(), rg.step()))
 
         if options.gains:
             for tuple in options.gains.split(","):
                 name, gain = tuple.split(":")
                 gain = int(gain)
-                print "Setting gain %s to %d." % (name, gain)
+                print("Setting gain %s to %g." % (name, gain))
                 self.src.set_gain(gain, name)
 
         if self._verbose:
             rates = self.src.get_sample_rates()
-            print 'Supported sample rates %d-%d step %d.' % (rates.start(), rates.stop(), rates.step())
+            print('Supported sample rates %.10g-%.10g step %.10g.' % (rates.start(), rates.stop(), rates.step()))
+
+        self.bandwidth_ok = True
+        try:
+            rg = self.src.get_bandwidth_range()
+            range_start = rg.start()
+            if self._verbose:
+                print('Supported bandwidth rates %.10g-%.10g step %.10g.' % (rg.start(), rg.stop(), rg.step()))
+        except RuntimeError as ex:
+            self.bandwidth_ok = False
 
         if options.center_freq is None:
             freq = self.src.get_center_freq()
@@ -171,93 +211,99 @@ class app_top_block(stdgui2.std_top_block, pubsub):
                 # if no freq was specified, use the mid-point in Hz
                 r = self.src.get_freq_range()
                 options.center_freq = float(r.start()+r.stop())/2
+                if self._verbose:
+                    print("Using auto-calculated mid-point frequency")
 
         input_rate = self.src.set_sample_rate(options.samp_rate)
         self.src.set_bandwidth(input_rate)
 
-        self.publish(SAMP_RANGE_KEY, self.src.get_sample_rates)
-        self.publish(FREQ_RANGE_KEY, self.src.get_freq_range)
+        if self._verbose:
+            ranges = self.src.get_freq_range()
+            print("Supported frequencies %s-%s"%(eng_notation.num_to_str(ranges.start()), eng_notation.num_to_str(ranges.stop())))
 
-        for name in self.get_gain_names():
-            self.publish(GAIN_RANGE_KEY(name), (lambda self=self,name=name: self.src.get_gain_range(name)))
 
-        self.publish(BWIDTH_RANGE_KEY, self.src.get_bandwidth_range)
-
-        for name in self.get_gain_names():
-            self.publish(GAIN_KEY(name), (lambda self=self,name=name: self.src.get_gain(name)))
-
-        self.publish(BWIDTH_KEY, self.src.get_bandwidth)
+            for name in self.src.get_gain_names():
+                print("GAIN(%s): %g"%(name, self.src.get_gain(name)))
 
         # initialize values from options
-        self[SAMP_RANGE_KEY] = self.src.get_sample_rates()
-        self[SAMP_RATE_KEY] = options.samp_rate
-        self[CENTER_FREQ_KEY] = options.center_freq
-        self[FREQ_CORR_KEY] = options.freq_corr
-        self['record'] = options.record
+        if options.freq_corr is not None:
+            self.set_freq_corr(options.freq_corr)
 
         self.dc_offset_mode = options.dc_offset_mode
         self.iq_balance_mode = options.iq_balance_mode
 
         # initialize reasonable defaults for DC / IQ correction
-        self['dc_offset_real'] = 0
-        self['dc_offset_imag'] = 0
-        self['iq_balance_mag'] = 0
-        self['iq_balance_pha'] = 0
-
-        #subscribe set methods
-        self.subscribe(SAMP_RATE_KEY, self.set_sample_rate)
-
-        for name in self.get_gain_names():
-            self.subscribe(GAIN_KEY(name), (lambda gain,self=self,name=name: self.set_named_gain(gain, name)))
-
-        self.subscribe(BWIDTH_KEY, self.set_bandwidth)
-        self.subscribe(CENTER_FREQ_KEY, self.set_freq)
-        self.subscribe(FREQ_CORR_KEY, self.set_freq_corr)
-
-        self.subscribe('dc_offset_real', self.set_dc_offset)
-        self.subscribe('dc_offset_imag', self.set_dc_offset)
-        self.subscribe('iq_balance_mag', self.set_iq_balance)
-        self.subscribe('iq_balance_pha', self.set_iq_balance)
-
-        #force update on pubsub keys
-        #for key in (SAMP_RATE_KEY, BWIDTH_KEY, CENTER_FREQ_KEY, FREQ_CORR_KEY):
-            #print key, "=", self[key]
-            #self[key] = self[key]
+        self.dc_offset_real = 0
+        self.dc_offset_imag = 0
+        self.iq_balance_mag = 0
+        self.iq_balance_pha = 0
 
         if options.fosphor:
             from gnuradio import fosphor
-            self.scope = fosphor.wx_sink_c(panel, size=(800,300))
-            self.scope.set_sample_rate(input_rate)
-            self.frame.SetMinSize((800,600))
+            self.scope = fosphor.qt_sink_c()
+            self.scope.set_frequency_range(0, input_rate)
+            self.scope_win = sip.wrapinstance(self.scope.pyqwidget(), Qt.QWidget)
+            self.scope_win.setMinimumSize(800, 300)
         elif options.waterfall:
-            self.scope = waterfallsink2.waterfall_sink_c (panel,
-                                                          fft_size=options.fft_size,
-                                                          sample_rate=input_rate,
-                                                          ref_scale=options.ref_scale,
-                                                          ref_level=20.0,
-                                                          y_divs = 12)
+            self.scope = qtgui.waterfall_sink_c(
+                options.fft_size,
+                wintype=firdes.WIN_BLACKMAN_hARRIS,
+                fc=0,
+                bw=input_rate,
+                name="",
+                nconnections=1
+            )
+            self.scope.enable_grid(False)
+            self.scope.enable_axis_labels(True)
+            self.scope.set_intensity_range(-100, 20)
+            self.scope_win = sip.wrapinstance(self.scope.pyqwidget(), Qt.QWidget)
+            self.scope_win.setMinimumSize(800, 420)
 
-            self.scope.set_callback(self.wxsink_callback)
-            self.frame.SetMinSize((800, 420))
         elif options.oscilloscope:
-            self.scope = scopesink2.scope_sink_c(panel, sample_rate=input_rate)
-            self.frame.SetMinSize((800, 600))
+            self.scope = qtgui.time_sink_c(
+                options.fft_size,
+                samp_rate=input_rate,
+                name="",
+                nconnections=1
+            )
+            self.scope_win = sip.wrapinstance(self.scope.pyqwidget(), Qt.QWidget)
+            self.scope_win.setMinimumSize(800, 600)
+
+        elif options.qtgui:
+            self.scope = qtgui.sink_c(
+                options.fft_size,
+                wintype=firdes.WIN_BLACKMAN_hARRIS,
+                fc=0,
+                bw=input_rate,
+                name="",
+                plotfreq=True,
+                plotwaterfall=True,
+                plottime=True,
+                plotconst=True
+            )
+            self.scope_win = sip.wrapinstance(self.scope.pyqwidget(), Qt.QWidget)
+            self.scope.set_update_time(1.0/10)
+            self.scope_win.setMinimumSize(800, 600)
+
         else:
-            self.scope = fftsink2.fft_sink_c (panel,
-                                              fft_size=options.fft_size,
-                                              sample_rate=input_rate,
-                                              ref_scale=options.ref_scale,
-                                              ref_level=20.0,
-                                              y_divs = 12,
-                                              average=options.averaging,
-                                              peak_hold=options.peak_hold,
-                                              avg_alpha=options.avg_alpha,
-                                              fft_rate=options.fft_rate)
+            self.scope = qtgui.freq_sink_c(
+                fftsize=options.fft_size,
+                wintype=firdes.WIN_BLACKMAN_hARRIS,
+                fc=0,
+                bw=input_rate,
+                name="",
+                nconnections=1
+            )
+            self.scope_win = sip.wrapinstance(self.scope.pyqwidget(), Qt.QWidget)
+            self.scope.disable_legend()
+            self.scope_win.setMinimumSize(800, 420)
 
-            self.scope.set_callback(self.wxsink_callback)
-            self.frame.SetMinSize((800, 420))
-
-        self.connect(self.src, self.scope)
+        self.connect((self.src, 0), (self.scope, 0))
+        try:
+            self.freq = freq_recv(self.set_freq)
+            self.msg_connect((self.scope, 'freq'), (self.freq, 'msg'))
+        except RuntimeError:
+            self.freq = None
 
         self.file_sink = blocks.file_sink(gr.sizeof_gr_complex, "/dev/null", False)
         self.file_sink.set_unbuffered(False)
@@ -265,586 +311,404 @@ class app_top_block(stdgui2.std_top_block, pubsub):
         # lock/connect/unlock at record button event did not work, so we leave it connected at all times
         self.connect(self.src, self.file_sink)
 
-        self._build_gui(vbox)
-
-        if self.dc_offset_mode != None:
-            self.set_dc_offset_mode(self.dc_offset_mode)
-
-        if self.iq_balance_mode != None:
-            self.set_iq_balance_mode(self.iq_balance_mode)
+        self._build_gui()
 
         # set initial values
-        if not(self.set_freq(options.center_freq)):
+        if not self.set_freq(options.center_freq):
             self._set_status_msg("Failed to set initial frequency")
+        if options.record is not None:
+            self._fre.insert(options.record)
 
     def record_to_filename(self):
-        s = self['record']
+        s = self._fre.text()
         s = s.replace('%S', '%e' % self.src.get_sample_rate())
         s = s.replace('%F', '%e' % self.src.get_center_freq())
         s = s.replace('%T', datetime.datetime.now().strftime('%Y%m%d%H%M%S'))
         return s
 
-    def wxsink_callback(self, x, y):
-        self.set_freq_from_callback(x)
+    def _set_status_msg(self, msg, timeout=0):
+        self.status.showMessage(msg, timeout)
 
-    def _set_status_msg(self, msg):
-        self.frame.GetStatusBar().SetStatusText(msg, 0)
+    def _shrink(self, widget):
+        """Try to shrink RangeWidget by removing unnecessary margins"""
+        try:
+            widget.layout().setContentsMargins(0, 0, 0, 0)
+            widget.children()[0].layout().setContentsMargins(0, 0, 0, 0)
+        except:
+            pass
 
-    def _build_gui(self, vbox):
+    def _add_section(self, text, layout):
+        """Add a section header to the GUI"""
+        frame = Qt.QWidget()
+        frame_layout = Qt.QHBoxLayout()
+        frame_layout.setContentsMargins(0, 0, 0, 0)
+        frame.setLayout(frame_layout)
 
-        if hasattr(self.scope, 'win'):
-            vbox.Add(self.scope.win, 1, wx.EXPAND)
-            vbox.AddSpacer(3)
+        wid = Qt.QLabel()
+        wid.setText(text)
+        wid.setStyleSheet("font-weight: bold;")
+        frame_layout.addWidget(wid)
+        wid = Qt.QFrame()
+        wid.setFrameShape(Qt.QFrame.HLine)
+        frame_layout.addWidget(wid)
+        frame_layout.setStretchFactor(wid, 1)
 
-        # add control area at the bottom
-        self.myform = myform = form.form()
+        layout.addWidget(frame)
+
+    def _chooser(self, names, callback, default=0):
+        """A simple radio-button chooser"""
+        buttons = Qt.QWidget()
+        blayout = Qt.QHBoxLayout()
+        bgroup = Qt.QButtonGroup()
+        buttons.setObjectName("foo")
+        buttons.setStyleSheet("QWidget#foo {border: 1px outset grey;}")
+        buttons.setLayout(blayout)
+        chooser = []
+        for (num, txt) in enumerate(names):
+            rb = Qt.QRadioButton(txt)
+            rb.clicked.connect(partial(callback, num))
+            chooser.append(rb)
+            bgroup.addButton(rb,num)
+            blayout.addWidget(rb)
+            if num == default:
+                rb.setChecked(True)
+        return buttons
+
+    def _build_gui(self):
+
+        self.top_widget = Qt.QWidget()
+
+        self.top_layout = Qt.QVBoxLayout(self.top_widget)
+        self.top_layout.addWidget(self.scope_win)
+
+        self.setCentralWidget(self.top_widget)
+
+        self.status = Qt.QStatusBar()
+        self.setStatusBar(self.status)
+        self.status.setStyleSheet("QStatusBar{border-top: 1px outset grey;}")
+
+        if hasattr(RangeWidget, 'EngSlider'):
+            eng_widget="eng_slider"
+        else:
+            eng_widget="counter_slider"
 
         ##################################################
         # Frequency controls
         ##################################################
-        fc_vbox = forms.static_box_sizer(parent=self.panel,
-                                         label="Center Frequency",
-                                         orient=wx.VERTICAL,
-                                         bold=True)
-        fc_vbox.AddSpacer(3)
-        # First row of frequency controls (center frequency)
-        freq_hbox = wx.BoxSizer(wx.HORIZONTAL)
-        fc_vbox.Add(freq_hbox, 0, wx.EXPAND)
-        fc_vbox.AddSpacer(5)
-        # Second row of frequency controls (freq. correction)
-        corr_hbox = wx.BoxSizer(wx.HORIZONTAL)
-        fc_vbox.Add(corr_hbox, 0, wx.EXPAND)
-        fc_vbox.AddSpacer(3)
+        self._add_section("Frequency", self.top_layout)
 
-        # Add frequency controls to top window sizer
-        vbox.Add(fc_vbox, 0, wx.EXPAND)
-        vbox.AddSpacer(5)
+        r = self.src.get_freq_range()
+        self._fr = Range(r.start(), r.stop(), (r.start()+r.stop())/100, self.src.get_center_freq(), 200)
+        self._fw = RangeWidget(self._fr, self.set_freq, 'Center Frequency (Hz)', eng_widget, float)
+        self._shrink(self._fw)
+        self.top_layout.addWidget(self._fw)
 
-        freq_hbox.AddSpacer(3)
-        forms.text_box(
-            parent=self.panel, sizer=freq_hbox,
-            label='Center Frequency (Hz)',
-            proportion=1,
-            converter=forms.float_converter(),
-            ps=self,
-            key=CENTER_FREQ_KEY,
-        )
-        freq_hbox.AddSpacer(5)
-
-        try: # range.start() == range.stop() in file= mode
-
-            forms.slider(
-                parent=self.panel, sizer=freq_hbox,
-                proportion=3,
-                ps=self,
-                key=CENTER_FREQ_KEY,
-                minimum=self[FREQ_RANGE_KEY].start(),
-                maximum=self[FREQ_RANGE_KEY].stop(),
-                num_steps=1000,
-            )
-            freq_hbox.AddSpacer(3)
-
-        except AssertionError:
-            pass
-
-        if self[FREQ_CORR_KEY] != None: # show frequency correction scrollbar
-
-            corr_hbox.AddSpacer(3)
-            forms.text_box(
-                parent=self.panel, sizer=corr_hbox,
-                label='Freq. Correction (ppm)',
-                proportion=1,
-                converter=forms.float_converter(),
-                ps=self,
-                key=FREQ_CORR_KEY,
-            )
-            corr_hbox.AddSpacer(5)
-
-            forms.slider(
-                parent=self.panel, sizer=corr_hbox,
-                proportion=3,
-                ps=self,
-                key=FREQ_CORR_KEY,
-                minimum=-100,
-                maximum=+100,
-                num_steps=2010,
-                step_size=0.1,
-            )
-            corr_hbox.AddSpacer(3)
+        if hasattr(self, 'ppm') and self.ppm is not None:
+            self._fcr = Range(-100, 100, 0.1, self.src.get_freq_corr(), 200)
+            self._fcw = RangeWidget(self._fcr, self.set_freq_corr, 'Freq. Correction (ppm)', "counter_slider", float)
+            self._shrink(self._fcw)
+            self.top_layout.addWidget(self._fcw)
 
         ##################################################
         # Gain controls
         ##################################################
-        gc_vbox = forms.static_box_sizer(parent=self.panel,
-                                         label="Gain Settings",
-                                         orient=wx.VERTICAL,
-                                         bold=True)
-        gc_vbox.AddSpacer(3)
+        self._add_section("Gains", self.top_layout)
 
-        # Add gain controls to top window sizer
-        vbox.Add(gc_vbox, 0, wx.EXPAND)
-        vbox.AddSpacer(5)
-
-        for gain_name in self.get_gain_names():
-            range = self[GAIN_RANGE_KEY(gain_name)]
-            gain = self[GAIN_KEY(gain_name)]
-
-            #print gain_name, gain, range.to_pp_string()
-            if range.start() < range.stop():
-                gain_hbox = wx.BoxSizer(wx.HORIZONTAL)
-                gc_vbox.Add(gain_hbox, 0, wx.EXPAND)
-                gc_vbox.AddSpacer(3)
-
-                gain_hbox.AddSpacer(3)
-                forms.text_box(
-                    parent=self.panel, sizer=gain_hbox,
-                    proportion=1,
-                    converter=forms.float_converter(),
-                    ps=self,
-                    key=GAIN_KEY(gain_name),
-                    label=gain_name + " Gain (dB)",
-                )
-                gain_hbox.AddSpacer(5)
-                forms.slider(
-                    parent=self.panel, sizer=gain_hbox,
-                    proportion=3,
-                    ps=self,
-                    key=GAIN_KEY(gain_name),
-                    minimum=range.start(),
-                    maximum=range.stop(),
-                    step_size=range.step() or (range.stop() - range.start())/10,
-                )
-                gain_hbox.AddSpacer(3)
+        self._gr={}
+        self._gw={}
+        for gain_name in self.src.get_gain_names():
+            rg = self.src.get_gain_range(gain_name)
+            self._gr[gain_name] = Range(rg.start(), rg.stop(), rg.step(), self.src.get_gain(gain_name), 100)
+            self._gw[gain_name] = RangeWidget(self._gr[gain_name], partial(self.set_named_gain,name=gain_name), '%s Gain (dB):'%gain_name, "counter_slider", float)
+            self._shrink(self._gw[gain_name])
+            self._gw[gain_name].d_widget.counter.setDecimals(2)
+            self.top_layout.addWidget(self._gw[gain_name])
 
         ##################################################
         # Bandwidth controls
         ##################################################
-        try:
+        if self.bandwidth_ok:
+            self._add_section("Bandwidth", self.top_layout)
 
-            bw_range = self[BWIDTH_RANGE_KEY]
-            #print bw_range.to_pp_string()
-            if bw_range.start() < bw_range.stop():
-                bwidth_vbox = forms.static_box_sizer(parent=self.panel,
-                                                     label="Bandwidth",
-                                                     orient=wx.VERTICAL,
-                                                     bold=True)
-                bwidth_vbox.AddSpacer(3)
-                bwidth_hbox = wx.BoxSizer(wx.HORIZONTAL)
-                bwidth_vbox.Add(bwidth_hbox, 0, wx.EXPAND)
-                bwidth_vbox.AddSpacer(3)
-
-                vbox.Add(bwidth_vbox, 0, wx.EXPAND)
-                vbox.AddSpacer(5)
-
-                bwidth_hbox.AddSpacer(3)
-                forms.text_box(
-                    parent=self.panel, sizer=bwidth_hbox,
-                    proportion=1,
-                    converter=forms.float_converter(),
-                    ps=self,
-                    key=BWIDTH_KEY,
-                    label="Bandwidth (Hz)",
-                )
-                bwidth_hbox.AddSpacer(5)
-                forms.slider(
-                    parent=self.panel, sizer=bwidth_hbox,
-                    proportion=3,
-                    ps=self,
-                    key=BWIDTH_KEY,
-                    minimum=bw_range.start(),
-                    maximum=bw_range.stop(),
-                    step_size=bw_range.step() or (bw_range.stop() - bw_range.start())/100,
-                )
-                bwidth_hbox.AddSpacer(3)
-
-        except RuntimeError:
-            pass
-
+            r = self.src.get_bandwidth_range()
+            self._bwr = Range(r.start(), r.stop(), r.step() or (r.stop() - r.start())/100, self.src.get_bandwidth(), 100)
+            self._bww = RangeWidget(self._bwr, self.set_bandwidth, 'Bandwidth (Hz):', eng_widget, float)
+            self._shrink(self._bww)
+            self.top_layout.addWidget(self._bww)
 
         ##################################################
         # Sample rate controls
         ##################################################
-        sr_vbox = forms.static_box_sizer(parent=self.panel,
-                                         label="Sample Rate",
-                                         orient=wx.VERTICAL,
-                                         bold=True)
-        sr_vbox.AddSpacer(3)
-        # First row of sample rate controls
-        sr_hbox = wx.BoxSizer(wx.HORIZONTAL)
-        sr_vbox.Add(sr_hbox, 0, wx.EXPAND)
-        sr_vbox.AddSpacer(5)
+        self._add_section("Sample Rate", self.top_layout)
 
-        # Add sample rate controls to top window sizer
-        vbox.Add(sr_vbox, 0, wx.EXPAND)
-        vbox.AddSpacer(5)
-
-        sr_hbox.AddSpacer(3)
-        self.sample_rate_text = forms.text_box(
-            parent=self.panel, sizer=sr_hbox,
-            label='Sample Rate (Hz)',
-            proportion=1,
-            converter=forms.float_converter(),
-            ps=self,
-            key=SAMP_RATE_KEY,
-        )
-        sr_hbox.AddSpacer(5)
-
-        #forms.slider(
-        #    parent=self.panel, sizer=sr_hbox,
-        #    proportion=3,
-        #    ps=self,
-        #    key=SAMP_RATE_KEY,
-        #    minimum=self[SAMP_RANGE_KEY].start(),
-        #    maximum=self[SAMP_RANGE_KEY].stop(),
-        #    step_size=self[SAMP_RANGE_KEY].step(),
-        #)
-        #sr_hbox.AddSpacer(3)
-
+        r = self.src.get_sample_rates()
+        self._srr = Range(r.start(), r.stop(), r.step(), self.src.get_sample_rate(), 100)
+        self._srw = RangeWidget(self._srr, self.set_sample_rate, 'Sample Rate (Hz)', eng_widget, float)
+        self._shrink(self._srw)
+        self.top_layout.addWidget(self._srw)
 
         ##################################################
         # File recording controls
         ##################################################
 
-        rec_vbox = forms.static_box_sizer(parent=self.panel,
-                                     label="File recording",
-                                     orient=wx.VERTICAL,
-                                     bold=True)
-        rec_vbox.AddSpacer(3)
-        # First row of sample rate controls
-        rec_hbox = wx.BoxSizer(wx.HORIZONTAL)
-        rec_vbox.Add(rec_hbox, 0, wx.EXPAND)
-        rec_vbox.AddSpacer(5)
+        self._add_section("File recording", self.top_layout)
 
-        # Add sample rate controls to top window sizer
-        vbox.Add(rec_vbox, 0, wx.EXPAND)
-        vbox.AddSpacer(5)
+        wid = Qt.QWidget()
 
-        rec_hbox.AddSpacer(3)
-        self.record_text = forms.text_box(
-            parent=self.panel, sizer=rec_hbox,
-            label='File Name',
-            proportion=1,
-            ps=self,
-            key='record',
-            converter=forms.str_converter(),
-        )
-        rec_hbox.AddSpacer(5)
+        layout = Qt.QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
 
-        def record_callback(value):
-            if value:
-                self.sample_rate_text.Disable()
-                self.record_text.Disable()
+        self._frl = Qt.QLabel('File Name')
+        layout.addWidget(self._frl)
+
+        self._fre = Qt.QLineEdit()
+        layout.addWidget(self._fre)
+
+        self._frb = Qt.QPushButton('REC')
+        layout.addWidget(self._frb)
+
+        wid.setLayout(layout)
+        self.top_layout.addWidget(wid)
+
+        self.recording = 0
+        def record_callback():
+            self.recording = 1-self.recording
+            if self.recording:
+                self._srw.setDisabled(True)
+                self._fre.setDisabled(True)
+                self._frb.setText('STOP')
 
                 self.rec_file_name = self.record_to_filename()
 
-                print "Recording samples to ", self.rec_file_name
+                print("Recording samples to ", self.rec_file_name)
                 self.file_sink.open(self.rec_file_name);
             else:
-                self.sample_rate_text.Enable()
-                self.record_text.Enable()
+                self._srw.setDisabled(False)
+                self._fre.setDisabled(False)
+                self._frb.setText('REC')
 
                 self.file_sink.close()
-                print "Finished recording to", self.rec_file_name
+                print("Finished recording to", self.rec_file_name)
 
-        forms.toggle_button(
-            sizer=rec_hbox,
-            parent=self.panel,
-            false_label='REC',
-            true_label='STOP',
-            value=False,
-            callback=record_callback,
-        )
+        self._fre.returnPressed.connect(record_callback)
+        self._frb.clicked.connect(record_callback)
 
         ##################################################
         # DC Offset controls
         ##################################################
 
         if self.dc_offset_mode != None:
+            self._add_section("DC Offset Correction", self.top_layout)
 
-            dc_offset_vbox = forms.static_box_sizer(parent=self.panel,
-                                             label="DC Offset Correction",
-                                             orient=wx.VERTICAL,
-                                             bold=True)
-            dc_offset_vbox.AddSpacer(3)
-            # First row of sample rate controls
-            dc_offset_hbox = wx.BoxSizer(wx.HORIZONTAL)
-            dc_offset_vbox.Add(dc_offset_hbox, 0, wx.EXPAND)
-            dc_offset_vbox.AddSpacer(3)
+            wid = Qt.QWidget()
 
-            # Add frequency controls to top window sizer
-            vbox.Add(dc_offset_vbox, 0, wx.EXPAND)
-            vbox.AddSpacer(3)
+            layout = Qt.QHBoxLayout()
+            layout.setContentsMargins(0, 0, 0, 0)
 
-            self.dc_offset_mode_chooser = forms.radio_buttons(
-                    parent=self.panel,
-                    value=self.dc_offset_mode,
-                    callback=self.set_dc_offset_mode,
-                    label='',
-                    choices=[0, 1, 2],
-                    labels=["Off", "Manual", "Auto"],
-                    style=wx.RA_HORIZONTAL,
-            )
-            dc_offset_hbox.Add(self.dc_offset_mode_chooser)
-            dc_offset_hbox.AddSpacer(3)
+            self._dcb = self._chooser(["Off", "Manual", "Auto"], self.set_dc_offset_mode, self.dc_offset_mode)
+            layout.addWidget(self._dcb)
 
-            dc_offset_hbox.AddSpacer(3)
-            self.dc_offset_real_text = forms.text_box(
-                parent=self.panel, sizer=dc_offset_hbox,
-                label='Real',
-                proportion=1,
-                converter=forms.float_converter(),
-                ps=self,
-                key='dc_offset_real',
-            )
-            dc_offset_hbox.AddSpacer(3)
+            self._dcrr = Range(-1, +1, 0.001, 0, 20)
+            self._dcrw = RangeWidget(self._dcrr, self.set_dc_offset_real, 'Real', "counter_slider", float)
+            self._shrink(self._dcrw)
+            layout.addWidget(self._dcrw)
 
-            self.dc_offset_real_slider = forms.slider(
-                parent=self.panel, sizer=dc_offset_hbox,
-                proportion=3,
-                minimum=-1,
-                maximum=+1,
-                step_size=0.001,
-                ps=self,
-                key='dc_offset_real',
-            )
-            dc_offset_hbox.AddSpacer(3)
+            self._dcir = Range(-1, +1, 0.001, 0, 20)
+            self._dciw = RangeWidget(self._dcrr, self.set_dc_offset_imag, 'Imag', "counter_slider", float)
+            self._shrink(self._dciw)
+            layout.addWidget(self._dciw)
 
-            dc_offset_hbox.AddSpacer(3)
-            self.dc_offset_imag_text = forms.text_box(
-                parent=self.panel, sizer=dc_offset_hbox,
-                label='Imag',
-                proportion=1,
-                converter=forms.float_converter(),
-                ps=self,
-                key='dc_offset_imag',
-            )
-            dc_offset_hbox.AddSpacer(3)
-
-            self.dc_offset_imag_slider = forms.slider(
-                parent=self.panel, sizer=dc_offset_hbox,
-                proportion=3,
-                minimum=-1,
-                maximum=+1,
-                step_size=0.001,
-                ps=self,
-                key='dc_offset_imag',
-            )
-            dc_offset_hbox.AddSpacer(3)
+            wid.setLayout(layout)
+            self.top_layout.addWidget(wid)
 
         ##################################################
         # IQ Imbalance controls
         ##################################################
 
         if self.iq_balance_mode != None:
+            self._add_section("IQ Imbalance Correction", self.top_layout)
 
-            iq_balance_vbox = forms.static_box_sizer(parent=self.panel,
-                                             label="IQ Imbalance Correction",
-                                             orient=wx.VERTICAL,
-                                             bold=True)
-            iq_balance_vbox.AddSpacer(3)
-            # First row of sample rate controls
-            iq_balance_hbox = wx.BoxSizer(wx.HORIZONTAL)
-            iq_balance_vbox.Add(iq_balance_hbox, 0, wx.EXPAND)
-            iq_balance_vbox.AddSpacer(3)
+            wid = Qt.QWidget()
 
-            # Add frequency controls to top window sizer
-            vbox.Add(iq_balance_vbox, 0, wx.EXPAND)
-            vbox.AddSpacer(3)
+            layout = Qt.QHBoxLayout()
+            layout.setContentsMargins(0, 0, 0, 0)
 
-            self.iq_balance_mode_chooser = forms.radio_buttons(
-                    parent=self.panel,
-                    value=self.iq_balance_mode,
-                    callback=self.set_iq_balance_mode,
-                    label='',
-                    choices=[0, 1, 2],
-                    labels=["Off", "Manual", "Auto"],
-                    style=wx.RA_HORIZONTAL,
-            )
-            iq_balance_hbox.Add(self.iq_balance_mode_chooser)
-            iq_balance_hbox.AddSpacer(3)
+            self._iqb = self._chooser(["Off", "Manual", "Auto"], self.set_dc_offset_mode, self.iq_balance_mode)
+            layout.addWidget(self._iqb)
 
-            iq_balance_hbox.AddSpacer(3)
-            self.iq_balance_mag_text = forms.text_box(
-                parent=self.panel, sizer=iq_balance_hbox,
-                label='Mag',
-                proportion=1,
-                converter=forms.float_converter(),
-                ps=self,
-                key='iq_balance_mag',
-            )
-            iq_balance_hbox.AddSpacer(3)
+            self._iqmr = Range(-1, +1, 0.001, 0, 20)
+            self._iqmw = RangeWidget(self._iqmr, self.set_iq_balance_mag, 'Mag', "counter_slider", float)
+            self._shrink(self._iqmw)
+            layout.addWidget(self._iqmw)
 
-            self.iq_balance_mag_slider = forms.slider(
-                parent=self.panel, sizer=iq_balance_hbox,
-                proportion=3,
-                minimum=-1,
-                maximum=+1,
-                step_size=0.001,
-                ps=self,
-                key='iq_balance_mag',
-            )
-            iq_balance_hbox.AddSpacer(3)
+            self._iqpr = Range(-1, +1, 0.001, 0, 20)
+            self._iqpw = RangeWidget(self._iqpr, self.set_iq_balance_pha, 'Pha', "counter_slider", float)
+            self._shrink(self._iqpw)
+            layout.addWidget(self._iqpw)
 
-            iq_balance_hbox.AddSpacer(3)
-            self.iq_balance_pha_text = forms.text_box(
-                parent=self.panel, sizer=iq_balance_hbox,
-                label='Phase',
-                proportion=1,
-                converter=forms.float_converter(),
-                ps=self,
-                key='iq_balance_pha',
-            )
-            iq_balance_hbox.AddSpacer(3)
-
-            self.iq_balance_pha_slider = forms.slider(
-                parent=self.panel, sizer=iq_balance_hbox,
-                proportion=3,
-                minimum=-1,
-                maximum=+1,
-                step_size=0.001,
-                ps=self,
-                key='iq_balance_pha',
-            )
-            iq_balance_hbox.AddSpacer(3)
+            wid.setLayout(layout)
+            self.top_layout.addWidget(wid)
 
     def set_dc_offset_mode(self, dc_offset_mode):
         if dc_offset_mode == 1:
-            self.dc_offset_real_text.Enable()
-            self.dc_offset_real_slider.Enable()
-            self.dc_offset_imag_text.Enable()
-            self.dc_offset_imag_slider.Enable()
+            self._dcrw.setDisabled(False)
+            self._dciw.setDisabled(False)
 
-            self.set_dc_offset(0)
+            self.set_dc_offset()
         else:
-            self.dc_offset_real_text.Disable()
-            self.dc_offset_real_slider.Disable()
-            self.dc_offset_imag_text.Disable()
-            self.dc_offset_imag_slider.Disable()
+            self._dcrw.setDisabled(True)
+            self._dciw.setDisabled(True)
 
         self.dc_offset_mode = dc_offset_mode
         self.src.set_dc_offset_mode(dc_offset_mode)
-        self.dc_offset_mode_chooser.set_value(self.dc_offset_mode)
 
-    def set_dc_offset(self, value):
-        correction = complex( self['dc_offset_real'], self['dc_offset_imag'] )
+    def set_dc_offset_real(self, value):
+        self.dc_offset_real = value
+        self.set_dc_offset()
+
+    def set_dc_offset_imag(self, value):
+        self.dc_offset_imag = value
+        self.set_dc_offset()
+
+    def set_dc_offset(self):
+        correction = complex(self.dc_offset_real, self.dc_offset_imag)
 
         try:
-            self.src.set_dc_offset( correction )
+            self.src.set_dc_offset(correction)
 
             if self._verbose:
-                print "Set DC offset to", correction
+                print("Set DC offset to", correction)
         except RuntimeError as ex:
-            print ex
+            print(ex)
 
     def set_iq_balance_mode(self, iq_balance_mode):
         if iq_balance_mode == 1:
-            self.iq_balance_mag_text.Enable()
-            self.iq_balance_mag_slider.Enable()
-            self.iq_balance_pha_text.Enable()
-            self.iq_balance_pha_slider.Enable()
+            self._iqpw.setDisabled(False)
+            self._iqmw.setDisabled(False)
 
-            self.set_iq_balance(0)
+            self.set_iq_balance()
         else:
-            self.iq_balance_mag_text.Disable()
-            self.iq_balance_mag_slider.Disable()
-            self.iq_balance_pha_text.Disable()
-            self.iq_balance_pha_slider.Disable()
+            self._iqpw.setDisabled(True)
+            self._iqmw.setDisabled(True)
 
         self.iq_balance_mode = iq_balance_mode
         self.src.set_iq_balance_mode(iq_balance_mode)
-        self.iq_balance_mode_chooser.set_value(self.iq_balance_mode)
 
-    def set_iq_balance(self, value):
-        correction = complex( self['iq_balance_mag'], self['iq_balance_pha'] )
+    def set_iq_balance_mag(self, value):
+        self.iq_balance_mag = value
+        self.set_iq_balance()
+
+    def set_iq_balance_pha(self, value):
+        self.iq_balance_pha = value
+        self.set_iq_balance()
+
+    def set_iq_balance(self):
+        correction = complex(self.iq_balance_mag, self.iq_balance_pha)
 
         try:
-            self.src.set_iq_balance( correction )
+            self.src.set_iq_balance(correction)
 
             if self._verbose:
-                print "Set IQ balance to", correction
+                print("Set IQ balance to", correction)
         except RuntimeError as ex:
-            print ex
+            print(ex)
 
     def set_sample_rate(self, samp_rate):
         samp_rate = self.src.set_sample_rate(samp_rate)
+        if hasattr(self.scope, 'set_frequency_range'):
+            self.scope.set_frequency_range(self.src.get_center_freq(), samp_rate)
         if hasattr(self.scope, 'set_sample_rate'):
             self.scope.set_sample_rate(samp_rate)
         if self._verbose:
-            print "Set sample rate to:", samp_rate
+            print("Set sample rate to:", samp_rate)
 
         try:
-            self[BWIDTH_KEY] = self.set_bandwidth(samp_rate)
-        except RuntimeError:
+            if hasattr(self._bww.d_widget, 'setValue'):
+                self._bww.d_widget.setValue(samp_rate)
+            else:
+                self._bww.d_widget.counter.setValue(samp_rate)
+        except (RuntimeError, AttributeError):
             pass
 
         return samp_rate
 
-    def get_gain_names(self):
-        return self.src.get_gain_names()
-
     def set_named_gain(self, gain, name):
-        if gain is None:
-            g = self[GAIN_RANGE_KEY(name)]
-            gain = float(g.start()+g.stop())/2
-            if self._verbose:
-                print "Using auto-calculated mid-point gain"
-            self[GAIN_KEY(name)] = gain
-            return
+        if self._verbose:
+            print("Trying to set " + name + " gain to:", gain)
 
         gain = self.src.set_gain(gain, name)
         if self._verbose:
-            print "Set " + name + " gain to:", gain
+            print("Set " + name + " gain to:", gain)
 
     def set_bandwidth(self, bw):
-        clipped_bw = self[BWIDTH_RANGE_KEY].clip(bw)
+        if self._verbose:
+            print("Trying to set bandwidth to:", bw)
+        clipped_bw = self.src.get_bandwidth_range().clip(bw)
+        if self._verbose:
+            print("Clipping bandwidth to:", clipped_bw)
         if self.src.get_bandwidth() != clipped_bw:
             bw = self.src.set_bandwidth(clipped_bw)
 
             if self._verbose:
-                print "Set bandwidth to:", bw
+                print("Set bandwidth to:", bw)
 
         return bw
 
-    def set_freq_from_callback(self, freq):
-        freq = self.src.set_center_freq(freq)
-        self[CENTER_FREQ_KEY] = freq;
-
     def set_freq(self, freq):
-        if freq is None:
-            f = self[FREQ_RANGE_KEY]
-            freq = float(f.start()+f.stop())/2.0
-            if self._verbose:
-                print "Using auto-calculated mid-point frequency"
-            self[CENTER_FREQ_KEY] = freq
-            return
 
         freq = self.src.set_center_freq(freq)
 
+        if hasattr(self.scope, 'set_frequency_range'):
+            self.scope.set_frequency_range(freq, self.src.get_sample_rate())
         if hasattr(self.scope, 'set_baseband_freq'):
             self.scope.set_baseband_freq(freq)
 
+        try:
+            if hasattr(self._fw.d_widget, 'setValue'):
+                self._fw.d_widget.setValue(freq)
+            else:
+                self._fw.d_widget.counter.setValue(freq)
+        except (RuntimeError, AttributeError):
+            pass
+
         if freq is not None:
             if self._verbose:
-                print "Set center frequency to", freq
+                print("Set center frequency to %.10g"%freq)
         elif self._verbose:
-            print "Failed to set freq."
+            print("Failed to set freq.")
         return freq
 
     def set_freq_corr(self, ppm):
-        if ppm is None:
-            ppm = 0.0
-            if self._verbose:
-                print "Using frequency corrrection of", ppm
-            self[FREQ_CORR_KEY] = ppm
-            return
-
-        ppm = self.src.set_freq_corr(ppm)
+        self.ppm = self.src.set_freq_corr(ppm)
         if self._verbose:
-            print "Set frequency correction to:", ppm
+            print("Set frequency correction to:", self.ppm)
 
-def main ():
-    app = stdgui2.stdapp(app_top_block, "osmocom Spectrum Browser", nstatus=1)
-    app.MainLoop()
+
+def main():
+    qapp = Qt.QApplication(sys.argv)
+
+    tb = app_top_block(qapp.arguments(), "osmocom Spectrum Browser")
+    tb.start()
+    tb.show()
+
+    def sig_handler(sig=None, frame=None):
+        print("caught signal")
+        Qt.QApplication.quit()
+
+    signal.signal(signal.SIGINT, sig_handler)
+    signal.signal(signal.SIGTERM, sig_handler)
+
+    # this timer is necessary for signals (^C) to work
+    timer = Qt.QTimer()
+    timer.start(500)
+    timer.timeout.connect(lambda: None)
+
+    def quitting():
+        tb.stop()
+        tb.wait()
+    qapp.aboutToQuit.connect(quitting)
+    qapp.exec_()
+
 
 if __name__ == '__main__':
-    main ()
+    main()

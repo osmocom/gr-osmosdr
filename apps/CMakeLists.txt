@@ -27,7 +27,7 @@ GR_PYTHON_INSTALL(
 
 GR_PYTHON_INSTALL(
     PROGRAMS
-    #    osmocom_fft
+    osmocom_fft
     #    osmocom_siggen
     osmocom_siggen_nogui
     osmocom_spectrum_sense
