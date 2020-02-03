@@ -269,7 +269,7 @@ double sink_impl::set_sample_rate(double rate)
     _sample_rate = sample_rate;
   }
 
-  return sample_rate;
+  return _sample_rate;
 }
 
 double sink_impl::get_sample_rate()
