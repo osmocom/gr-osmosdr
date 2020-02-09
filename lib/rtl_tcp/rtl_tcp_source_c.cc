@@ -98,7 +98,7 @@ static int is_error( int perr )
   case WSAENOPROTOOPT:
     return( perr == ENOPROTOOPT );
   default:
-    fprintf(stderr,"rtl_tcp_source_f: unknown error %d WS err %d \n", perr, werr );
+    fprintf(stderr,"rtl_tcp_source_c: unknown error %d WS err %d \n", perr, werr );
     throw std::runtime_error("internal error");
   }
   return 0;
@@ -200,7 +200,7 @@ rtl_tcp_source_c::rtl_tcp_source_c(const std::string &args) :
   WSADATA wsaData;
   int iResult = WSAStartup( MAKEWORD(2,2), &wsaData );
   if( iResult != NO_ERROR ) {
-    report_error( "rtl_tcp_source_f WSAStartup", "can't open socket" );
+    report_error( "rtl_tcp_source_c WSAStartup", "can't open socket" );
   }
 #endif
 
@@ -219,7 +219,7 @@ rtl_tcp_source_c::rtl_tcp_source_c(const std::string &args) :
   // FIXME leaks if report_error throws below
   int ret = getaddrinfo(host.c_str(), port_str, &hints, &ip_src);
   if (ret != 0)
-    report_error("rtl_tcp_source_f/getaddrinfo",
+    report_error("rtl_tcp_source_c/getaddrinfo",
                  "can't initialize source socket" );
 
   d_temp_buff = new unsigned char[payload_size];   // allow it to hold up to payload_size bytes
@@ -261,8 +261,8 @@ rtl_tcp_source_c::rtl_tcp_source_c(const std::string &args) :
     report_error("SO_RCVTIMEO","can't set socket option SO_RCVTIMEO");
 #endif // USE_RCV_TIMEO
 
-  while (::connect(d_socket, ip_src->ai_addr, ip_src->ai_addrlen) != 0)
-    ; // FIXME handle errors?
+  if (::connect(d_socket, ip_src->ai_addr, ip_src->ai_addrlen) != 0)
+    report_error("rtl_tcp_source_c/connect","can't open TCP connection");
   freeaddrinfo(ip_src);
 
   int flag = 1;
