@@ -442,7 +442,7 @@ class app_top_block(gr.top_block, Qt.QMainWindow):
         self._add_section("Sample Rate", self.top_layout)
 
         r = self.src.get_sample_rates()
-        self._srr = Range(r.start(), r.stop(), r.step(), self.src.get_sample_rate(), 100)
+        self._srr = Range(r.start(), r.stop(), r.step() or (r.stop() - r.start())/100, self.src.get_sample_rate(), 100)
         self._srw = RangeWidget(self._srr, self.set_sample_rate, 'Sample Rate (Hz)', eng_widget, float)
         self._shrink(self._srw)
         self.top_layout.addWidget(self._srw)
