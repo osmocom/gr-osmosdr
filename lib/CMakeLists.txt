@@ -41,7 +41,7 @@ if(CMAKE_COMPILER_IS_GNUCXX)
 endif()
 
 add_library(gnuradio-osmosdr SHARED)
-target_link_libraries(gnuradio-osmosdr ${Boost_LIBRARIES} gnuradio::gnuradio-runtime)
+list(APPEND gr_osmosdr_libs ${Boost_LIBRARIES} gnuradio::gnuradio-runtime)
 target_include_directories(gnuradio-osmosdr
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
     PUBLIC ${Boost_INCLUDE_DIRS}
@@ -100,7 +100,7 @@ CHECK_CXX_SOURCE_COMPILES("
 if(HAVE_CLOCK_GETTIME)
     message(STATUS "  High resolution timing supported through clock_gettime.")
     set(TIME_SPEC_DEFS HAVE_CLOCK_GETTIME)
-    target_link_libraries(gnuradio-osmosdr "-lrt")
+    list(APPEND gr_osmosdr_libs "-lrt")
 elseif(HAVE_MACH_ABSOLUTE_TIME)
     message(STATUS "  High resolution timing supported through mach_absolute_time.")
     set(TIME_SPEC_DEFS HAVE_MACH_ABSOLUTE_TIME)
@@ -124,7 +124,7 @@ GR_REGISTER_COMPONENT("Osmocom IQ Imbalance Correction" ENABLE_IQBALANCE gnuradi
 if(ENABLE_IQBALANCE)
     add_definitions(-DHAVE_IQBALANCE=1)
     target_include_directories(gnuradio-osmosdr PRIVATE ${gnuradio-iqbalance_INCLUDE_DIRS})
-    target_link_libraries(gnuradio-osmosdr gnuradio::gnuradio-iqbalance)
+    list(APPEND gr_osmosdr_libs gnuradio::gnuradio-iqbalance)
 endif(ENABLE_IQBALANCE)
 
 ########################################################################
@@ -263,6 +263,7 @@ configure_file(
 # Finalize target
 ########################################################################
 set_target_properties(gnuradio-osmosdr PROPERTIES SOURCES "${gr_osmosdr_srcs}")
+target_link_libraries(gnuradio-osmosdr ${gr_osmosdr_libs})
 
 ########################################################################
 # Install built library files

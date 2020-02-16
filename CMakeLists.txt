@@ -20,14 +20,13 @@
 ########################################################################
 # Project setup
 ########################################################################
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.8)
 include(GNUInstallDirs)
 project(gr-osmosdr CXX C)
 enable_testing()
 
 #policy setup
 cmake_policy(SET CMP0011 NEW)
-cmake_policy(SET CMP0079 NEW)
 
 #select the release build type by default to get optimization flags
 if(NOT CMAKE_BUILD_TYPE)
