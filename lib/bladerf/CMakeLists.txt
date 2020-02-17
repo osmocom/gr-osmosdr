@@ -27,7 +27,7 @@ target_include_directories(gnuradio-osmosdr PRIVATE
     ${Volk_INCLUDE_DIRS}
 )
 
-target_link_libraries(gnuradio-osmosdr
+list(APPEND gr_osmosdr_libs
     ${LIBBLADERF_LIBRARIES}
     ${Volk_LIBRARIES}
 )

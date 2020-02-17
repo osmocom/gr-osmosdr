@@ -26,7 +26,7 @@ target_include_directories(gnuradio-osmosdr PRIVATE
     ${LIBAIRSPYHF_INCLUDE_DIRS}
 )
 
-target_link_libraries(gnuradio-osmosdr
+list(APPEND gr_osmosdr_libs
     ${Gnuradio-blocks_LIBRARIES}
     ${LIBAIRSPYHF_LIBRARIES}
 )

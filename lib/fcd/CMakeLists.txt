@@ -29,7 +29,8 @@ if(ENABLE_FCD)
     target_include_directories(gnuradio-osmosdr PRIVATE
         ${Gnuradio-fcd_INCLUDE_DIRS}
     )
-    target_link_libraries(gnuradio-osmosdr PRIVATE
+
+    list(APPEND gr_osmosdr_libs
         ${Gnuradio-fcd_LIBRARIES}
     )
 endif(ENABLE_FCD)
@@ -38,7 +39,7 @@ if(ENABLE_FCDPP)
     target_include_directories(gnuradio-osmosdr PRIVATE
         ${Gnuradio-fcdpp_INCLUDE_DIRS}
     )
-    target_link_libraries(gnuradio-osmosdr PRIVATE
+    list(APPEND gr_osmosdr_libs
         ${Gnuradio-fcdpp_LIBRARIES}
     )
 endif(ENABLE_FCDPP)
