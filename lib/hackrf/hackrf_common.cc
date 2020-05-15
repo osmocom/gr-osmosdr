@@ -411,11 +411,11 @@ bool hackrf_common::get_bias()
 void hackrf_common::start()
 {
   _started = true;
-  set_bandwidth(get_bandwidth());
   set_center_freq(get_center_freq());
   set_sample_rate(get_sample_rate());
   set_gain(get_gain());
   set_bias(get_bias());
+  set_bandwidth(get_bandwidth());
 }
 
 void hackrf_common::stop()
