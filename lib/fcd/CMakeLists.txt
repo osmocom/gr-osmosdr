@@ -23,26 +23,12 @@
 
 target_include_directories(gnuradio-osmosdr PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
+    ${GNURADIO_FCDPP_INCLUDE_DIRS}
 )
 
-if(ENABLE_FCD)
-    target_include_directories(gnuradio-osmosdr PRIVATE
-        ${Gnuradio-fcd_INCLUDE_DIRS}
-    )
-
-    list(APPEND gr_osmosdr_libs
-        ${Gnuradio-fcd_LIBRARIES}
-    )
-endif(ENABLE_FCD)
-
-if(ENABLE_FCDPP)
-    target_include_directories(gnuradio-osmosdr PRIVATE
-        ${Gnuradio-fcdpp_INCLUDE_DIRS}
-    )
-    list(APPEND gr_osmosdr_libs
-        ${Gnuradio-fcdpp_LIBRARIES}
-    )
-endif(ENABLE_FCDPP)
+list(APPEND gr_osmosdr_libs
+    ${GNURADIO_FCDPP_LIBRARIES}
+)
 
 list(APPEND gr_osmosdr_srcs
     ${CMAKE_CURRENT_SOURCE_DIR}/fcd_source_c.cc

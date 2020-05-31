@@ -136,6 +136,14 @@ if(ENABLE_OSMOSDR)
 endif(ENABLE_OSMOSDR)
 
 ########################################################################
+# Setup FCD component
+########################################################################
+GR_REGISTER_COMPONENT("FUNcube Dongle" ENABLE_FCD GNURADIO_FCDPP_FOUND)
+if(ENABLE_FCD)
+    add_subdirectory(fcd)
+endif(ENABLE_FCD)
+
+########################################################################
 # Setup File component
 ########################################################################
 GR_REGISTER_COMPONENT("IQ File Source & Sink" ENABLE_FILE gnuradio-blocks_FOUND)

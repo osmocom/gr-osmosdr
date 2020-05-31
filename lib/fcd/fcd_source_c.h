@@ -22,13 +22,8 @@
 
 #include <gnuradio/hier_block2.h>
 
-#ifdef HAVE_FCD
-#include <gnuradio/fcd/source_c.h>
-#endif
-
-#ifdef HAVE_FCDPP
+#include <fcdproplus/fcd.h>
 #include <fcdproplus/fcdproplus.h>
-#endif
 
 #include "source_iface.h"
 
@@ -86,12 +81,8 @@ public:
 
 private:
   dongle_type _type;
-#ifdef HAVE_FCD
-  gr::fcd::source_c::sptr _src_v1;
-#endif
-#ifdef HAVE_FCDPP
+  gr::fcdproplus::fcd::sptr _src_v1;
   gr::fcdproplus::fcdproplus::sptr _src_v2;
-#endif
   double _lna_gain, _mix_gain, _bb_gain, _freq;
   int _correct;
 };
