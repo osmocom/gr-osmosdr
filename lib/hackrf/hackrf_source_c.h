@@ -123,9 +123,9 @@ private:
   static int _hackrf_rx_callback(hackrf_transfer* transfer);
   int hackrf_rx_callback(unsigned char *buf, uint32_t len);
 
-  std::vector<gr_complex> _lut;
+  std::vector<float> _lut;
 
-  unsigned short **_buf;
+  unsigned char **_buf;
   unsigned int _buf_num;
   unsigned int _buf_len;
   unsigned int _buf_head;

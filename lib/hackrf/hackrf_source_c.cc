@@ -31,8 +31,6 @@
 #include <stdexcept>
 #include <iostream>
 
-#include <boost/detail/endian.hpp>
-
 #include <gnuradio/io_signature.h>
 
 #include "hackrf_source_c.h"
@@ -89,14 +87,8 @@ hackrf_source_c::hackrf_source_c (const std::string &args)
   _samp_avail = _buf_len / BYTES_PER_SAMPLE;
 
   // create a lookup table for gr_complex values
-  for (unsigned int i = 0; i <= 0xffff; i++) {
-#ifdef BOOST_LITTLE_ENDIAN
-    _lut.push_back( gr_complex( (float(int8_t(i & 0xff))) * (1.0f/128.0f),
-                                (float(int8_t(i >> 8))) * (1.0f/128.0f) ) );
-#else // BOOST_BIG_ENDIAN
-    _lut.push_back( gr_complex( (float(int8_t(i >> 8))) * (1.0f/128.0f),
-                                (float(int8_t(i & 0xff))) * (1.0f/128.0f) ) );
-#endif
+  for (unsigned int i = 0; i <= 0xff; i++) {
+    _lut.push_back( float(i) * (1.0f/128.0f) );
   }
 
   if ( BUF_NUM != _buf_num || BUF_LEN != _buf_len ) {
@@ -119,11 +111,11 @@ hackrf_source_c::hackrf_source_c (const std::string &args)
     hackrf_common::set_bias(dict["bias"] == "1");
   }
 
-  _buf = (unsigned short **) malloc(_buf_num * sizeof(unsigned short *));
+  _buf = (unsigned char **) malloc(_buf_num * sizeof(unsigned char *));
 
   if (_buf) {
     for(unsigned int i = 0; i < _buf_num; ++i)
-      _buf[i] = (unsigned short *) malloc(_buf_len);
+      _buf[i] = (unsigned char *) malloc(_buf_len);
   }
 }
 
@@ -218,17 +210,18 @@ int hackrf_source_c::work( int noutput_items,
   if ( ! running )
     return WORK_DONE;
 
-  unsigned short *buf = _buf[_buf_head] + _buf_offset;
+  const uint8_t *buf = _buf[_buf_head] + _buf_offset * BYTES_PER_SAMPLE;
+#define TO_COMPLEX(p) gr_complex( _lut[(p)[0]], _lut[(p)[1]] )
 
   if (noutput_items <= _samp_avail) {
     for (int i = 0; i < noutput_items; ++i)
-      *out++ = _lut[ *(buf + i) ];
+      *out++ = TO_COMPLEX( buf + i*BYTES_PER_SAMPLE );
 
     _buf_offset += noutput_items;
     _samp_avail -= noutput_items;
   } else {
     for (int i = 0; i < _samp_avail; ++i)
-      *out++ = _lut[ *(buf + i) ];
+      *out++ = TO_COMPLEX( buf + i*BYTES_PER_SAMPLE );
 
     {
       std::lock_guard<std::mutex> lock(_buf_mutex);
@@ -242,7 +235,7 @@ int hackrf_source_c::work( int noutput_items,
     int remaining = noutput_items - _samp_avail;
 
     for (int i = 0; i < remaining; ++i)
-      *out++ = _lut[ *(buf + i) ];
+      *out++ = TO_COMPLEX( buf + i*BYTES_PER_SAMPLE );
 
     _buf_offset = remaining;
     _samp_avail = (_buf_len / BYTES_PER_SAMPLE) - remaining;
