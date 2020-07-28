@@ -122,11 +122,11 @@ templates:
     ${'%'} if context.get('nchan')() > ${n}:
     self.${'$'}{id}.set_center_freq(${'$'}{${'freq' + str(n)}}, ${n})
     self.${'$'}{id}.set_freq_corr(${'$'}{${'corr' + str(n)}}, ${n})
-    ${'%'} if context.get('sourk') == 'source':
+    % if sourk == 'source':
     self.${'$'}{id}.set_dc_offset_mode(${'$'}{${'dc_offset_mode' + str(n)}}, ${n})
     self.${'$'}{id}.set_iq_balance_mode(${'$'}{${'iq_balance_mode' + str(n)}}, ${n})
     self.${'$'}{id}.set_gain_mode(${'$'}{${'gain_mode' + str(n)}}, ${n})
-    ${'%'} endif
+    % endif
     self.${'$'}{id}.set_gain(${'$'}{${'gain' + str(n)}}, ${n})
     self.${'$'}{id}.set_if_gain(${'$'}{${'if_gain' + str(n)}}, ${n})
     self.${'$'}{id}.set_bb_gain(${'$'}{${'bb_gain' + str(n)}}, ${n})
