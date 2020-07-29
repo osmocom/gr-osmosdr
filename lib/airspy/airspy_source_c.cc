@@ -33,7 +33,7 @@
 
 #include <boost/assign.hpp>
 #include <boost/format.hpp>
-#include <boost/detail/endian.hpp>
+#include <boost/predef/other/endian.h>
 #include <boost/algorithm/string.hpp>
 #include <boost/thread/thread.hpp>
 

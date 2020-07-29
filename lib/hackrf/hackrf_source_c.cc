@@ -31,7 +31,7 @@
 #include <stdexcept>
 #include <iostream>
 
-#include <boost/detail/endian.hpp>
+#include <boost/predef/other/endian.h>
 
 #include <gnuradio/io_signature.h>
 
