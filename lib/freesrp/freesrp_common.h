@@ -1,6 +1,7 @@
 #ifndef INCLUDED_FREESRP_COMMON_H
 #define INCLUDED_FREESRP_COMMON_H
 
+#include <memory>
 #include <vector>
 #include <string>
 
@@ -22,7 +23,7 @@ public:
     double set_freq_corr( double ppm, size_t chan = 0 );
     double get_freq_corr( size_t chan = 0 );
 protected:
-    static boost::shared_ptr<::FreeSRP::FreeSRP> _srp;
+    static std::shared_ptr<::FreeSRP::FreeSRP> _srp;
     bool _ignore_overflow = false;
 };
 

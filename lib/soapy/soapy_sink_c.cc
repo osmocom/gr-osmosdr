@@ -63,7 +63,7 @@ soapy_sink_c::soapy_sink_c (const std::string &args)
                     gr::io_signature::make (0, 0, 0))
 {
     {
-        boost::mutex::scoped_lock l(get_soapy_maker_mutex());
+        std::lock_guard<std::mutex> l(get_soapy_maker_mutex());
         _device = SoapySDR::Device::make(params_to_dict(args));
     }
     _nchan = std::max(1, args_to_io_signature(args)->max_streams());
@@ -75,7 +75,7 @@ soapy_sink_c::soapy_sink_c (const std::string &args)
 soapy_sink_c::~soapy_sink_c(void)
 {
     _device->closeStream(_stream);
-    boost::mutex::scoped_lock l(get_soapy_maker_mutex());
+    std::lock_guard<std::mutex> l(get_soapy_maker_mutex());
     SoapySDR::Device::unmake(_device);
 }
 

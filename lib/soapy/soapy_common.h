@@ -23,7 +23,8 @@
 
 #include <osmosdr/ranges.h>
 #include <SoapySDR/Types.hpp>
-#include <boost/thread/mutex.hpp>
+
+#include <mutex>
 
 /*!
  * Convert a soapy range to a gain range.
@@ -35,6 +36,6 @@ osmosdr::gain_range_t soapy_range_to_gain_range(const SoapySDR::Range &r);
  * Global mutex to protect factory routines.
  * (optional under 0.5 release above)
  */
-boost::mutex &get_soapy_maker_mutex(void);
+std::mutex &get_soapy_maker_mutex(void);
 
 #endif /* INCLUDED_SOAPY_COMMON_H */

@@ -24,8 +24,9 @@
 #include <gnuradio/sync_block.h>
 
 #include <gnuradio/thread/thread.h>
-#include <boost/thread/mutex.hpp>
-#include <boost/thread/condition_variable.hpp>
+
+#include <mutex>
+#include <condition_variable>
 
 #include "osmosdr/ranges.h"
 
@@ -126,7 +127,7 @@ private:
    std::vector< short > _bufi;
    std::vector< short > _bufq;
    int _buf_offset;
-   boost::mutex _buf_mutex;
+   std::mutex _buf_mutex;
 
    bool _running;
    bool _uninit;

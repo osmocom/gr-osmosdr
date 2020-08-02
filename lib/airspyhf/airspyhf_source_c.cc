@@ -239,7 +239,7 @@ int airspyhf_source_c::work( int noutput_items,
   if ( ! running )
     return WORK_DONE;
 
-  boost::unique_lock<boost::mutex> lock(_fifo_lock);
+  std::unique_lock<std::mutex> lock(_fifo_lock);
 
   /* Wait until we have the requested number of samples */
   int n_samples_avail = _fifo->size();

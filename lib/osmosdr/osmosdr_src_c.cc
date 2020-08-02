@@ -179,7 +179,7 @@ void osmosdr_src_c::osmosdr_callback(unsigned char *buf, uint32_t len)
   }
 
   {
-    boost::mutex::scoped_lock lock( _buf_mutex );
+    std::lock_guard<std::mutex> lock( _buf_mutex );
 
     int buf_tail = (_buf_head + _buf_used) % _buf_num;
     memcpy(_buf[buf_tail], buf, len);
@@ -219,7 +219,7 @@ int osmosdr_src_c::work( int noutput_items,
   gr_complex *out = (gr_complex *)output_items[0];
 
   {
-    boost::mutex::scoped_lock lock( _buf_mutex );
+    std::unique_lock<std::mutex> lock( _buf_mutex );
 
     while (_buf_used < 3 && _running) // collect at least 3 buffers
       _buf_cond.wait( lock );
@@ -243,7 +243,7 @@ int osmosdr_src_c::work( int noutput_items,
                            float(*(buf + i * 2 + 1)) * (1.0f/32767.5f) );
 
     {
-      boost::mutex::scoped_lock lock( _buf_mutex );
+      std::lock_guard<std::mutex> lock( _buf_mutex );
 
       _buf_head = (_buf_head + 1) % _buf_num;
       _buf_used--;

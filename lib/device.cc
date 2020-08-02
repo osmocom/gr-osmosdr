@@ -22,8 +22,8 @@
 #include <stdexcept>
 #include <boost/foreach.hpp>
 #include <boost/format.hpp>
-#include <boost/thread/mutex.hpp>
 #include <algorithm>
+#include <mutex>
 #include <sstream>
 
 #ifdef HAVE_CONFIG_H
@@ -102,7 +102,7 @@ static const std::string args_delim = " ";
 static const std::string pairs_delim = ",";
 static const std::string pair_delim = "=";
 
-static boost::mutex _device_mutex;
+static std::mutex _device_mutex;
 
 device_t::device_t(const std::string &args)
 {
@@ -141,7 +141,7 @@ std::string device_t::to_string(void) const
 
 devices_t device::find(const device_t &hint)
 {
-  boost::mutex::scoped_lock lock(_device_mutex);
+  std::lock_guard<std::mutex> lock(_device_mutex);
 
   bool fake = true;
 

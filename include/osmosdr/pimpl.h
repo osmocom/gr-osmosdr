@@ -18,7 +18,7 @@
 #ifndef INCLUDED_OSMOSDR_PIMPL_H
 #define INCLUDED_OSMOSDR_PIMPL_H
 
-#include <boost/shared_ptr.hpp>
+#include <memory>
 
 /*! \file pimpl.h
  * "Pimpl idiom" (pointer to implementation idiom).
@@ -39,7 +39,7 @@
  * \param _name the name of the pimpl class
  */
 #define OSMOSDR_PIMPL_DECL(_name) \
-    struct _name; boost::shared_ptr<_name>
+    struct _name; std::shared_ptr<_name>
 
 /*!
  * Make an instance of a pimpl in a source file.
@@ -49,6 +49,6 @@
  * \param _args the constructor args for the pimpl
  */
 #define OSMOSDR_PIMPL_MAKE(_name, _args) \
-    boost::shared_ptr<_name>(new _name _args)
+    std::shared_ptr<_name>(new _name _args)
 
 #endif /* INCLUDED_OSMOSDR_PIMPL_H */

@@ -23,8 +23,9 @@
 #include <gnuradio/sync_block.h>
 
 #include <gnuradio/thread/thread.h>
-#include <boost/thread/mutex.hpp>
-#include <boost/thread/condition_variable.hpp>
+
+#include <mutex>
+#include <condition_variable>
 
 #include "source_iface.h"
 
@@ -120,8 +121,8 @@ private:
   unsigned int _buf_num;
   unsigned int _buf_head;
   unsigned int _buf_used;
-  boost::mutex _buf_mutex;
-  boost::condition_variable _buf_cond;
+  std::mutex _buf_mutex;
+  std::condition_variable _buf_cond;
   bool _running;
 
   unsigned int _buf_offset;

@@ -590,7 +590,7 @@ bool rfspace_source_c::transaction( const unsigned char *cmd, size_t size,
     if ( write(_usb, cmd, size) != (int)size )
       return false;
 
-    boost::unique_lock<boost::mutex> lock(_resp_lock);
+    std::unique_lock<std::mutex> lock(_resp_lock);
     _resp_avail.wait(lock);
 
     rx_bytes = _resp.size();
@@ -598,7 +598,7 @@ bool rfspace_source_c::transaction( const unsigned char *cmd, size_t size,
   }
   else
   {
-    boost::mutex::scoped_lock lock(_tcp_lock);
+    std::lock_guard<std::mutex> lock(_tcp_lock);
 
 #ifdef USE_ASIO
     _t.write_some( boost::asio::buffer(cmd, size) );
@@ -829,7 +829,7 @@ int rfspace_source_c::work( int noutput_items,
     {
       gr_complex *out = (gr_complex *)output_items[0];
 
-      boost::unique_lock<boost::mutex> lock(_fifo_lock);
+      std::unique_lock<std::mutex> lock(_fifo_lock);
 
       /* Wait until we have the requested number of samples */
       int n_samples_avail = _fifo->size();

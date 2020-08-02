@@ -151,7 +151,7 @@ int hackrf_source_c::_hackrf_rx_callback(hackrf_transfer *transfer)
 int hackrf_source_c::hackrf_rx_callback(unsigned char *buf, uint32_t len)
 {
   {
-    std::unique_lock<std::mutex> lock(_buf_mutex);
+    std::lock_guard<std::mutex> lock(_buf_mutex);
 
     int buf_tail = (_buf_head + _buf_used) % _buf_num;
     memcpy(_buf[buf_tail], buf, len);
@@ -231,7 +231,7 @@ int hackrf_source_c::work( int noutput_items,
       *out++ = _lut[ *(buf + i) ];
 
     {
-      std::unique_lock<std::mutex> lock(_buf_mutex);
+      std::lock_guard<std::mutex> lock(_buf_mutex);
 
       _buf_head = (_buf_head + 1) % _buf_num;
       _buf_used--;

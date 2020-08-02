@@ -30,8 +30,9 @@
 #include <gnuradio/sync_block.h>
 
 #include <boost/circular_buffer.hpp>
-#include <boost/thread/mutex.hpp>
-#include <boost/thread/condition_variable.hpp>
+
+#include <mutex>
+#include <condition_variable>
 
 #include "osmosdr/ranges.h"
 #include "source_iface.h"
@@ -164,15 +165,15 @@ private: /* members */
   gr::thread::thread _thread;
   bool _run_usb_read_task;
   bool _run_tcp_keepalive_task;
-  boost::mutex _tcp_lock;
+  std::mutex _tcp_lock;
 
   boost::circular_buffer<gr_complex> *_fifo;
-  boost::mutex _fifo_lock;
-  boost::condition_variable _samp_avail;
+  std::mutex _fifo_lock;
+  std::condition_variable _samp_avail;
 
   std::vector< unsigned char > _resp;
-  boost::mutex _resp_lock;
-  boost::condition_variable _resp_avail;
+  std::mutex _resp_lock;
+  std::condition_variable _resp_avail;
 };
 
 #endif /* INCLUDED_RFSPACE_SOURCE_C_H */

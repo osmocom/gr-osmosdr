@@ -64,7 +64,7 @@ soapy_source_c::soapy_source_c (const std::string &args)
                     args_to_io_signature(args))
 {
     {
-        boost::mutex::scoped_lock l(get_soapy_maker_mutex());
+        std::lock_guard<std::mutex> l(get_soapy_maker_mutex());
         _device = SoapySDR::Device::make(params_to_dict(args));
     }
     _nchan = std::max(1, args_to_io_signature(args)->max_streams());
@@ -76,7 +76,7 @@ soapy_source_c::soapy_source_c (const std::string &args)
 soapy_source_c::~soapy_source_c(void)
 {
     _device->closeStream(_stream);
-    boost::mutex::scoped_lock l(get_soapy_maker_mutex());
+    std::lock_guard<std::mutex> l(get_soapy_maker_mutex());
     SoapySDR::Device::unmake(_device);
 }
 

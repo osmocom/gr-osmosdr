@@ -2,7 +2,6 @@
 
 #include <cstdlib>
 
-#include <boost/make_shared.hpp>
 #include <boost/assign.hpp>
 
 #include <arg_helpers.h>
@@ -11,7 +10,7 @@ using namespace FreeSRP;
 using namespace std;
 using namespace boost::assign;
 
-boost::shared_ptr<::FreeSRP::FreeSRP> freesrp_common::_srp;
+std::shared_ptr<::FreeSRP::FreeSRP> freesrp_common::_srp;
 
 freesrp_common::freesrp_common(const string &args)
 {
