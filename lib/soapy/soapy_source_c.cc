@@ -96,9 +96,14 @@ int soapy_source_c::work( int noutput_items,
 {
     int flags = 0;
     long long timeNs = 0;
-    int ret = _device->readStream(
-        _stream, &output_items[0],
-        noutput_items, flags, timeNs);
+    int ret;
+    int retries = 1;
+
+    do {
+        ret = _device->readStream(
+            _stream, &output_items[0],
+            noutput_items, flags, timeNs);
+    } while (retries-- && (ret == SOAPY_SDR_OVERFLOW));
 
     if (ret < 0) return 0; //call again
     return ret;
