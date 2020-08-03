@@ -40,8 +40,16 @@ if(CMAKE_COMPILER_IS_GNUCXX)
     list(APPEND Boost_LIBRARIES -pthread)
 endif()
 
+#dirty macro to allow appending from subdirs
+#this appends all unnamed implicit macro args!
+MACRO (APPEND_LIB_LIST)
+      SET (gr_osmosdr_libs "${gr_osmosdr_libs};${ARGN}" CACHE INTERNAL "lib list")
+ENDMACRO (APPEND_INTERNAL_LIST)
+
+set(gr_osmosdr_libs "" CACHE INTERNAL "lib that accumulates link targets")
+
 add_library(gnuradio-osmosdr SHARED)
-list(APPEND gr_osmosdr_libs ${Boost_LIBRARIES} gnuradio::gnuradio-runtime)
+APPEND_LIB_LIST(${Boost_LIBRARIES} gnuradio::gnuradio-runtime)
 target_include_directories(gnuradio-osmosdr
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
     PUBLIC ${Boost_INCLUDE_DIRS}
@@ -100,7 +108,7 @@ CHECK_CXX_SOURCE_COMPILES("
 if(HAVE_CLOCK_GETTIME)
     message(STATUS "  High resolution timing supported through clock_gettime.")
     set(TIME_SPEC_DEFS HAVE_CLOCK_GETTIME)
-    list(APPEND gr_osmosdr_libs "-lrt")
+    APPEND_LIB_LIST( "-lrt")
 elseif(HAVE_MACH_ABSOLUTE_TIME)
     message(STATUS "  High resolution timing supported through mach_absolute_time.")
     set(TIME_SPEC_DEFS HAVE_MACH_ABSOLUTE_TIME)
@@ -124,7 +132,7 @@ GR_REGISTER_COMPONENT("Osmocom IQ Imbalance Correction" ENABLE_IQBALANCE gnuradi
 if(ENABLE_IQBALANCE)
     add_definitions(-DHAVE_IQBALANCE=1)
     target_include_directories(gnuradio-osmosdr PRIVATE ${gnuradio-iqbalance_INCLUDE_DIRS})
-    list(APPEND gr_osmosdr_libs gnuradio::gnuradio-iqbalance)
+    APPEND_LIB_LIST( gnuradio::gnuradio-iqbalance)
 endif(ENABLE_IQBALANCE)
 
 ########################################################################

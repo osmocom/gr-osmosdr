@@ -26,7 +26,7 @@ target_include_directories(gnuradio-osmosdr PRIVATE
     ${GNURADIO_FCDPP_INCLUDE_DIRS}
 )
 
-list(APPEND gr_osmosdr_libs
+APPEND_LIB_LIST(
     ${GNURADIO_FCDPP_LIBRARIES}
 )
 
