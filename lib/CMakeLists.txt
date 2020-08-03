@@ -138,10 +138,10 @@ endif(ENABLE_IQBALANCE)
 ########################################################################
 # Setup OsmoSDR component
 ########################################################################
-GR_REGISTER_COMPONENT("sysmocom OsmoSDR" ENABLE_OSMOSDR LIBOSMOSDR_FOUND)
-if(ENABLE_OSMOSDR)
-    add_subdirectory(osmosdr)
-endif(ENABLE_OSMOSDR)
+#GR_REGISTER_COMPONENT("sysmocom OsmoSDR" ENABLE_OSMOSDR LIBOSMOSDR_FOUND)
+#if(ENABLE_OSMOSDR)
+#    add_subdirectory(osmosdr)
+#endif(ENABLE_OSMOSDR)
 
 ########################################################################
 # Setup FCD component
@@ -186,10 +186,10 @@ endif(ENABLE_UHD)
 ########################################################################
 # Setup MiriSDR component
 ########################################################################
-GR_REGISTER_COMPONENT("Osmocom MiriSDR" ENABLE_MIRI LIBMIRISDR_FOUND)
-if(ENABLE_MIRI)
-    add_subdirectory(miri)
-endif(ENABLE_MIRI)
+#GR_REGISTER_COMPONENT("Osmocom MiriSDR" ENABLE_MIRI LIBMIRISDR_FOUND)
+#if(ENABLE_MIRI)
+#    add_subdirectory(miri)
+#endif(ENABLE_MIRI)
 
 ########################################################################
 # Setup SDRplay component
