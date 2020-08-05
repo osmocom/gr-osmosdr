@@ -88,7 +88,7 @@ hackrf_source_c::hackrf_source_c (const std::string &args)
 
   // create a lookup table for gr_complex values
   for (unsigned int i = 0; i <= 0xff; i++) {
-    _lut.push_back( float(i) * (1.0f/128.0f) );
+    _lut.push_back( float(int8_t(i)) * (1.0f/128.0f) );
   }
 
   if ( BUF_NUM != _buf_num || BUF_LEN != _buf_len ) {

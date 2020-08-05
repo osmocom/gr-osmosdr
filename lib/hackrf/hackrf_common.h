@@ -34,7 +34,7 @@
 #define BUF_LEN  (16 * 32 * 512) /* must be multiple of 512 */
 #define BUF_NUM   15
 
-#define BYTES_PER_SAMPLE  2 /* HackRF device produces/consumes 8 bit unsigned IQ data */
+#define BYTES_PER_SAMPLE  2 /* HackRF device produces/consumes 8 bit signed IQ data */
 
 #define HACKRF_FORMAT_ERROR(ret, msg) \
   boost::str( boost::format(msg " (%1%) %2%") \
