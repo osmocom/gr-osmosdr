@@ -48,6 +48,9 @@
 #ifdef ENABLE_FREESRP
 #include <freesrp_sink_c.h>
 #endif
+#ifdef ENABLE_XTRX
+#include "xtrx_sink_c.h"
+#endif
 #ifdef ENABLE_FILE
 #include "file_sink_c.h"
 #endif
@@ -99,6 +102,9 @@ sink_impl::sink_impl( const std::string &args )
 #ifdef ENABLE_FREESRP
   dev_types.push_back("freesrp");
 #endif
+#ifdef ENABLE_XTRX
+  dev_types.push_back("xtrx");
+#endif
 #ifdef ENABLE_FILE
   dev_types.push_back("file");
 #endif
@@ -146,6 +152,9 @@ sink_impl::sink_impl( const std::string &args )
 #ifdef ENABLE_FREESRP
     BOOST_FOREACH( std::string dev, freesrp_sink_c::get_devices() )
       dev_list.push_back( dev );
+#endif
+#ifdef ENABLE_XTRX
+	BOOST_FOREACH( std::string dev, xtrx_sink_c::get_devices() )
 #endif
 #ifdef ENABLE_FILE
     BOOST_FOREACH( std::string dev, file_sink_c::get_devices() )
@@ -206,6 +215,12 @@ sink_impl::sink_impl( const std::string &args )
 #ifdef ENABLE_FREESRP
     if ( dict.count("freesrp") ) {
       freesrp_sink_c_sptr sink = make_freesrp_sink_c( arg );
+      block = sink; iface = sink.get();
+    }
+#endif
+#ifdef ENABLE_XTRX
+    if ( dict.count("xtrx") ) {
+      xtrx_sink_c_sptr sink = make_xtrx_sink_c( arg );
       block = sink; iface = sink.get();
     }
 #endif
