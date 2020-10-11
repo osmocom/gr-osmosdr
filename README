@@ -13,7 +13,8 @@ as well supports:
  * Great Scott Gadgets HackRF through libhackrf
  * Nuand LLC bladeRF through libbladeRF library
  * Ettus USRP Devices through Ettus UHD library
- * Fairwaves UmTRX through Fairwaves' fork of UHD
+ * Fairwaves UmTRX through Fairwaves' module for UHD
+ * Fairwaves XTRX through libxtrx
  * Red Pitaya SDR transceiver (http://bazaar.redpitaya.com)
  * FreeSRP through libfreesrp
 

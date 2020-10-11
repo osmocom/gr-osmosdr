@@ -250,6 +250,14 @@ if(ENABLE_FREESRP)
 endif(ENABLE_FREESRP)
 
 ########################################################################
+# Setup XTRX component
+########################################################################
+GR_REGISTER_COMPONENT("XTRX SDR" ENABLE_XTRX LIBXTRX_FOUND)
+if(ENABLE_XTRX)
+    add_subdirectory(xtrx)
+endif(ENABLE_XTRX)
+
+########################################################################
 # Setup configuration file
 ########################################################################
 add_definitions(-DHAVE_CONFIG_H=1)
