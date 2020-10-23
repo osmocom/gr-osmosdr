@@ -29,7 +29,6 @@
 
 #include <boost/lexical_cast.hpp>
 #include <boost/tokenizer.hpp>
-#include <boost/foreach.hpp>
 #include <ciso646>
 
 typedef std::map< std::string, std::string > dict_t;
@@ -38,7 +37,7 @@ typedef std::pair< std::string, std::string > pair_t;
 inline std::string dict_to_args_string( const dict_t &d )
 {
     std::string out;
-    BOOST_FOREACH(const pair_t pair, d)
+    for (const pair_t pair : d)
     {
         if (not out.empty()) out += ",";
         out += pair.first + "='" + pair.second + "'";
@@ -54,7 +53,7 @@ inline std::vector< std::string > args_to_vector( const std::string &args )
   typedef boost::tokenizer< boost::escaped_list_separator<char> > tokenizer_t;
   tokenizer_t tokens(args, separator);
 
-  BOOST_FOREACH(std::string token, tokens)
+  for (std::string token : tokens)
     result.push_back(token);
 
   return result;
@@ -68,7 +67,7 @@ inline std::vector< std::string > params_to_vector( const std::string &params )
   typedef boost::tokenizer< boost::escaped_list_separator<char> > tokenizer_t;
   tokenizer_t tokens(params, separator);
 
-  BOOST_FOREACH(std::string token, tokens)
+  for (std::string token : tokens)
     result.push_back(token);
 
   return result;
@@ -98,7 +97,7 @@ inline dict_t params_to_dict( const std::string &params )
   dict_t result;
 
   std::vector< std::string > param_list = params_to_vector( params );
-  BOOST_FOREACH(std::string param, param_list)
+  for (std::string param : param_list)
   {
     pair_t pair = param_to_pair( param );
     std::string value = pair.second;
@@ -124,7 +123,7 @@ inline gr::io_signature::sptr args_to_io_signature( const std::string &args )
   size_t dev_nchan = 0;
   std::vector< std::string > arg_list = args_to_vector( args );
 
-  BOOST_FOREACH( std::string arg, arg_list )
+  for (std::string arg : arg_list)
   {
     if ( arg.find( "numchan=" ) == 0 ) // try to parse global nchan value
     {
@@ -141,7 +140,7 @@ inline gr::io_signature::sptr args_to_io_signature( const std::string &args )
 
   // try to parse device specific nchan values, assume 1 channel if none given
 
-  BOOST_FOREACH( std::string arg, arg_list )
+  for (std::string arg : arg_list)
   {
     dict_t dict = params_to_dict(arg);
     if (dict.count("nchan"))

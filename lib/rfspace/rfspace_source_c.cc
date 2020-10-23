@@ -1296,7 +1296,7 @@ std::vector<std::string> rfspace_source_c::get_devices( bool fake )
 
   std::vector < unit_t > units = discover_netsdr();
 
-  BOOST_FOREACH( unit_t u, units )
+  for (unit_t u : units)
   {
 //    std::cerr << u.name << " " << u.sn << " " << u.addr <<  ":" << u.port
 //              << std::endl;
@@ -1310,7 +1310,7 @@ std::vector<std::string> rfspace_source_c::get_devices( bool fake )
 
   units = discover_sdr_iq();
 
-  BOOST_FOREACH( unit_t u, units )
+  for (unit_t u : units)
   {
 //    std::cerr << u.name << " " << u.sn << " " << u.addr <<  ":" << u.port
 //              << std::endl;

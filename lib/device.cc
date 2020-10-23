@@ -20,7 +20,6 @@
 
 #include <osmosdr/device.h>
 #include <stdexcept>
-#include <boost/foreach.hpp>
 #include <boost/format.hpp>
 #include <algorithm>
 #include <mutex>
@@ -108,7 +107,7 @@ device_t::device_t(const std::string &args)
 {
   dict_t dict = params_to_dict(args);
 
-  BOOST_FOREACH( dict_t::value_type &entry, dict )
+  for (dict_t::value_type &entry : dict)
     (*this)[entry.first] = entry.second;
 }
 
@@ -118,7 +117,7 @@ std::string device_t::to_pp_string(void) const
 
   std::stringstream ss;
   ss << "Device Address:" << std::endl;
-  BOOST_FOREACH(const device_t::value_type &entry, *this) {
+  for (const device_t::value_type &entry : *this) {
     ss << boost::format("    %s: %s") % entry.first % entry.second << std::endl;
   }
   return ss.str();
@@ -128,7 +127,7 @@ std::string device_t::to_string(void) const
 {
   std::stringstream ss;
   size_t count = 0;
-  BOOST_FOREACH(const device_t::value_type &entry, *this) {
+  for (const device_t::value_type &entry : *this) {
     std::string value = entry.second;
     if (value.find(" ") != std::string::npos)
       value = "'" + value + "'";
@@ -151,55 +150,55 @@ devices_t device::find(const device_t &hint)
   devices_t devices;
 
 #ifdef ENABLE_OSMOSDR
-  BOOST_FOREACH( std::string dev, osmosdr_src_c::get_devices() )
+  for (std::string dev : osmosdr_src_c::get_devices())
     devices.push_back( device_t(dev) );
 #endif
 #ifdef ENABLE_FCD
-  BOOST_FOREACH( std::string dev, fcd_source_c::get_devices() )
+  for (std::string dev : fcd_source_c::get_devices())
     devices.push_back( device_t(dev) );
 #endif
 #ifdef ENABLE_RTL
-  BOOST_FOREACH( std::string dev, rtl_source_c::get_devices() )
+  for (std::string dev : rtl_source_c::get_devices())
     devices.push_back( device_t(dev) );
 #endif
 #ifdef ENABLE_UHD
-  BOOST_FOREACH( std::string dev, uhd_source_c::get_devices() )
+  for (std::string dev : uhd_source_c::get_devices())
     devices.push_back( device_t(dev) );
 #endif
 #ifdef ENABLE_MIRI
-  BOOST_FOREACH( std::string dev, miri_source_c::get_devices() )
+  for (std::string dev : miri_source_c::get_devices())
     devices.push_back( device_t(dev) );
 #endif
 #ifdef ENABLE_SDRPLAY
-  BOOST_FOREACH( std::string dev, sdrplay_source_c::get_devices() )
+  for (std::string dev : sdrplay_source_c::get_devices())
     devices.push_back( device_t(dev) );
 #endif
 #ifdef ENABLE_BLADERF
-  BOOST_FOREACH( std::string dev, bladerf_source_c::get_devices() )
+  for (std::string dev : bladerf_source_c::get_devices())
     devices.push_back( device_t(dev) );
 #endif
 #ifdef ENABLE_HACKRF
-  BOOST_FOREACH( std::string dev, hackrf_source_c::get_devices() )
+  for (std::string dev : hackrf_source_c::get_devices())
     devices.push_back( device_t(dev) );
 #endif
 #ifdef ENABLE_RFSPACE
-  BOOST_FOREACH( std::string dev, rfspace_source_c::get_devices( fake ) )
+  for (std::string dev : rfspace_source_c::get_devices( fake ))
     devices.push_back( device_t(dev) );
 #endif
 #ifdef ENABLE_AIRSPY
-  BOOST_FOREACH( std::string dev, airspy_source_c::get_devices() )
+  for (std::string dev : airspy_source_c::get_devices())
     devices.push_back( device_t(dev) );
 #endif
 #ifdef ENABLE_AIRSPYHF
-  BOOST_FOREACH( std::string dev, airspyhf_source_c::get_devices() )
+  for (std::string dev : airspyhf_source_c::get_devices())
     devices.push_back( device_t(dev) );
 #endif
 #ifdef ENABLE_FREESRP
-  BOOST_FOREACH( std::string dev, freesrp_source_c::get_devices() )
+  for (std::string dev : freesrp_source_c::get_devices())
     devices.push_back( device_t(dev) );
 #endif
 #ifdef ENABLE_SOAPY
-  BOOST_FOREACH( std::string dev, soapy_source_c::get_devices() )
+  for (std::string dev : soapy_source_c::get_devices())
     devices.push_back( device_t(dev) );
 #endif
 
@@ -208,15 +207,15 @@ devices_t device::find(const device_t &hint)
    * in a graphical interface etc... */
 
 #ifdef ENABLE_RTL_TCP
-  BOOST_FOREACH( std::string dev, rtl_tcp_source_c::get_devices( fake ) )
+  for (std::string dev : rtl_tcp_source_c::get_devices( fake ))
     devices.push_back( device_t(dev) );
 #endif
 #ifdef ENABLE_REDPITAYA
-  BOOST_FOREACH( std::string dev, redpitaya_source_c::get_devices( fake ) )
+  for (std::string dev : redpitaya_source_c::get_devices( fake ))
     devices.push_back( device_t(dev) );
 #endif
 #ifdef ENABLE_FILE
-  BOOST_FOREACH( std::string dev, file_source_c::get_devices( fake ) )
+  for (std::string dev : file_source_c::get_devices( fake ))
     devices.push_back( device_t(dev) );
 #endif
 

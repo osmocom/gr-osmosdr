@@ -35,7 +35,6 @@
 #include <string>
 
 #include <boost/assign.hpp>
-#include <boost/foreach.hpp>
 #include <boost/format.hpp>
 #include <boost/lexical_cast.hpp>
 
@@ -498,7 +497,7 @@ int bladerf_common::channel2rfport(bladerf_channel ch)
 bladerf_channel bladerf_common::chan2channel(bladerf_direction direction,
                                              size_t chan)
 {
-  BOOST_FOREACH(bladerf_channel_map::value_type &i, _chanmap) {
+  for (bladerf_channel_map::value_type &i : _chanmap) {
     bladerf_channel ch = i.first;
     if (
         (i.second == (int)chan) && (
@@ -642,7 +641,7 @@ osmosdr::freq_range_t bladerf_common::filter_bandwidths(bladerf_channel ch)
       0.75, 0.875, 1.25, 1.375, 1.5, 1.92, 2.5,
       2.75, 3, 3.5, 4.375, 5, 6, 7, 10, 14;
 
-  BOOST_FOREACH( double half_bw, half_bandwidths )
+  for (double half_bw : half_bandwidths)
     bandwidths += osmosdr::range_t( half_bw * 2e6 );
 #else
 
@@ -1136,7 +1135,7 @@ bladerf_sptr bladerf_common::get_cached_device(struct bladerf_devinfo devinfo)
   int status;
   struct bladerf_devinfo other_devinfo;
 
-  BOOST_FOREACH(std::weak_ptr<struct bladerf> dev, _devs) {
+  for (std::weak_ptr<struct bladerf> dev : _devs) {
     status = bladerf_get_devinfo(bladerf_sptr(dev).get(), &other_devinfo);
     if (status < 0) {
       BLADERF_THROW_STATUS(status, "Failed to get devinfo for cached device");
@@ -1199,7 +1198,7 @@ void bladerf_common::print_device_info()
 bool bladerf_common::is_antenna_valid(bladerf_direction dir,
                                       const std::string &antenna)
 {
-  BOOST_FOREACH(std::string ant, get_antennas(dir)) {
+  for (std::string ant : get_antennas(dir)) {
     if (antenna == ant) {
       return true;
     }

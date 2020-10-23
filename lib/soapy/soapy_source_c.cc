@@ -113,7 +113,7 @@ std::vector<std::string> soapy_source_c::get_devices()
 {
     std::vector<std::string> result;
     int i = 0;
-    BOOST_FOREACH(SoapySDR::Kwargs kw, SoapySDR::Device::enumerate())
+    for (SoapySDR::Kwargs kw : SoapySDR::Device::enumerate())
     {
         kw["soapy"] = boost::lexical_cast<std::string>(i++);
         result.push_back(dict_to_args_string(kw));
@@ -130,12 +130,12 @@ osmosdr::meta_range_t soapy_source_c::get_sample_rates( void )
 {
     osmosdr::meta_range_t result;
     #ifdef SOAPY_SDR_API_HAS_GET_SAMPLE_RATE_RANGE
-    BOOST_FOREACH(const SoapySDR::Range &r, _device->getSampleRateRange(SOAPY_SDR_RX, 0))
+    for (const SoapySDR::Range &r : _device->getSampleRateRange(SOAPY_SDR_RX, 0))
     {
         result.push_back(osmosdr::range_t(r.minimum(), r.maximum()));
     }
     #else
-    BOOST_FOREACH(const double rate, _device->listSampleRates(SOAPY_SDR_RX, 0))
+    for (const double rate : _device->listSampleRates(SOAPY_SDR_RX, 0))
     {
         result.push_back(osmosdr::range_t(rate));
     }
@@ -157,7 +157,7 @@ double soapy_source_c::get_sample_rate( void )
 osmosdr::freq_range_t soapy_source_c::get_freq_range( size_t chan )
 {
     osmosdr::meta_range_t result;
-    BOOST_FOREACH(const SoapySDR::Range r, _device->getFrequencyRange(SOAPY_SDR_RX, 0))
+    for (const SoapySDR::Range r : _device->getFrequencyRange(SOAPY_SDR_RX, 0))
     {
         result.push_back(osmosdr::range_t(r.minimum(), r.maximum()));
     }
@@ -338,12 +338,12 @@ osmosdr::freq_range_t soapy_source_c::get_bandwidth_range( size_t chan )
 {
     osmosdr::meta_range_t result;
     #ifdef SOAPY_SDR_API_HAS_GET_BANDWIDTH_RANGE
-    BOOST_FOREACH(const SoapySDR::Range &r, _device->getBandwidthRange(SOAPY_SDR_RX, 0))
+    for (const SoapySDR::Range &r : _device->getBandwidthRange(SOAPY_SDR_RX, 0))
     {
         result.push_back(osmosdr::range_t(r.minimum(), r.maximum()));
     }
     #else
-    BOOST_FOREACH(const double bw, _device->listBandwidths(SOAPY_SDR_RX, 0))
+    for (const double bw : _device->listBandwidths(SOAPY_SDR_RX, 0))
     {
         result.push_back(osmosdr::range_t(bw));
     }

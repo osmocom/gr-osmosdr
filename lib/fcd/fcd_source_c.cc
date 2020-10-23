@@ -23,7 +23,6 @@
 #include <sstream>
 
 #include <boost/assign.hpp>
-#include <boost/foreach.hpp>
 
 #include <gnuradio/io_signature.h>
 
@@ -171,7 +170,7 @@ std::vector< std::string > fcd_source_c::get_devices()
   int id = 0;
   std::vector< std::string > devices;
 
-  BOOST_FOREACH( device_t dev, _get_devices() )
+  for (device_t dev : _get_devices())
   {
     std::string args = "fcd=" + boost::lexical_cast< std::string >( id++ );
 

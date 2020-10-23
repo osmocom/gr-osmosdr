@@ -177,7 +177,7 @@ source_impl::source_impl( const std::string &args )
             << GR_OSMOSDR_VERSION << " (" << GR_OSMOSDR_LIBVER << ") "
             << "gnuradio " << gr::version() << std::endl;
   std::cerr << "built-in source types: ";
-  BOOST_FOREACH(std::string dev_type, dev_types)
+  for (std::string dev_type : dev_types)
     std::cerr << dev_type << " ";
   std::cerr << std::endl;
 
@@ -188,9 +188,9 @@ source_impl::source_impl( const std::string &args )
   dev_types.push_back("cloudiq");
 #endif
 
-  BOOST_FOREACH(std::string arg, arg_list) {
+  for (std::string arg : arg_list) {
     dict_t dict = params_to_dict(arg);
-    BOOST_FOREACH(std::string dev_type, dev_types) {
+    for (std::string dev_type : dev_types) {
       if ( dict.count( dev_type ) ) {
         device_specified = true;
         break;
@@ -201,64 +201,64 @@ source_impl::source_impl( const std::string &args )
   if ( ! device_specified ) {
     std::vector< std::string > dev_list;
 #ifdef ENABLE_OSMOSDR
-    BOOST_FOREACH( std::string dev, osmosdr_src_c::get_devices() )
+    for (std::string dev : osmosdr_src_c::get_devices())
       dev_list.push_back( dev );
 #endif
 #ifdef ENABLE_FCD
-    BOOST_FOREACH( std::string dev, fcd_source_c::get_devices() )
+    for (std::string dev : fcd_source_c::get_devices())
       dev_list.push_back( dev );
 #endif
 #ifdef ENABLE_RTL
-    BOOST_FOREACH( std::string dev, rtl_source_c::get_devices() )
+    for (std::string dev : rtl_source_c::get_devices())
       dev_list.push_back( dev );
 #endif
 #ifdef ENABLE_UHD
-    BOOST_FOREACH( std::string dev, uhd_source_c::get_devices() )
+    for (std::string dev : uhd_source_c::get_devices())
       dev_list.push_back( dev );
 #endif
 #ifdef ENABLE_MIRI
-    BOOST_FOREACH( std::string dev, miri_source_c::get_devices() )
+    for (std::string dev : miri_source_c::get_devices())
       dev_list.push_back( dev );
 #endif
 #ifdef ENABLE_SDRPLAY
-    BOOST_FOREACH( std::string dev, sdrplay_source_c::get_devices() )
+    for (std::string dev : sdrplay_source_c::get_devices())
       dev_list.push_back( dev );
 #endif
 #ifdef ENABLE_BLADERF
-    BOOST_FOREACH( std::string dev, bladerf_source_c::get_devices() )
+    for (std::string dev : bladerf_source_c::get_devices())
       dev_list.push_back( dev );
 #endif
 #ifdef ENABLE_RFSPACE
-    BOOST_FOREACH( std::string dev, rfspace_source_c::get_devices() )
+    for (std::string dev : rfspace_source_c::get_devices())
       dev_list.push_back( dev );
 #endif
 #ifdef ENABLE_HACKRF
-    BOOST_FOREACH( std::string dev, hackrf_source_c::get_devices() )
+    for (std::string dev : hackrf_source_c::get_devices())
       dev_list.push_back( dev );
 #endif
 #ifdef ENABLE_AIRSPY
-    BOOST_FOREACH( std::string dev, airspy_source_c::get_devices() )
+    for (std::string dev : airspy_source_c::get_devices())
       dev_list.push_back( dev );
 #endif
 #ifdef ENABLE_AIRSPYHF
-    BOOST_FOREACH( std::string dev, airspyhf_source_c::get_devices() )
+    for (std::string dev : airspyhf_source_c::get_devices())
       dev_list.push_back( dev );
 #endif
 #ifdef ENABLE_SOAPY
-    BOOST_FOREACH( std::string dev, soapy_source_c::get_devices() )
+    for (std::string dev : soapy_source_c::get_devices())
       dev_list.push_back( dev );
 #endif
 #ifdef ENABLE_REDPITAYA
-    BOOST_FOREACH( std::string dev, redpitaya_source_c::get_devices() )
+    for (std::string dev : redpitaya_source_c::get_devices())
       dev_list.push_back( dev );
 #endif
 #ifdef ENABLE_FREESRP
-    BOOST_FOREACH( std::string dev, freesrp_source_c::get_devices() )
+    for (std::string dev : freesrp_source_c::get_devices())
       dev_list.push_back( dev );
 #endif
 
 //    std::cerr << std::endl;
-//    BOOST_FOREACH( std::string dev, dev_list )
+//    for (std::string dev : dev_list)
 //      std::cerr << "'" << dev << "'" << std::endl;
 
     if ( dev_list.size() )
@@ -267,12 +267,12 @@ source_impl::source_impl( const std::string &args )
       throw std::runtime_error("No supported devices found (check the connection and/or udev rules).");
   }
 
-  BOOST_FOREACH(std::string arg, arg_list) {
+  for (std::string arg : arg_list) {
 
     dict_t dict = params_to_dict(arg);
 
 //    std::cerr << std::endl;
-//    BOOST_FOREACH( dict_t::value_type &entry, dict )
+//    for (dict_t::value_type &entry : dict)
 //      std::cerr << "'" << entry.first << "' = '" << entry.second << "'" << std::endl;
 
     source_iface *iface = NULL;
@@ -427,7 +427,7 @@ size_t source_impl::get_num_channels()
 {
   size_t channels = 0;
 
-  BOOST_FOREACH( source_iface *dev, _devs )
+  for (source_iface *dev : _devs)
     channels += dev->get_num_channels();
 
   return channels;
@@ -436,7 +436,7 @@ size_t source_impl::get_num_channels()
 bool source_impl::seek( long seek_point, int whence, size_t chan )
 {
   size_t channel = 0;
-  BOOST_FOREACH( source_iface *dev, _devs )
+  for (source_iface *dev : _devs)
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
       if ( chan == channel++ )
         return dev->seek( seek_point, whence, dev_chan );
@@ -466,12 +466,12 @@ double source_impl::set_sample_rate(double rate)
     if (_devs.empty())
       throw std::runtime_error(NO_DEVICES_MSG);
 #endif
-    BOOST_FOREACH( source_iface *dev, _devs )
+    for (source_iface *dev : _devs)
       sample_rate = dev->set_sample_rate(rate);
 
 #ifdef HAVE_IQBALANCE
     size_t channel = 0;
-    BOOST_FOREACH( source_iface *dev, _devs ) {
+    for (source_iface *dev : _devs) {
       for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++) {
         if ( channel < _iq_opt.size() ) {
           gr::iqbalance::optimize_c *opt = _iq_opt[channel];
@@ -509,7 +509,7 @@ double source_impl::get_sample_rate()
 osmosdr::freq_range_t source_impl::get_freq_range( size_t chan )
 {
   size_t channel = 0;
-  BOOST_FOREACH( source_iface *dev, _devs )
+  for (source_iface *dev : _devs)
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
       if ( chan == channel++ )
         return dev->get_freq_range( dev_chan );
@@ -520,7 +520,7 @@ osmosdr::freq_range_t source_impl::get_freq_range( size_t chan )
 double source_impl::set_center_freq( double freq, size_t chan )
 {
   size_t channel = 0;
-  BOOST_FOREACH( source_iface *dev, _devs )
+  for (source_iface *dev : _devs)
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
       if ( chan == channel++ ) {
         if ( _center_freq[ chan ] != freq ) {
@@ -535,7 +535,7 @@ double source_impl::set_center_freq( double freq, size_t chan )
 double source_impl::get_center_freq( size_t chan )
 {
   size_t channel = 0;
-  BOOST_FOREACH( source_iface *dev, _devs )
+  for (source_iface *dev : _devs)
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
       if ( chan == channel++ )
         return dev->get_center_freq( dev_chan );
@@ -546,7 +546,7 @@ double source_impl::get_center_freq( size_t chan )
 double source_impl::set_freq_corr( double ppm, size_t chan )
 {
   size_t channel = 0;
-  BOOST_FOREACH( source_iface *dev, _devs )
+  for (source_iface *dev : _devs)
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
       if ( chan == channel++ ) {
         if ( _freq_corr[ chan ] != ppm ) {
@@ -561,7 +561,7 @@ double source_impl::set_freq_corr( double ppm, size_t chan )
 double source_impl::get_freq_corr( size_t chan )
 {
   size_t channel = 0;
-  BOOST_FOREACH( source_iface *dev, _devs )
+  for (source_iface *dev : _devs)
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
       if ( chan == channel++ )
         return dev->get_freq_corr( dev_chan );
@@ -572,7 +572,7 @@ double source_impl::get_freq_corr( size_t chan )
 std::vector<std::string> source_impl::get_gain_names( size_t chan )
 {
   size_t channel = 0;
-  BOOST_FOREACH( source_iface *dev, _devs )
+  for (source_iface *dev : _devs)
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
       if ( chan == channel++ )
         return dev->get_gain_names( dev_chan );
@@ -583,7 +583,7 @@ std::vector<std::string> source_impl::get_gain_names( size_t chan )
 osmosdr::gain_range_t source_impl::get_gain_range( size_t chan )
 {
   size_t channel = 0;
-  BOOST_FOREACH( source_iface *dev, _devs )
+  for (source_iface *dev : _devs)
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
       if ( chan == channel++ )
         return dev->get_gain_range( dev_chan );
@@ -594,7 +594,7 @@ osmosdr::gain_range_t source_impl::get_gain_range( size_t chan )
 osmosdr::gain_range_t source_impl::get_gain_range( const std::string & name, size_t chan )
 {
   size_t channel = 0;
-  BOOST_FOREACH( source_iface *dev, _devs )
+  for (source_iface *dev : _devs)
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
       if ( chan == channel++ )
         return dev->get_gain_range( name, dev_chan );
@@ -605,7 +605,7 @@ osmosdr::gain_range_t source_impl::get_gain_range( const std::string & name, siz
 bool source_impl::set_gain_mode( bool automatic, size_t chan )
 {
   size_t channel = 0;
-  BOOST_FOREACH( source_iface *dev, _devs )
+  for (source_iface *dev : _devs)
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
       if ( chan == channel++ ) {
         if ( _gain_mode[ chan ] != automatic ) {
@@ -623,7 +623,7 @@ bool source_impl::set_gain_mode( bool automatic, size_t chan )
 bool source_impl::get_gain_mode( size_t chan )
 {
   size_t channel = 0;
-  BOOST_FOREACH( source_iface *dev, _devs )
+  for (source_iface *dev : _devs)
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
       if ( chan == channel++ )
         return dev->get_gain_mode( dev_chan );
@@ -634,7 +634,7 @@ bool source_impl::get_gain_mode( size_t chan )
 double source_impl::set_gain( double gain, size_t chan )
 {
   size_t channel = 0;
-  BOOST_FOREACH( source_iface *dev, _devs )
+  for (source_iface *dev : _devs)
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
       if ( chan == channel++ ) {
         if ( _gain[ chan ] != gain ) {
@@ -649,7 +649,7 @@ double source_impl::set_gain( double gain, size_t chan )
 double source_impl::set_gain( double gain, const std::string & name, size_t chan)
 {
   size_t channel = 0;
-  BOOST_FOREACH( source_iface *dev, _devs )
+  for (source_iface *dev : _devs)
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
       if ( chan == channel++ )
         return dev->set_gain( gain, name, dev_chan );
@@ -660,7 +660,7 @@ double source_impl::set_gain( double gain, const std::string & name, size_t chan
 double source_impl::get_gain( size_t chan )
 {
   size_t channel = 0;
-  BOOST_FOREACH( source_iface *dev, _devs )
+  for (source_iface *dev : _devs)
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
       if ( chan == channel++ )
         return dev->get_gain( dev_chan );
@@ -671,7 +671,7 @@ double source_impl::get_gain( size_t chan )
 double source_impl::get_gain( const std::string & name, size_t chan )
 {
   size_t channel = 0;
-  BOOST_FOREACH( source_iface *dev, _devs )
+  for (source_iface *dev : _devs)
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
       if ( chan == channel++ )
         return dev->get_gain( name, dev_chan );
@@ -682,7 +682,7 @@ double source_impl::get_gain( const std::string & name, size_t chan )
 double source_impl::set_if_gain( double gain, size_t chan )
 {
   size_t channel = 0;
-  BOOST_FOREACH( source_iface *dev, _devs )
+  for (source_iface *dev : _devs)
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
       if ( chan == channel++ ) {
         if ( _if_gain[ chan ] != gain ) {
@@ -697,7 +697,7 @@ double source_impl::set_if_gain( double gain, size_t chan )
 double source_impl::set_bb_gain( double gain, size_t chan )
 {
   size_t channel = 0;
-  BOOST_FOREACH( source_iface *dev, _devs )
+  for (source_iface *dev : _devs)
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
       if ( chan == channel++ ) {
         if ( _bb_gain[ chan ] != gain ) {
@@ -712,7 +712,7 @@ double source_impl::set_bb_gain( double gain, size_t chan )
 std::vector< std::string > source_impl::get_antennas( size_t chan )
 {
   size_t channel = 0;
-  BOOST_FOREACH( source_iface *dev, _devs )
+  for (source_iface *dev : _devs)
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
       if ( chan == channel++ )
         return dev->get_antennas( dev_chan );
@@ -723,7 +723,7 @@ std::vector< std::string > source_impl::get_antennas( size_t chan )
 std::string source_impl::set_antenna( const std::string & antenna, size_t chan )
 {
   size_t channel = 0;
-  BOOST_FOREACH( source_iface *dev, _devs )
+  for (source_iface *dev : _devs)
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
       if ( chan == channel++ ) {
         if ( _antenna[ chan ] != antenna ) {
@@ -738,7 +738,7 @@ std::string source_impl::set_antenna( const std::string & antenna, size_t chan )
 std::string source_impl::get_antenna( size_t chan )
 {
   size_t channel = 0;
-  BOOST_FOREACH( source_iface *dev, _devs )
+  for (source_iface *dev : _devs)
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
       if ( chan == channel++ )
         return dev->get_antenna( dev_chan );
@@ -749,7 +749,7 @@ std::string source_impl::get_antenna( size_t chan )
 void source_impl::set_dc_offset_mode( int mode, size_t chan )
 {
   size_t channel = 0;
-  BOOST_FOREACH( source_iface *dev, _devs )
+  for (source_iface *dev : _devs)
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
       if ( chan == channel++ )
         dev->set_dc_offset_mode( mode, dev_chan );
@@ -758,7 +758,7 @@ void source_impl::set_dc_offset_mode( int mode, size_t chan )
 void source_impl::set_dc_offset( const std::complex<double> &offset, size_t chan )
 {
   size_t channel = 0;
-  BOOST_FOREACH( source_iface *dev, _devs )
+  for (source_iface *dev : _devs)
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
       if ( chan == channel++ )
         dev->set_dc_offset( offset, dev_chan );
@@ -768,7 +768,7 @@ void source_impl::set_iq_balance_mode( int mode, size_t chan )
 {
   size_t channel = 0;
 #ifdef HAVE_IQBALANCE
-  BOOST_FOREACH( source_iface *dev, _devs ) {
+  for (source_iface *dev : _devs) {
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++) {
       if ( chan == channel++ ) {
         if ( chan < _iq_opt.size() && chan < _iq_fix.size() ) {
@@ -798,7 +798,7 @@ void source_impl::set_iq_balance_mode( int mode, size_t chan )
     }
   }
 #else
-  BOOST_FOREACH( source_iface *dev, _devs )
+  for (source_iface *dev : _devs)
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
       if ( chan == channel++ )
         return dev->set_iq_balance_mode( mode, dev_chan );
@@ -809,7 +809,7 @@ void source_impl::set_iq_balance( const std::complex<double> &balance, size_t ch
 {
   size_t channel = 0;
 #ifdef HAVE_IQBALANCE
-  BOOST_FOREACH( source_iface *dev, _devs ) {
+  for (source_iface *dev : _devs) {
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++) {
       if ( chan == channel++ ) {
         if ( chan < _iq_opt.size() && chan < _iq_fix.size() ) {
@@ -825,7 +825,7 @@ void source_impl::set_iq_balance( const std::complex<double> &balance, size_t ch
     }
   }
 #else
-  BOOST_FOREACH( source_iface *dev, _devs )
+  for (source_iface *dev : _devs)
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
       if ( chan == channel++ )
         return dev->set_iq_balance( balance, dev_chan );
@@ -835,7 +835,7 @@ void source_impl::set_iq_balance( const std::complex<double> &balance, size_t ch
 double source_impl::set_bandwidth( double bandwidth, size_t chan )
 {
   size_t channel = 0;
-  BOOST_FOREACH( source_iface *dev, _devs )
+  for (source_iface *dev : _devs)
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
       if ( chan == channel++ ) {
         if ( _bandwidth[ chan ] != bandwidth || 0.0f == bandwidth ) {
@@ -850,7 +850,7 @@ double source_impl::set_bandwidth( double bandwidth, size_t chan )
 double source_impl::get_bandwidth( size_t chan )
 {
   size_t channel = 0;
-  BOOST_FOREACH( source_iface *dev, _devs )
+  for (source_iface *dev : _devs)
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
       if ( chan == channel++ )
         return dev->get_bandwidth( dev_chan );
@@ -861,7 +861,7 @@ double source_impl::get_bandwidth( size_t chan )
 osmosdr::freq_range_t source_impl::get_bandwidth_range( size_t chan )
 {
   size_t channel = 0;
-  BOOST_FOREACH( source_iface *dev, _devs )
+  for (source_iface *dev : _devs)
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
       if ( chan == channel++ )
         return dev->get_bandwidth_range( dev_chan );
@@ -954,7 +954,7 @@ void source_impl::set_time_now(const osmosdr::time_spec_t &time_spec, size_t mbo
 
 void source_impl::set_time_next_pps(const osmosdr::time_spec_t &time_spec)
 {
-  BOOST_FOREACH( source_iface *dev, _devs )
+  for (source_iface *dev : _devs)
   {
     dev->set_time_next_pps( time_spec );
   }
@@ -962,7 +962,7 @@ void source_impl::set_time_next_pps(const osmosdr::time_spec_t &time_spec)
 
 void source_impl::set_time_unknown_pps(const osmosdr::time_spec_t &time_spec)
 {
-  BOOST_FOREACH( source_iface *dev, _devs )
+  for (source_iface *dev : _devs)
   {
     dev->set_time_unknown_pps( time_spec );
   }
