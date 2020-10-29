@@ -4,13 +4,11 @@
 #define GR_OSMOSDR_VERSION "@VERSION@"
 #define GR_OSMOSDR_LIBVER "@LIBVER@"
 
-#cmakedefine ENABLE_OSMOSDR
 #cmakedefine ENABLE_FCD
 #cmakedefine ENABLE_FILE
 #cmakedefine ENABLE_RTL
 #cmakedefine ENABLE_RTL_TCP
 #cmakedefine ENABLE_UHD
-#cmakedefine ENABLE_MIRI
 #cmakedefine ENABLE_SDRPLAY
 #cmakedefine ENABLE_HACKRF
 #cmakedefine ENABLE_BLADERF

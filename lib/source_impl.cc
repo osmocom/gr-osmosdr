@@ -32,10 +32,6 @@
 #include <gnuradio/blocks/throttle.h>
 #include <gnuradio/constants.h>
 
-#ifdef ENABLE_OSMOSDR
-#include <osmosdr_src_c.h>
-#endif
-
 #ifdef ENABLE_FCD
 #include <fcd_source_c.h>
 #endif
@@ -54,10 +50,6 @@
 
 #ifdef ENABLE_UHD
 #include <uhd_source_c.h>
-#endif
-
-#ifdef ENABLE_MIRI
-#include <miri_source_c.h>
 #endif
 
 #ifdef ENABLE_SDRPLAY
@@ -128,9 +120,6 @@ source_impl::source_impl( const std::string &args )
 #ifdef ENABLE_FILE
   dev_types.push_back("file");
 #endif
-#ifdef ENABLE_OSMOSDR
-  dev_types.push_back("osmosdr");
-#endif
 #ifdef ENABLE_FCD
   dev_types.push_back("fcd");
 #endif
@@ -142,9 +131,6 @@ source_impl::source_impl( const std::string &args )
 #endif
 #ifdef ENABLE_UHD
   dev_types.push_back("uhd");
-#endif
-#ifdef ENABLE_MIRI
-  dev_types.push_back("miri");
 #endif
 #ifdef ENABLE_SDRPLAY
   dev_types.push_back("sdrplay");
@@ -200,10 +186,6 @@ source_impl::source_impl( const std::string &args )
 
   if ( ! device_specified ) {
     std::vector< std::string > dev_list;
-#ifdef ENABLE_OSMOSDR
-    for (std::string dev : osmosdr_src_c::get_devices())
-      dev_list.push_back( dev );
-#endif
 #ifdef ENABLE_FCD
     for (std::string dev : fcd_source_c::get_devices())
       dev_list.push_back( dev );
@@ -214,10 +196,6 @@ source_impl::source_impl( const std::string &args )
 #endif
 #ifdef ENABLE_UHD
     for (std::string dev : uhd_source_c::get_devices())
-      dev_list.push_back( dev );
-#endif
-#ifdef ENABLE_MIRI
-    for (std::string dev : miri_source_c::get_devices())
       dev_list.push_back( dev );
 #endif
 #ifdef ENABLE_SDRPLAY
@@ -278,13 +256,6 @@ source_impl::source_impl( const std::string &args )
     source_iface *iface = NULL;
     gr::basic_block_sptr block;
 
-#ifdef ENABLE_OSMOSDR
-    if ( dict.count("osmosdr") ) {
-      osmosdr_src_c_sptr src = osmosdr_make_src_c( arg );
-      block = src; iface = src.get();
-    }
-#endif
-
 #ifdef ENABLE_FCD
     if ( dict.count("fcd") ) {
       fcd_source_c_sptr src = make_fcd_source_c( arg );
@@ -316,13 +287,6 @@ source_impl::source_impl( const std::string &args )
 #ifdef ENABLE_UHD
     if ( dict.count("uhd") ) {
       uhd_source_c_sptr src = make_uhd_source_c( arg );
-      block = src; iface = src.get();
-    }
-#endif
-
-#ifdef ENABLE_MIRI
-    if ( dict.count("miri") ) {
-      miri_source_c_sptr src = make_miri_source_c( arg );
       block = src; iface = src.get();
     }
 #endif

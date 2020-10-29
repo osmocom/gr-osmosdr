@@ -170,9 +170,7 @@ message (STATUS " Found Volk: ${Volk_FOUND}")
     # Hardware drivers
     ####################
 
-#find_package(LibOsmoSDR)
 find_package(LibRTLSDR)
-#find_package(LibMiriSDR)
 if(ENABLE_NONFREE)
     find_package(LibSDRplay)
 endif(ENABLE_NONFREE)

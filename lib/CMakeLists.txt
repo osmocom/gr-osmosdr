@@ -136,14 +136,6 @@ if(ENABLE_IQBALANCE)
 endif(ENABLE_IQBALANCE)
 
 ########################################################################
-# Setup OsmoSDR component
-########################################################################
-#GR_REGISTER_COMPONENT("sysmocom OsmoSDR" ENABLE_OSMOSDR LIBOSMOSDR_FOUND)
-#if(ENABLE_OSMOSDR)
-#    add_subdirectory(osmosdr)
-#endif(ENABLE_OSMOSDR)
-
-########################################################################
 # Setup FCD component
 ########################################################################
 GR_REGISTER_COMPONENT("FUNcube Dongle" ENABLE_FCD GNURADIO_FCDPP_FOUND)
@@ -182,14 +174,6 @@ GR_REGISTER_COMPONENT("Ettus USRP Devices" ENABLE_UHD UHD_FOUND gnuradio-uhd_FOU
 if(ENABLE_UHD)
     add_subdirectory(uhd)
 endif(ENABLE_UHD)
-
-########################################################################
-# Setup MiriSDR component
-########################################################################
-#GR_REGISTER_COMPONENT("Osmocom MiriSDR" ENABLE_MIRI LIBMIRISDR_FOUND)
-#if(ENABLE_MIRI)
-#    add_subdirectory(miri)
-#endif(ENABLE_MIRI)
 
 ########################################################################
 # Setup SDRplay component
