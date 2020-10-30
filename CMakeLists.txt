@@ -41,7 +41,7 @@ set(CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE} CACHE STRING "")
 list(INSERT CMAKE_MODULE_PATH 0 ${CMAKE_SOURCE_DIR}/cmake/Modules)
 
 # Find GNURadio (pmt and runtime are core, always included)
-find_package(Gnuradio "3.8" REQUIRED COMPONENTS blocks fft filter)
+find_package(Gnuradio "3.9" REQUIRED COMPONENTS blocks fft filter)
 
 # Set the version information here
 set(VERSION_MAJOR 0)
@@ -188,20 +188,11 @@ find_package(Doxygen)
     ##########
 
 find_package(PythonLibs 3)
-find_package(SWIG)
-
-if(SWIG_FOUND)
-    message(STATUS "Minimum SWIG version required is 1.3.31")
-    set(SWIG_VERSION_CHECK FALSE)
-    if("${SWIG_VERSION}" VERSION_GREATER "1.3.30")
-        set(SWIG_VERSION_CHECK TRUE)
-    endif()
-endif(SWIG_FOUND)
+find_package(pybind11)
 
 GR_REGISTER_COMPONENT("Python support" ENABLE_PYTHON
     PYTHONLIBS_FOUND
-    SWIG_FOUND
-    SWIG_VERSION_CHECK
+    pybind11_FOUND
 )
 
 ########################################################################
@@ -269,7 +260,6 @@ add_custom_target(uninstall
 add_subdirectory(include/osmosdr)
 add_subdirectory(lib)
 if(ENABLE_PYTHON)
-    add_subdirectory(swig)
     add_subdirectory(python)
     add_subdirectory(grc)
     add_subdirectory(apps)
