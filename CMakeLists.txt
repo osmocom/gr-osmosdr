@@ -116,6 +116,11 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
         add_definitions(/arch:AVX)
         add_definitions(-DUSE_AVX)
     endif()
+    # boost feels like using lib pragmas to link to libs,
+    # but the boost libs might not even be in the (default) lib search path
+    add_definitions(-DBOOST_ALL_NO_LIB)
+    # macro turns std::min into errors...
+    add_definitions(-DNOMINMAX)
 endif()
 
 ########################################################################
