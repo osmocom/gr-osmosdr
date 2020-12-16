@@ -30,6 +30,7 @@
 
 #include <stdexcept>
 #include <iostream>
+#include <chrono>
 
 #include <gnuradio/io_signature.h>
 
@@ -203,8 +204,15 @@ int hackrf_source_c::work( int noutput_items,
   {
     std::unique_lock<std::mutex> lock(_buf_mutex);
 
-    while (_buf_used < 3 && running) // collect at least 3 buffers
-      _buf_cond.wait( lock );
+    while (_buf_used < 3 && running) { // collect at least 3 buffers
+      _buf_cond.wait_for( lock , std::chrono::milliseconds(100));
+
+      // Re-check whether the device has closed or stopped streaming
+      if ( _dev.get() )
+        running = (hackrf_is_streaming( _dev.get() ) == HACKRF_TRUE);
+      else
+        running = false;
+    }
   }
 
   if ( ! running )
