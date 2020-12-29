@@ -38,7 +38,7 @@ class sink;
 class OSMOSDR_API sink : virtual public gr::hier_block2
 {
 public:
-  typedef boost::shared_ptr< sink > sptr;
+  typedef std::shared_ptr< sink > sptr;
 
   /*!
    * \brief Return a shared_ptr to a new instance of sink.

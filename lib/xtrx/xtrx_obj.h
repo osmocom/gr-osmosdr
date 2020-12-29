@@ -28,7 +28,7 @@
 
 class xtrx_obj;
 
-typedef boost::shared_ptr<xtrx_obj> xtrx_obj_sptr;
+typedef std::shared_ptr<xtrx_obj> xtrx_obj_sptr;
 
 class xtrx_obj
 {

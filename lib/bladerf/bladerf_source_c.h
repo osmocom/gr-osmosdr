@@ -30,7 +30,7 @@
 class bladerf_source_c;
 
 /*
- * We use boost::shared_ptr's instead of raw pointers for all access
+ * We use std::shared_ptr's instead of raw pointers for all access
  * to gr_blocks (and many other data structures).  The shared_ptr gets
  * us transparent reference counting, which greatly simplifies storage
  * management issues.  This is especially helpful in our hybrid
@@ -38,9 +38,9 @@ class bladerf_source_c;
  *
  * See http://www.boost.org/libs/smart_ptr/smart_ptr.htm
  *
- * As a convention, the _sptr suffix indicates a boost::shared_ptr
+ * As a convention, the _sptr suffix indicates a std::shared_ptr
  */
-typedef boost::shared_ptr<bladerf_source_c> bladerf_source_c_sptr;
+typedef std::shared_ptr<bladerf_source_c> bladerf_source_c_sptr;
 
 /*!
  * \brief Return a shared_ptr to a new instance of bladerf_source_c.

@@ -32,7 +32,7 @@ static const pmt::pmt_t FREQ_KEY = pmt::string_to_symbol("rx_freq");
 
 class xtrx_source_c;
 
-typedef boost::shared_ptr< xtrx_source_c > xtrx_source_c_sptr;
+typedef std::shared_ptr< xtrx_source_c > xtrx_source_c_sptr;
 
 xtrx_source_c_sptr make_xtrx_source_c( const std::string & args = "" );
 

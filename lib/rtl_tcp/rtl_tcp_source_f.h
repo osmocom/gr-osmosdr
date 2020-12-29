@@ -59,7 +59,7 @@ enum rtlsdr_tuner {
 };
 
 class rtl_tcp_source_f;
-typedef boost::shared_ptr<rtl_tcp_source_f> rtl_tcp_source_f_sptr;
+typedef std::shared_ptr<rtl_tcp_source_f> rtl_tcp_source_f_sptr;
 
 rtl_tcp_source_f_sptr make_rtl_tcp_source_f (
     size_t itemsize,

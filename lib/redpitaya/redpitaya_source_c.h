@@ -29,7 +29,7 @@
 
 class redpitaya_source_c;
 
-typedef boost::shared_ptr< redpitaya_source_c > redpitaya_source_c_sptr;
+typedef std::shared_ptr< redpitaya_source_c > redpitaya_source_c_sptr;
 
 redpitaya_source_c_sptr make_redpitaya_source_c( const std::string & args = "" );
 

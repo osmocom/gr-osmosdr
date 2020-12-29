@@ -35,7 +35,7 @@
 
 class airspyhf_source_c;
 
-typedef boost::shared_ptr<airspyhf_source_c> airspyhf_source_c_sptr;
+typedef std::shared_ptr<airspyhf_source_c> airspyhf_source_c_sptr;
 
 /*!
  * \brief Return a shared_ptr to a new instance of airspyhf_source_c.

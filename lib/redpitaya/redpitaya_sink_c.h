@@ -29,7 +29,7 @@
 
 class redpitaya_sink_c;
 
-typedef boost::shared_ptr< redpitaya_sink_c > redpitaya_sink_c_sptr;
+typedef std::shared_ptr< redpitaya_sink_c > redpitaya_sink_c_sptr;
 
 redpitaya_sink_c_sptr make_redpitaya_sink_c( const std::string & args = "" );
 

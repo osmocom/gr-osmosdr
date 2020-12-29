@@ -36,7 +36,7 @@ static const pmt::pmt_t COMMAND_KEY = pmt::string_to_symbol("tx_command");
 
 class xtrx_sink_c;
 
-typedef boost::shared_ptr< xtrx_sink_c > xtrx_sink_c_sptr;
+typedef std::shared_ptr< xtrx_sink_c > xtrx_sink_c_sptr;
 
 xtrx_sink_c_sptr make_xtrx_sink_c( const std::string & args = "" );
 
