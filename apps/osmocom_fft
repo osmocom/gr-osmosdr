@@ -24,7 +24,7 @@ import osmosdr
 from gnuradio import blocks
 from gnuradio import gr
 from gnuradio import eng_notation
-from gnuradio.filter import firdes
+from gnuradio.fft import window
 from gnuradio.eng_option import eng_option
 from optparse import OptionParser
 from functools import partial
@@ -247,7 +247,7 @@ class app_top_block(gr.top_block, Qt.QMainWindow):
         elif options.waterfall:
             self.scope = qtgui.waterfall_sink_c(
                 options.fft_size,
-                wintype=firdes.WIN_BLACKMAN_hARRIS,
+                wintype=window.WIN_BLACKMAN_hARRIS,
                 fc=0,
                 bw=input_rate,
                 name="",
@@ -272,7 +272,7 @@ class app_top_block(gr.top_block, Qt.QMainWindow):
         elif options.qtgui:
             self.scope = qtgui.sink_c(
                 options.fft_size,
-                wintype=firdes.WIN_BLACKMAN_hARRIS,
+                wintype=window.WIN_BLACKMAN_hARRIS,
                 fc=0,
                 bw=input_rate,
                 name="",
@@ -288,7 +288,7 @@ class app_top_block(gr.top_block, Qt.QMainWindow):
         else:
             self.scope = qtgui.freq_sink_c(
                 fftsize=options.fft_size,
-                wintype=firdes.WIN_BLACKMAN_hARRIS,
+                wintype=window.WIN_BLACKMAN_hARRIS,
                 fc=0,
                 bw=input_rate,
                 name="",
