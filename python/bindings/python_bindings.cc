@@ -25,6 +25,10 @@ namespace py = pybind11;
     void bind_source(py::module& m);
 // ) END BINDING_FUNCTION_PROTOTYPES
 
+void bind_device(py::module& m);
+void bind_ranges(py::module& m);
+void bind_time_spec(py::module& m);
+
 
 // We need this hack because import_array() returns NULL
 // for newer Python versions.
@@ -54,4 +58,8 @@ PYBIND11_MODULE(osmosdr_python, m)
         bind_sink(m);
         bind_source(m);
     // ) END BINDING_FUNCTION_CALLS
+
+    bind_device(m);
+    bind_ranges(m);
+    bind_time_spec(m);
 }
