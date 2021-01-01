@@ -37,6 +37,7 @@ hackrf_common::hackrf_common(const std::string &args) :
   _center_freq(0),
   _freq_corr(0),
   _auto_gain(false),
+  _requested_bandwidth(0),
   _bandwidth(0),
   _bias(false),
   _started(false)
@@ -339,6 +340,7 @@ double hackrf_common::set_bandwidth( double bandwidth, size_t chan )
   int ret;
 //  osmosdr::freq_range_t bandwidths = get_bandwidth_range( chan );
 
+  _requested_bandwidth = bandwidth;
   if ( bandwidth == 0.0 ) /* bandwidth of 0 means automatic filter selection */
     bandwidth = _sample_rate * 0.75; /* select narrower filters to prevent aliasing */
 
@@ -411,9 +413,10 @@ bool hackrf_common::get_bias()
 void hackrf_common::start()
 {
   _started = true;
-  set_bandwidth(get_bandwidth());
   set_center_freq(get_center_freq());
   set_sample_rate(get_sample_rate());
+  if (_requested_bandwidth != 0)
+    set_bandwidth(get_bandwidth());
   set_gain(get_gain());
   set_bias(get_bias());
 }

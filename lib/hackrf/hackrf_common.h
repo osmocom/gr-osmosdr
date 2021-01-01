@@ -104,6 +104,7 @@ private:
   double _freq_corr;
   bool _auto_gain;
   double _amp_gain;
+  double _requested_bandwidth;
   double _bandwidth;
   bool _bias;
   bool _started;
