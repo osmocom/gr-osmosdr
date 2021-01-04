@@ -1,8 +1,6 @@
 /* -*- c++ -*- */
 /*
- * Copyright 2013 Dimitri Stolnikov <horiz0n@gmx.net>
- *
- * This file is part of GNU Radio
+ * Copyright 2016 Sergey Kostanabev <sergey.kostanbaev@fairwaves.co>
  *
  * GNU Radio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,60 +17,44 @@
  * the Free Software Foundation, Inc., 51 Franklin Street,
  * Boston, MA 02110-1301, USA.
  */
-#ifndef INCLUDED_AIRSPYHF_SOURCE_C_H
-#define INCLUDED_AIRSPYHF_SOURCE_C_H
 
-#include <boost/circular_buffer.hpp>
+#ifndef XTRX_SINK_C_H
+#define XTRX_SINK_C_H
 
-#include <mutex>
-#include <condition_variable>
-
+#include <gnuradio/block.h>
 #include <gnuradio/sync_block.h>
 
-#include <libairspyhf/airspyhf.h>
+#include "sink_iface.h"
+#include "xtrx_obj.h"
 
-#include "source_iface.h"
 
-class airspyhf_source_c;
+static const pmt::pmt_t SOB_KEY = pmt::string_to_symbol("tx_sob");
+static const pmt::pmt_t EOB_KEY = pmt::string_to_symbol("tx_eob");
+static const pmt::pmt_t TIME_KEY = pmt::string_to_symbol("tx_time");
+static const pmt::pmt_t FREQ_KEY = pmt::string_to_symbol("tx_freq");
+static const pmt::pmt_t COMMAND_KEY = pmt::string_to_symbol("tx_command");
 
-typedef boost::shared_ptr<airspyhf_source_c> airspyhf_source_c_sptr;
+class xtrx_sink_c;
 
-/*!
- * \brief Return a shared_ptr to a new instance of airspyhf_source_c.
- *
- * To avoid accidental use of raw pointers, airspyhf_source_c's
- * constructor is private.  make_airspyhf_source_c is the public
- * interface for creating new instances.
- */
-airspyhf_source_c_sptr make_airspyhf_source_c (const std::string & args = "");
+typedef boost::shared_ptr< xtrx_sink_c > xtrx_sink_c_sptr;
 
-/*!
- * \brief Provides a stream of complex samples.
- * \ingroup block
- */
-class airspyhf_source_c :
+xtrx_sink_c_sptr make_xtrx_sink_c( const std::string & args = "" );
+
+class xtrx_sink_c :
     public gr::sync_block,
-    public source_iface
+    public sink_iface
 {
 private:
-  // The friend declaration allows make_airspyhf_source_c to
-  // access the private constructor.
+  friend xtrx_sink_c_sptr make_xtrx_sink_c(const std::string &args);
 
-  friend airspyhf_source_c_sptr make_airspyhf_source_c (const std::string & args);
-
-  airspyhf_source_c (const std::string & args);
+  xtrx_sink_c(const std::string &args);
 
 public:
-  ~airspyhf_source_c ();
+  ~xtrx_sink_c();
 
-  bool start();
-  bool stop();
+  std::string name();
 
-  int work( int noutput_items,
-            gr_vector_const_void_star &input_items,
-            gr_vector_void_star &output_items );
-
-  static std::vector< std::string > get_devices();
+  static std::vector< std::string > get_devices( bool fake = false ) { return xtrx_obj::get_devices(); }
 
   size_t get_num_channels( void );
 
@@ -89,6 +71,8 @@ public:
   std::vector<std::string> get_gain_names( size_t chan = 0 );
   osmosdr::gain_range_t get_gain_range( size_t chan = 0 );
   osmosdr::gain_range_t get_gain_range( const std::string & name, size_t chan = 0 );
+  bool set_gain_mode( bool automatic, size_t chan = 0 );
+  bool get_gain_mode( size_t chan = 0 );
   double set_gain( double gain, size_t chan = 0 );
   double set_gain( double gain, const std::string & name, size_t chan = 0 );
   double get_gain( size_t chan = 0 );
@@ -98,21 +82,48 @@ public:
   std::string set_antenna( const std::string & antenna, size_t chan = 0 );
   std::string get_antenna( size_t chan = 0 );
 
+  double set_bandwidth( double bandwidth, size_t chan = 0 );
+  double get_bandwidth( size_t chan = 0 );
+
+  int work (int noutput_items,
+            gr_vector_const_void_star &input_items,
+            gr_vector_void_star &output_items);
+
+  bool start();
+  bool stop();
+
+  void tag_process(int ninput_items);
 
 private:
-  static int _airspyhf_rx_callback(airspyhf_transfer_t* transfer);
-  int airspyhf_rx_callback(void *samples, int sample_count);
+  xtrx_obj_sptr _xtrx;
+  std::vector<gr::tag_t> _tags;
 
-  airspyhf_device *_dev;
+  unsigned _sample_flags;
+  double _rate;
+  double _master;
+  double _freq;
+  double _corr;
+  double _bandwidth;
+  double _dsp;
+  bool _auto_gain;
 
-  boost::circular_buffer<gr_complex> *_fifo;
-  std::mutex _fifo_lock;
-  std::condition_variable _samp_avail;
+  xtrx_wire_format_t _otw;
+  bool _mimo_mode;
 
-  std::vector< std::pair<double, uint32_t> > _sample_rates;
-  double _sample_rate;
-  double _center_freq;
-  double _freq_corr;
+  int _gain_tx;
+
+  unsigned _channels;
+  xtrx_antenna_t _ant;
+
+  uint64_t _ts;
+
+  bool     _swap_ab;
+  bool     _swap_iq;
+
+  bool     _tdd;
+  bool     _allow_dis;
+
+  std::string _dev;
 };
 
-#endif /* INCLUDED_AIRSPY_SOURCE_C_H */
+#endif // xtrx_sink_c_H

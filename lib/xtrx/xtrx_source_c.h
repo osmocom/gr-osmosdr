@@ -1,6 +1,6 @@
 /* -*- c++ -*- */
 /*
- * Copyright 2013 Dimitri Stolnikov <horiz0n@gmx.net>
+ * Copyright 2016,2017 Sergey Kostanbaev <sergey.kostanbaev@fairwaves.co>
  *
  * GNU Radio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,43 +17,40 @@
  * the Free Software Foundation, Inc., 51 Franklin Street,
  * Boston, MA 02110-1301, USA.
  */
-#ifndef FCD_SOURCE_C_H
-#define FCD_SOURCE_C_H
+#ifndef XTRX_SOURCE_C_H
+#define XTRX_SOURCE_C_H
 
-#include <gnuradio/hier_block2.h>
-
-#include <fcdproplus/fcd.h>
-#include <fcdproplus/fcdproplus.h>
+#include <gnuradio/block.h>
+#include <gnuradio/sync_block.h>
 
 #include "source_iface.h"
+#include "xtrx_obj.h"
 
-class fcd_source_c;
+static const pmt::pmt_t TIME_KEY = pmt::string_to_symbol("rx_time");
+static const pmt::pmt_t RATE_KEY = pmt::string_to_symbol("rx_rate");
+static const pmt::pmt_t FREQ_KEY = pmt::string_to_symbol("rx_freq");
 
-typedef boost::shared_ptr< fcd_source_c > fcd_source_c_sptr;
+class xtrx_source_c;
 
-fcd_source_c_sptr make_fcd_source_c( const std::string & args = "" );
+typedef boost::shared_ptr< xtrx_source_c > xtrx_source_c_sptr;
 
-class fcd_source_c :
-    public gr::hier_block2,
+xtrx_source_c_sptr make_xtrx_source_c( const std::string & args = "" );
+
+class xtrx_source_c :
+    public gr::sync_block,
     public source_iface
 {
 private:
-  friend fcd_source_c_sptr make_fcd_source_c(const std::string &args);
+  friend xtrx_source_c_sptr make_xtrx_source_c(const std::string &args);
 
-  fcd_source_c(const std::string &args);
+  xtrx_source_c(const std::string &args);
 
 public:
-  ~fcd_source_c();
-
-  enum dongle_type {
-    FUNCUBE_UNKNOWN,
-    FUNCUBE_V1,
-    FUNCUBE_V2
-  };
-
-  static std::vector< std::string > get_devices();
+  ~xtrx_source_c();
 
   std::string name();
+
+  static std::vector< std::string > get_devices( bool fake = false ) { return xtrx_obj::get_devices(); }
 
   size_t get_num_channels( void );
 
@@ -70,21 +67,61 @@ public:
   std::vector<std::string> get_gain_names( size_t chan = 0 );
   osmosdr::gain_range_t get_gain_range( size_t chan = 0 );
   osmosdr::gain_range_t get_gain_range( const std::string & name, size_t chan = 0 );
+  bool set_gain_mode( bool automatic, size_t chan = 0 );
+  bool get_gain_mode( size_t chan = 0 );
   double set_gain( double gain, size_t chan = 0 );
   double set_gain( double gain, const std::string & name, size_t chan = 0 );
   double get_gain( size_t chan = 0 );
   double get_gain( const std::string & name, size_t chan = 0 );
 
+  double set_if_gain( double gain, size_t chan = 0 );
+
   std::vector< std::string > get_antennas( size_t chan = 0 );
   std::string set_antenna( const std::string & antenna, size_t chan = 0 );
   std::string get_antenna( size_t chan = 0 );
 
+  double set_bandwidth( double bandwidth, size_t chan = 0 );
+  double get_bandwidth( size_t chan = 0 );
+  osmosdr::freq_range_t get_bandwidth_range( size_t chan = 0);
+
+  int work (int noutput_items,
+            gr_vector_const_void_star &input_items,
+            gr_vector_void_star &output_items);
+
+  bool start();
+  bool stop();
+
 private:
-  dongle_type _type;
-  gr::fcdproplus::fcd::sptr _src_v1;
-  gr::fcdproplus::fcdproplus::sptr _src_v2;
-  double _lna_gain, _mix_gain, _bb_gain, _freq;
-  int _correct;
+  xtrx_obj_sptr _xtrx;
+  pmt::pmt_t _id;
+
+  unsigned _sample_flags;
+  double _rate;
+  double _master;
+  double _freq;
+  double _corr;
+  double _bandwidth;
+  bool _auto_gain;
+
+  xtrx_wire_format_t _otw;
+  bool _mimo_mode;
+
+  int _gain_lna;
+  int _gain_tia;
+  int _gain_pga;
+
+  unsigned _channels;
+  xtrx_antenna_t _ant;
+
+  bool     _swap_ab;
+  bool     _swap_iq;
+  bool     _loopback;
+  bool     _tdd;
+  bool     _fbctrl;
+  bool     _timekey;
+
+  double   _dsp;
+  std::string _dev;
 };
 
-#endif // FCD_SOURCE_C_H
+#endif // XTRX_SOURCE_C_H

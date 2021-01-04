@@ -96,7 +96,7 @@ bladerf_sink_c::bladerf_sink_c(const std::string &args) :
   }
 
   /* Initialize channel <-> antenna map */
-  BOOST_FOREACH(std::string ant, get_antennas()) {
+  for (std::string ant : get_antennas()) {
     _chanmap[str2channel(ant)] = -1;
   }
 
@@ -329,7 +329,7 @@ int bladerf_sink_c::transmit_with_tags(int16_t const *samples,
     }
   }
 
-  BOOST_FOREACH(gr::tag_t tag, tags) {
+  for (gr::tag_t tag : tags) {
     // Upon seeing an SOB tag, update our offset. We'll TX the start of the
     // burst when we see an EOB or at the end of this function - whichever
     // occurs first.

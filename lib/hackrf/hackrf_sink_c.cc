@@ -196,7 +196,7 @@ int hackrf_sink_c::hackrf_tx_callback(unsigned char *buffer, uint32_t length)
     *buffer++ = rand() % 255;
 #else
   {
-    std::unique_lock<std::mutex> lock(_buf_mutex);
+    std::lock_guard<std::mutex> lock(_buf_mutex);
 
     if ( ! cb_pop_front( &_cbuf, buffer ) ) {
       memset(buffer, 0, length);
@@ -372,7 +372,7 @@ int hackrf_sink_c::work( int noutput_items,
 
   if((unsigned int)noutput_items >= remaining) {
     {
-      std::unique_lock<std::mutex> lock(_buf_mutex);
+      std::lock_guard<std::mutex> lock(_buf_mutex);
 
       if ( ! cb_push_back( &_cbuf, _buf ) ) {
         _buf_used = prev_buf_used;

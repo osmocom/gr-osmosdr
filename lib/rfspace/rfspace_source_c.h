@@ -20,25 +20,17 @@
 #ifndef INCLUDED_RFSPACE_SOURCE_C_H
 #define INCLUDED_RFSPACE_SOURCE_C_H
 
-//#define USE_ASIO
-
-#ifdef USE_ASIO
-#include <boost/asio.hpp>
-#endif
 #include <gnuradio/thread/thread.h>
 #include <gnuradio/block.h>
 #include <gnuradio/sync_block.h>
 
 #include <boost/circular_buffer.hpp>
-#include <boost/thread/mutex.hpp>
-#include <boost/thread/condition_variable.hpp>
+
+#include <mutex>
+#include <condition_variable>
 
 #include "osmosdr/ranges.h"
 #include "source_iface.h"
-#ifdef USE_ASIO
-using boost::asio::ip::tcp;
-using boost::asio::ip::udp;
-#endif
 class rfspace_source_c;
 
 #ifndef SOCKET
@@ -143,15 +135,8 @@ private: /* members */
 
   radio_type _radio;
 
-#ifdef USE_ASIO
-  boost::asio::io_service _io_service;
-  tcp::resolver _resolver;
-  tcp::socket _t;
-  udp::socket _u;
-#else
   SOCKET _tcp;
   SOCKET _udp;
-#endif
   int _usb;
   bool _running;
   bool _keep_running;
@@ -164,15 +149,15 @@ private: /* members */
   gr::thread::thread _thread;
   bool _run_usb_read_task;
   bool _run_tcp_keepalive_task;
-  boost::mutex _tcp_lock;
+  std::mutex _tcp_lock;
 
   boost::circular_buffer<gr_complex> *_fifo;
-  boost::mutex _fifo_lock;
-  boost::condition_variable _samp_avail;
+  std::mutex _fifo_lock;
+  std::condition_variable _samp_avail;
 
   std::vector< unsigned char > _resp;
-  boost::mutex _resp_lock;
-  boost::condition_variable _resp_avail;
+  std::mutex _resp_lock;
+  std::condition_variable _resp_avail;
 };
 
 #endif /* INCLUDED_RFSPACE_SOURCE_C_H */

@@ -20,14 +20,13 @@
 ########################################################################
 # Project setup
 ########################################################################
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.8)
 include(GNUInstallDirs)
 project(gr-osmosdr CXX C)
 enable_testing()
 
 #policy setup
 cmake_policy(SET CMP0011 NEW)
-cmake_policy(SET CMP0079 NEW)
 
 #select the release build type by default to get optimization flags
 if(NOT CMAKE_BUILD_TYPE)
@@ -117,6 +116,11 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
         add_definitions(/arch:AVX)
         add_definitions(-DUSE_AVX)
     endif()
+    # boost feels like using lib pragmas to link to libs,
+    # but the boost libs might not even be in the (default) lib search path
+    add_definitions(-DBOOST_ALL_NO_LIB)
+    # macro turns std::min into errors...
+    add_definitions(-DNOMINMAX)
 endif()
 
 ########################################################################
@@ -166,9 +170,7 @@ message (STATUS " Found Volk: ${Volk_FOUND}")
     # Hardware drivers
     ####################
 
-find_package(LibOsmoSDR)
 find_package(LibRTLSDR)
-find_package(LibMiriSDR)
 if(ENABLE_NONFREE)
     find_package(LibSDRplay)
 endif(ENABLE_NONFREE)
@@ -176,8 +178,10 @@ find_package(LibHackRF)
 find_package(LibAIRSPY)
 find_package(LibAIRSPYHF)
 find_package(LibbladeRF)
+find_package(GnuradioFCDPP)
 find_package(SoapySDR NO_MODULE)
 find_package(LibFreeSRP)
+find_package(LibXTRX)
 find_package(Doxygen)
 
     # Python

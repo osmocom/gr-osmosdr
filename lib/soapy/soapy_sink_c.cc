@@ -63,7 +63,7 @@ soapy_sink_c::soapy_sink_c (const std::string &args)
                     gr::io_signature::make (0, 0, 0))
 {
     {
-        boost::mutex::scoped_lock l(get_soapy_maker_mutex());
+        std::lock_guard<std::mutex> l(get_soapy_maker_mutex());
         _device = SoapySDR::Device::make(params_to_dict(args));
     }
     _nchan = std::max(1, args_to_io_signature(args)->max_streams());
@@ -75,7 +75,7 @@ soapy_sink_c::soapy_sink_c (const std::string &args)
 soapy_sink_c::~soapy_sink_c(void)
 {
     _device->closeStream(_stream);
-    boost::mutex::scoped_lock l(get_soapy_maker_mutex());
+    std::lock_guard<std::mutex> l(get_soapy_maker_mutex());
     SoapySDR::Device::unmake(_device);
 }
 
@@ -107,7 +107,7 @@ std::vector<std::string> soapy_sink_c::get_devices()
 {
     std::vector<std::string> result;
     int i = 0;
-    BOOST_FOREACH(SoapySDR::Kwargs kw, SoapySDR::Device::enumerate())
+    for (SoapySDR::Kwargs kw : SoapySDR::Device::enumerate())
     {
         kw["soapy"] = boost::lexical_cast<std::string>(i++);
         result.push_back(dict_to_args_string(kw));
@@ -124,12 +124,12 @@ osmosdr::meta_range_t soapy_sink_c::get_sample_rates( void )
 {
     osmosdr::meta_range_t result;
     #ifdef SOAPY_SDR_API_HAS_GET_SAMPLE_RATE_RANGE
-    BOOST_FOREACH(const SoapySDR::Range &r, _device->getSampleRateRange(SOAPY_SDR_TX, 0))
+    for (const SoapySDR::Range &r : _device->getSampleRateRange(SOAPY_SDR_TX, 0))
     {
         result.push_back(osmosdr::range_t(r.minimum(), r.maximum()));
     }
     #else
-    BOOST_FOREACH(const double rate, _device->listSampleRates(SOAPY_SDR_TX, 0))
+    for (const double rate : _device->listSampleRates(SOAPY_SDR_TX, 0))
     {
         result.push_back(osmosdr::range_t(rate));
     }
@@ -151,7 +151,7 @@ double soapy_sink_c::get_sample_rate( void )
 osmosdr::freq_range_t soapy_sink_c::get_freq_range( size_t chan)
 {
     osmosdr::meta_range_t result;
-    BOOST_FOREACH(const SoapySDR::Range r, _device->getFrequencyRange(SOAPY_SDR_TX, 0))
+    for (const SoapySDR::Range r : _device->getFrequencyRange(SOAPY_SDR_TX, 0))
     {
         result.push_back(osmosdr::range_t(r.minimum(), r.maximum()));
     }
@@ -309,12 +309,12 @@ osmosdr::freq_range_t soapy_sink_c::get_bandwidth_range( size_t chan)
 {
     osmosdr::meta_range_t result;
     #ifdef SOAPY_SDR_API_HAS_GET_BANDWIDTH_RANGE
-    BOOST_FOREACH(const SoapySDR::Range &r, _device->getBandwidthRange(SOAPY_SDR_TX, 0))
+    for (const SoapySDR::Range &r : _device->getBandwidthRange(SOAPY_SDR_TX, 0))
     {
         result.push_back(osmosdr::range_t(r.minimum(), r.maximum()));
     }
     #else
-    BOOST_FOREACH(const double bw, _device->listBandwidths(SOAPY_SDR_TX, 0))
+    for (const double bw : _device->listBandwidths(SOAPY_SDR_TX, 0))
     {
         result.push_back(osmosdr::range_t(bw));
     }

@@ -23,11 +23,10 @@
 
 #include <list>
 #include <map>
+#include <memory>
+#include <mutex>
 #include <string>
 #include <vector>
-
-#include <boost/thread/mutex.hpp>
-#include <boost/weak_ptr.hpp>
 
 #include <libbladeRF.h>
 
@@ -43,7 +42,7 @@ typedef ptrdiff_t ssize_t;
 
 #define BLADERF_DEBUG_ENABLE
 
-typedef boost::shared_ptr<struct bladerf> bladerf_sptr;
+typedef std::shared_ptr<struct bladerf> bladerf_sptr;
 
 /* Identification of the bladeRF hardware in use */
 typedef enum {
@@ -287,8 +286,8 @@ private:
   /*****************************************************************************
    * Private members
    ****************************************************************************/
-  static boost::mutex _devs_mutex;  /**< mutex for access to _devs */
-  static std::list<boost::weak_ptr<struct bladerf>> _devs;  /**< dev cache */
+  static std::mutex _devs_mutex;  /**< mutex for access to _devs */
+  static std::list<std::weak_ptr<struct bladerf>> _devs;  /**< dev cache */
 };
 
 #endif

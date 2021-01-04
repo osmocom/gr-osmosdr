@@ -36,8 +36,8 @@ osmosdr::gain_range_t soapy_range_to_gain_range(const SoapySDR::Range &r)
     return osmosdr::gain_range_t(r.minimum(), r.maximum(), step);
 }
 
-boost::mutex &get_soapy_maker_mutex(void)
+std::mutex &get_soapy_maker_mutex(void)
 {
-    static boost::mutex m;
+    static std::mutex m;
     return m;
 }

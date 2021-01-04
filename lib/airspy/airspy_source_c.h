@@ -23,8 +23,9 @@
 #define INCLUDED_AIRSPY_SOURCE_C_H
 
 #include <boost/circular_buffer.hpp>
-#include <boost/thread/mutex.hpp>
-#include <boost/thread/condition_variable.hpp>
+
+#include <mutex>
+#include <condition_variable>
 
 #include <gnuradio/sync_block.h>
 
@@ -128,8 +129,8 @@ private:
   airspy_device *_dev;
 
   boost::circular_buffer<gr_complex> *_fifo;
-  boost::mutex _fifo_lock;
-  boost::condition_variable _samp_avail;
+  std::mutex _fifo_lock;
+  std::condition_variable _samp_avail;
 
   std::vector< std::pair<double, uint32_t> > _sample_rates;
   double _sample_rate;

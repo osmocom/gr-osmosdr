@@ -3,10 +3,8 @@ as well supports:
 
  * FUNcube Dongle through libgnuradio-fcd
  * FUNcube Dongle Pro+ through gr-fcdproplus
- * sysmocom OsmoSDR Devices through libosmosdr
  * RTL2832U based DVB-T dongles through librtlsdr
  * RTL-TCP spectrum server (see librtlsdr project)
- * MSi2500 based DVB-T dongles through libmirisdr
  * SDRplay RSP through SDRplay API library
  * gnuradio .cfile input through libgnuradio-blocks
  * RFSPACE SDR-IQ, SDR-IP, NetSDR (incl. X2 option)
@@ -15,7 +13,8 @@ as well supports:
  * Great Scott Gadgets HackRF through libhackrf
  * Nuand LLC bladeRF through libbladeRF library
  * Ettus USRP Devices through Ettus UHD library
- * Fairwaves UmTRX through Fairwaves' fork of UHD
+ * Fairwaves UmTRX through Fairwaves' module for UHD
+ * Fairwaves XTRX through libxtrx
  * Red Pitaya SDR transceiver (http://bazaar.redpitaya.com)
  * FreeSRP through libfreesrp
 

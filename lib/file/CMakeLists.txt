@@ -25,7 +25,7 @@ target_include_directories(gnuradio-osmosdr PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-target_link_libraries(gnuradio-osmosdr
+APPEND_LIB_LIST(
     gnuradio::gnuradio-blocks
 )
 message(STATUS ${gnuradio-blocks_LIBRARIES})

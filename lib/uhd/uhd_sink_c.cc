@@ -18,7 +18,6 @@
  * Boston, MA 02110-1301, USA.
  */
 
-#include <boost/foreach.hpp>
 #include <boost/assign.hpp>
 #include <boost/algorithm/string.hpp>
 
@@ -71,7 +70,7 @@ uhd_sink_c::uhd_sink_c(const std::string &args) :
     _lo_offset = boost::lexical_cast< double >( dict["lo_offset"] );
 
   std::string arguments; // rebuild argument string without internal arguments
-  BOOST_FOREACH( dict_t::value_type &entry, dict )
+  for (dict_t::value_type &entry : dict)
   {
     if ( "cpu_format" == entry.first ||
          "otw_format" == entry.first ||
@@ -135,7 +134,7 @@ std::vector< std::string > uhd_sink_c::get_devices()
   std::vector< std::string > devices;
 
   uhd::device_addr_t hint;
-  BOOST_FOREACH(const uhd::device_addr_t &dev, uhd::device::find(hint))
+  for (const uhd::device_addr_t &dev : uhd::device::find(hint))
   {
     std::string args = "uhd," + dev.to_string();
 
@@ -190,7 +189,7 @@ osmosdr::meta_range_t uhd_sink_c::get_sample_rates( void )
 {
   osmosdr::meta_range_t rates;
 
-  BOOST_FOREACH( uhd::range_t rate, _snk->get_samp_rates() )
+  for (uhd::range_t rate : _snk->get_samp_rates())
       rates += osmosdr::range_t( rate.start(), rate.stop(), rate.step() );
 
   return rates;
@@ -211,7 +210,7 @@ osmosdr::freq_range_t uhd_sink_c::get_freq_range( size_t chan )
 {
   osmosdr::freq_range_t range;
 
-  BOOST_FOREACH( uhd::range_t freq, _snk->get_freq_range(chan) )
+  for (uhd::range_t freq : _snk->get_freq_range(chan))
       range += osmosdr::range_t( freq.start(), freq.stop(), freq.step() );
 
   return range;
@@ -260,7 +259,7 @@ osmosdr::gain_range_t uhd_sink_c::get_gain_range( size_t chan )
 {
   osmosdr::gain_range_t range;
 
-  BOOST_FOREACH( uhd::range_t gain, _snk->get_gain_range(chan) )
+  for (uhd::range_t gain : _snk->get_gain_range(chan))
       range += osmosdr::range_t( gain.start(), gain.stop(), gain.step() );
 
   return range;
@@ -270,7 +269,7 @@ osmosdr::gain_range_t uhd_sink_c::get_gain_range( const std::string & name, size
 {
   osmosdr::gain_range_t range;
 
-  BOOST_FOREACH( uhd::range_t gain, _snk->get_gain_range(name, chan) )
+  for (uhd::range_t gain : _snk->get_gain_range(name, chan))
       range += osmosdr::range_t( gain.start(), gain.stop(), gain.step() );
 
   return range;
@@ -351,7 +350,7 @@ osmosdr::freq_range_t uhd_sink_c::get_bandwidth_range( size_t chan )
 {
   osmosdr::freq_range_t bandwidths;
 
-  BOOST_FOREACH( uhd::range_t bw, _snk->get_bandwidth_range(chan) )
+  for (uhd::range_t bw : _snk->get_bandwidth_range(chan))
       bandwidths += osmosdr::range_t( bw.start(), bw.stop(), bw.step() );
 
   return bandwidths;

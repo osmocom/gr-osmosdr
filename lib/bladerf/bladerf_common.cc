@@ -35,10 +35,8 @@
 #include <string>
 
 #include <boost/assign.hpp>
-#include <boost/foreach.hpp>
 #include <boost/format.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/weak_ptr.hpp>
 
 #include "bladerf_common.h"
 
@@ -50,8 +48,8 @@ static size_t const STREAM_TIMEOUT_MS = 3000;
 
 using namespace boost::assign;
 
-boost::mutex bladerf_common::_devs_mutex;
-std::list<boost::weak_ptr<struct bladerf>> bladerf_common::_devs;
+std::mutex bladerf_common::_devs_mutex;
+std::list<std::weak_ptr<struct bladerf>> bladerf_common::_devs;
 
 /* name for system-wide gain (which is not its own libbladeRF gain stage) */
 static const char *SYSTEM_GAIN_NAME = "system";
@@ -499,7 +497,7 @@ int bladerf_common::channel2rfport(bladerf_channel ch)
 bladerf_channel bladerf_common::chan2channel(bladerf_direction direction,
                                              size_t chan)
 {
-  BOOST_FOREACH(bladerf_channel_map::value_type &i, _chanmap) {
+  for (bladerf_channel_map::value_type &i : _chanmap) {
     bladerf_channel ch = i.first;
     if (
         (i.second == (int)chan) && (
@@ -643,7 +641,7 @@ osmosdr::freq_range_t bladerf_common::filter_bandwidths(bladerf_channel ch)
       0.75, 0.875, 1.25, 1.375, 1.5, 1.92, 2.5,
       2.75, 3, 3.5, 4.375, 5, 6, 7, 10, 14;
 
-  BOOST_FOREACH( double half_bw, half_bandwidths )
+  for (double half_bw : half_bandwidths)
     bandwidths += osmosdr::range_t( half_bw * 2e6 );
 #else
 
@@ -1079,7 +1077,7 @@ bladerf_sptr bladerf_common::open(std::string const &device_name)
   struct bladerf *raw_dev = NULL;
   struct bladerf_devinfo devinfo;
 
-  boost::unique_lock<boost::mutex> lock(_devs_mutex);
+  std::lock_guard<std::mutex> lock(_devs_mutex);
 
   /* Initialize the information used to identify the desired device
    * to all wildcard (i.e., "any device") values */
@@ -1109,15 +1107,15 @@ bladerf_sptr bladerf_common::open(std::string const &device_name)
   /* Add the device handle to our cache */
   bladerf_sptr dev = bladerf_sptr(raw_dev, bladerf_common::close);
 
-  _devs.push_back(static_cast<boost::weak_ptr<struct bladerf>>(dev));
+  _devs.push_back(static_cast<std::weak_ptr<struct bladerf>>(dev));
 
   return dev;
 }
 
 void bladerf_common::close(void *dev)
 {
-  boost::unique_lock<boost::mutex> lock(_devs_mutex);
-  std::list<boost::weak_ptr<struct bladerf>>::iterator it(_devs.begin());
+  std::lock_guard<std::mutex> lock(_devs_mutex);
+  std::list<std::weak_ptr<struct bladerf>>::iterator it(_devs.begin());
 
   /* Prune expired entries from device cache */
   while (it != _devs.end()) {
@@ -1137,7 +1135,7 @@ bladerf_sptr bladerf_common::get_cached_device(struct bladerf_devinfo devinfo)
   int status;
   struct bladerf_devinfo other_devinfo;
 
-  BOOST_FOREACH(boost::weak_ptr<struct bladerf> dev, _devs) {
+  for (std::weak_ptr<struct bladerf> dev : _devs) {
     status = bladerf_get_devinfo(bladerf_sptr(dev).get(), &other_devinfo);
     if (status < 0) {
       BLADERF_THROW_STATUS(status, "Failed to get devinfo for cached device");
@@ -1200,7 +1198,7 @@ void bladerf_common::print_device_info()
 bool bladerf_common::is_antenna_valid(bladerf_direction dir,
                                       const std::string &antenna)
 {
-  BOOST_FOREACH(std::string ant, get_antennas(dir)) {
+  for (std::string ant : get_antennas(dir)) {
     if (antenna == ant) {
       return true;
     }

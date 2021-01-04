@@ -144,7 +144,7 @@ bladerf_source_c::bladerf_source_c(const std::string &args) :
   }
 
   /* Initialize channel <-> antenna map */
-  BOOST_FOREACH(std::string ant, get_antennas()) {
+  for (std::string ant : get_antennas()) {
     _chanmap[str2channel(ant)] = -1;
   }
 
@@ -180,7 +180,7 @@ bladerf_source_c::bladerf_source_c(const std::string &args) :
 
 bool bladerf_source_c::is_antenna_valid(const std::string &antenna)
 {
-  BOOST_FOREACH(std::string ant, get_antennas()) {
+  for (std::string ant : get_antennas()) {
     if (antenna == ant) {
       return true;
     }

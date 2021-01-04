@@ -4,13 +4,11 @@
 #define GR_OSMOSDR_VERSION "@VERSION@"
 #define GR_OSMOSDR_LIBVER "@LIBVER@"
 
-#cmakedefine ENABLE_OSMOSDR
 #cmakedefine ENABLE_FCD
 #cmakedefine ENABLE_FILE
 #cmakedefine ENABLE_RTL
 #cmakedefine ENABLE_RTL_TCP
 #cmakedefine ENABLE_UHD
-#cmakedefine ENABLE_MIRI
 #cmakedefine ENABLE_SDRPLAY
 #cmakedefine ENABLE_HACKRF
 #cmakedefine ENABLE_BLADERF
@@ -20,6 +18,7 @@
 #cmakedefine ENABLE_SOAPY
 #cmakedefine ENABLE_REDPITAYA
 #cmakedefine ENABLE_FREESRP
+#cmakedefine ENABLE_XTRX
 
 //provide NAN define for MSVC older than VC12
 #if defined(_MSC_VER) && (_MSC_VER < 1800)

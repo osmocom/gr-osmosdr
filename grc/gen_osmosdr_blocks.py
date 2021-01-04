@@ -122,11 +122,11 @@ templates:
     ${'%'} if context.get('nchan')() > ${n}:
     self.${'$'}{id}.set_center_freq(${'$'}{${'freq' + str(n)}}, ${n})
     self.${'$'}{id}.set_freq_corr(${'$'}{${'corr' + str(n)}}, ${n})
-    ${'%'} if context.get('sourk') == 'source':
+    % if sourk == 'source':
     self.${'$'}{id}.set_dc_offset_mode(${'$'}{${'dc_offset_mode' + str(n)}}, ${n})
     self.${'$'}{id}.set_iq_balance_mode(${'$'}{${'iq_balance_mode' + str(n)}}, ${n})
     self.${'$'}{id}.set_gain_mode(${'$'}{${'gain_mode' + str(n)}}, ${n})
-    ${'%'} endif
+    % endif
     self.${'$'}{id}.set_gain(${'$'}{${'gain' + str(n)}}, ${n})
     self.${'$'}{id}.set_if_gain(${'$'}{${'if_gain' + str(n)}}, ${n})
     self.${'$'}{id}.set_bb_gain(${'$'}{${'bb_gain' + str(n)}}, ${n})
@@ -157,10 +157,8 @@ documentation: |-
   While primarily being developed for the OsmoSDR hardware, this block as well supports:
 
   % if sourk == 'source':
-   * sysmocom OsmoSDR Devices through libosmosdr
    * RTL2832U based DVB-T dongles through librtlsdr
    * RTL-TCP spectrum server (see librtlsdr project)
-   * MSi2500 based DVB-T dongles through libmirisdr
    * SDRplay RSP devices through SDRplay library
    * gnuradio .cfile input through libgnuradio-blocks
    * RFSPACE SDR-IQ, SDR-IP, NetSDR (incl. X2 option)
@@ -173,7 +171,8 @@ documentation: |-
    * Great Scott Gadgets HackRF through libhackrf
    * Nuand LLC bladeRF through libbladeRF library
    * Ettus USRP Devices through Ettus UHD library
-   * Fairwaves UmTRX through Fairwaves' fork of UHD
+   * Fairwaves XTRX through libxtrx
+   * Fairwaves UmTRX through Fairwaves' module for UHD
    * Red Pitaya SDR transceiver (http://bazaar.redpitaya.com)
    * FreeSRP through libfreesrp library
 
@@ -192,13 +191,11 @@ documentation: |-
   Lines ending with ... mean it's possible to bind devices together by specifying multiple device arguments separated with a space.
 
   % if sourk == 'source':
-    miri=0[,buffers=32] ...
     rtl=serial_number ...
     rtl=0[,rtl_xtal=28.8e6][,tuner_xtal=28.8e6] ...
     rtl=1[,buffers=32][,buflen=N*512] ...
     rtl=2[,direct_samp=0|1|2][,offset_tune=0|1][,bias=0|1] ...
     rtl_tcp=127.0.0.1:1234[,psize=16384][,direct_samp=0|1|2][,offset_tune=0|1][,bias=0|1] ...
-    osmosdr=0[,buffers=32][,buflen=N*512] ...
     file='/path/to/your file',rate=1e6[,freq=100e6][,repeat=true][,throttle=true] ...
     netsdr=127.0.0.1[:50000][,nchan=2]
     sdr-ip=127.0.0.1[:50000]
@@ -214,6 +211,7 @@ documentation: |-
     hackrf=0[,buffers=32][,bias=0|1][,bias_tx=0|1]
     bladerf=0[,tamer=internal|external|external_1pps][,smb=25e6]
     uhd[,serial=...][,lo_offset=0][,mcr=52e6][,nchan=2][,subdev='\\\\'B:0 A:0\\\\''] ...
+    xtrx
 
   Num Channels:
   Selects the total number of channels in this multi-device configuration. Required when specifying multiple device arguments.

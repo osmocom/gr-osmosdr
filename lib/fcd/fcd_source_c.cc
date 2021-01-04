@@ -23,7 +23,6 @@
 #include <sstream>
 
 #include <boost/assign.hpp>
-#include <boost/foreach.hpp>
 
 #include <gnuradio/io_signature.h>
 
@@ -142,18 +141,15 @@ fcd_source_c::fcd_source_c(const std::string &args) :
 
   std::cerr << "Using " << name() << " (" << dev_name << ")" << std::endl;
 
-#ifdef HAVE_FCD
   if ( FUNCUBE_V1 == _type )
   {
-    _src_v1 = gr::fcd::source_c::make( dev_name );
+    _src_v1 = gr::fcdproplus::fcd::make( dev_name );
     connect( _src_v1, 0, self(), 0 );
 
     set_gain( 20, "LNA" );
     set_gain( 12, "MIX" );
   }
-#endif
 
-#ifdef HAVE_FCDPP
   if ( FUNCUBE_V2 == _type )
   {
     _src_v2 = gr::fcdproplus::fcdproplus::make( dev_name );
@@ -163,7 +159,6 @@ fcd_source_c::fcd_source_c(const std::string &args) :
     set_gain( 1, "MIX" );
     set_gain( 15, "BB" );
   }
-#endif
 }
 
 fcd_source_c::~fcd_source_c()
@@ -175,7 +170,7 @@ std::vector< std::string > fcd_source_c::get_devices()
   int id = 0;
   std::vector< std::string > devices;
 
-  BOOST_FOREACH( device_t dev, _get_devices() )
+  for (device_t dev : _get_devices())
   {
     std::string args = "fcd=" + boost::lexical_cast< std::string >( id++ );
 
@@ -241,15 +236,11 @@ osmosdr::freq_range_t fcd_source_c::get_freq_range( size_t chan )
 
 double fcd_source_c::set_center_freq( double freq, size_t chan )
 {
-#ifdef HAVE_FCD
   if ( FUNCUBE_V1 == _type )
     _src_v1->set_freq( float(freq) );
-#endif
 
-#ifdef HAVE_FCDPP
   if ( FUNCUBE_V2 == _type )
     _src_v2->set_freq( float(freq) );
-#endif
 
   _freq = freq;
 
@@ -263,15 +254,11 @@ double fcd_source_c::get_center_freq( size_t chan )
 
 double fcd_source_c::set_freq_corr( double ppm, size_t chan )
 {
-#ifdef HAVE_FCD
   if ( FUNCUBE_V1 == _type )
     _src_v1->set_freq_corr( ppm );
-#endif
 
-#ifdef HAVE_FCDPP
   if ( FUNCUBE_V2 == _type )
     _src_v2->set_freq_corr( ppm );
-#endif
 
   _correct = ppm;
 
@@ -343,7 +330,6 @@ double fcd_source_c::set_gain( double gain, size_t chan )
 
 double fcd_source_c::set_gain( double gain, const std::string & name, size_t chan )
 {
-#ifdef HAVE_FCD
   if ( FUNCUBE_V1 == _type )
   {
     if ( "LNA" == name )
@@ -357,9 +343,7 @@ double fcd_source_c::set_gain( double gain, const std::string & name, size_t cha
       _src_v1->set_mixer_gain(_mix_gain);
     }
   }
-#endif
 
-#ifdef HAVE_FCDPP
   if ( FUNCUBE_V2 == _type )
   {
     if ( "LNA" == name )
@@ -378,7 +362,6 @@ double fcd_source_c::set_gain( double gain, const std::string & name, size_t cha
       _src_v2->set_if_gain(_bb_gain);
     }
   }
-#endif
 
   return get_gain( name, chan );
 }
