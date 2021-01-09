@@ -242,7 +242,7 @@ source_impl::source_impl( const std::string &args )
       dev_list.push_back( dev );
 #endif
 #ifdef ENABLE_XTRX
-    BOOST_FOREACH( std::string dev, xtrx_source_c::get_devices() )
+    for (std::string dev : xtrx_source_c::get_devices())
       dev_list.push_back( dev );
 #endif
 

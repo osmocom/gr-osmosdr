@@ -394,7 +394,7 @@ void xtrx_sink_c::tag_process(int ninput_items)
   uint64_t max_count = samp0_count + ninput_items;
 
   bool found_time_tag = false;
-  BOOST_FOREACH(const gr::tag_t &my_tag, _tags) {
+  for (const gr::tag_t &my_tag : _tags) {
     const uint64_t my_tag_count = my_tag.offset;
     const pmt::pmt_t &key = my_tag.key;
     const pmt::pmt_t &value = my_tag.value;
@@ -416,7 +416,7 @@ void xtrx_sink_c::tag_process(int ninput_items)
 
       std::cerr << "TX_TIME: " << seconds << ":" << fractional << std::endl;
     }
-  } // end foreach
+  } // end for
 
   if (found_time_tag) {
     //_metadata.has_time_spec = true;

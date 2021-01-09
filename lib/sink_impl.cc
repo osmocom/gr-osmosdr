@@ -154,7 +154,8 @@ sink_impl::sink_impl( const std::string &args )
       dev_list.push_back( dev );
 #endif
 #ifdef ENABLE_XTRX
-	BOOST_FOREACH( std::string dev, xtrx_sink_c::get_devices() )
+    for (std::string dev : xtrx_sink_c::get_devices())
+      dev_list.push_back( dev );
 #endif
 #ifdef ENABLE_FILE
     for (std::string dev : file_sink_c::get_devices())
