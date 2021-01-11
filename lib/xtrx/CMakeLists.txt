@@ -26,6 +26,10 @@ target_include_directories(gnuradio-osmosdr PRIVATE
     ${LIBXTRX_INCLUDE_DIRS}
 )
 
+APPEND_LIB_LIST(
+    ${LIBXTRX_LIBRARIES}
+)
+
 list(APPEND gr_osmosdr_srcs
     ${CMAKE_CURRENT_SOURCE_DIR}/xtrx_obj.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/xtrx_source_c.cc
