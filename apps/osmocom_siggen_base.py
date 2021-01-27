@@ -46,7 +46,7 @@ from gnuradio import blocks
 from gnuradio import filter
 from gnuradio import analog
 from gnuradio import digital
-from gnuradio import gr, gru, eng_notation
+from gnuradio import gr, eng_notation
 from gnuradio.gr.pubsub import pubsub
 from gnuradio.eng_option import eng_option
 from optparse import OptionParser
