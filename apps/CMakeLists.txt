@@ -30,6 +30,6 @@ GR_PYTHON_INSTALL(
     osmocom_fft
     #    osmocom_siggen
     osmocom_siggen_nogui
-    osmocom_spectrum_sense
+    #    osmocom_spectrum_sense
     DESTINATION ${GR_RUNTIME_DIR}
 )
