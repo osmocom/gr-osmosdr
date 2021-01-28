@@ -44,7 +44,7 @@ endif()
 #this appends all unnamed implicit macro args!
 MACRO (APPEND_LIB_LIST)
       SET (gr_osmosdr_libs "${gr_osmosdr_libs};${ARGN}" CACHE INTERNAL "lib list")
-ENDMACRO (APPEND_INTERNAL_LIST)
+ENDMACRO (APPEND_LIB_LIST)
 
 set(gr_osmosdr_libs "" CACHE INTERNAL "lib that accumulates link targets")
 
