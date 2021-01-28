@@ -201,6 +201,7 @@ public:
 
   /*!
    * Select the active antenna of the underlying radio hardware.
+   * \param antenna the antenna name
    * \param chan the channel index 0 to N-1
    * \return the actual antenna's name
    */
