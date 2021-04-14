@@ -237,6 +237,11 @@ int bladerf_sink_c::work(int noutput_items,
     return 0;
   }
 
+  noutput_items &= ~(3ULL);
+  if (!noutput_items) {
+    return 0;
+  }
+
   // copy the samples from input_items
   gr_complex const **in = reinterpret_cast<gr_complex const **>(&input_items[0]);
 
