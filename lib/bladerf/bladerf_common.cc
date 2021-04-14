@@ -133,7 +133,7 @@ size_t num_streams(bladerf_channel_layout layout)
  * Public methods
  ******************************************************************************/
 bladerf_common::bladerf_common() :
-  _dev(boost::shared_ptr<struct bladerf>()),
+  _dev(std::shared_ptr<struct bladerf>()),
   _pfx("[bladeRF common] "),
   _failures(0),
   _num_buffers(NUM_BUFFERS),
