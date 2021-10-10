@@ -288,7 +288,8 @@ class app_top_block(gr.top_block, Qt.QMainWindow):
                 plotfreq=True,
                 plotwaterfall=True,
                 plottime=True,
-                plotconst=True
+                plotconst=True,
+                parent=None
             )
             if hasattr(self.scope,'pyqwidget'):
                 self.scope_win = sip.wrapinstance(self.scope.pyqwidget(), Qt.QWidget)
