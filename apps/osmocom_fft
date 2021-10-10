@@ -317,7 +317,7 @@ class app_top_block(gr.top_block, Qt.QMainWindow):
         try:
             self.freq = freq_recv(self.set_freq)
             self.msg_connect((self.scope, 'freq'), (self.freq, 'msg'))
-        except RuntimeError:
+        except (RuntimeError, ValueError):
             self.freq = None
 
         self.file_sink = blocks.file_sink(gr.sizeof_gr_complex, "/dev/null", False)
