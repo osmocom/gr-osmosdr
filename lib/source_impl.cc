@@ -265,7 +265,6 @@ source_impl::source_impl( const std::string &args )
 //      std::cerr << "'" << entry.first << "' = '" << entry.second << "'" << std::endl;
 
     source_iface *iface = NULL;
-    gr::basic_block_sptr block;
 
 #ifdef ENABLE_OSMOSDR
     if ( dict.count("osmosdr") ) {
@@ -378,24 +377,21 @@ source_impl::source_impl( const std::string &args )
 
     if ( iface != NULL && long(block.get()) != 0 ) {
       _devs.push_back( iface );
-
-      for (size_t i = 0; i < iface->get_num_channels(); i++) {
+      size_t i;
+      for (i = 0; i < iface->get_num_channels(); i++) {
 #ifdef HAVE_IQBALANCE
+
         gr::iqbalance::optimize_c::sptr iq_opt = gr::iqbalance::optimize_c::make( 0 );
         gr::iqbalance::fix_cc::sptr     iq_fix = gr::iqbalance::fix_cc::make();
+        _iq_opt.push_back( iq_opt );
+        _iq_fix.push_back( iq_fix );
 
-        connect(block, i, iq_fix, 0);
-        connect(iq_fix, 0, self(), channel++);
-
-        connect(block, i, iq_opt, 0);
-        msg_connect(iq_opt, "iqbal_corr", iq_fix, "iqbal_corr");
-
-        _iq_opt.push_back( iq_opt.get() );
-        _iq_fix.push_back( iq_fix.get() );
-#else
-        connect(block, i, self(), channel++);
+        _iq_mode.push_back( IQBalanceOff );
 #endif
+        connect(block, i, self(), channel++);
       }
+//      _iq_opt.resize(i);
+//      _iq_fix.resize(i);
     } else if ( (iface != NULL) || (long(block.get()) != 0) )
       throw std::runtime_error("Either iface or block are NULL.");
 
@@ -456,7 +452,7 @@ double source_impl::set_sample_rate(double rate)
     BOOST_FOREACH( source_iface *dev, _devs ) {
       for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++) {
         if ( channel < _iq_opt.size() ) {
-          gr::iqbalance::optimize_c *opt = _iq_opt[channel];
+          gr::iqbalance::optimize_c::sptr opt = _iq_opt[channel];
 
           if ( opt->period() > 0 ) { /* optimize is enabled */
             opt->set_period( dev->get_sample_rate() / 5 );
@@ -754,9 +750,27 @@ void source_impl::set_iq_balance_mode( int mode, size_t chan )
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++) {
       if ( chan == channel++ ) {
         if ( chan < _iq_opt.size() && chan < _iq_fix.size() ) {
-          gr::iqbalance::optimize_c *opt = _iq_opt[chan];
-          gr::iqbalance::fix_cc *fix = _iq_fix[chan];
-
+          gr::iqbalance::optimize_c::sptr opt = _iq_opt[chan];
+          gr::iqbalance::fix_cc::sptr fix = _iq_fix[chan];
+          if( mode != _iq_mode[chan]) {
+              lock();
+              if ( mode == IQBalanceOff ) {
+                    disconnect(block, chan, fix, 0);
+                    disconnect(fix, 0, self(), chan);
+                    disconnect(block, chan, opt, 0);
+                    msg_disconnect(opt, "iqbal_corr", fix, "iqbal_corr");
+                    connect(block, chan, self(), chan);
+              }
+              if ( _iq_mode[chan] == IQBalanceOff ) {
+                    disconnect(block, chan, self(), chan);
+                    connect(block, chan, fix, 0);
+                    connect(fix, 0, self(), chan);
+                    connect(block, chan, opt, 0);
+                    msg_connect(opt, "iqbal_corr", fix, "iqbal_corr");
+              }
+              _iq_mode[chan] = mode;
+              unlock();
+          }
           if ( IQBalanceOff == mode  ) {
             opt->set_period( 0 );
             /* store current values in order to be able to restore them later */
@@ -795,8 +809,8 @@ void source_impl::set_iq_balance( const std::complex<double> &balance, size_t ch
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++) {
       if ( chan == channel++ ) {
         if ( chan < _iq_opt.size() && chan < _iq_fix.size() ) {
-          gr::iqbalance::optimize_c *opt = _iq_opt[chan];
-          gr::iqbalance::fix_cc *fix = _iq_fix[chan];
+          gr::iqbalance::optimize_c::sptr opt = _iq_opt[chan];
+          gr::iqbalance::fix_cc::sptr fix = _iq_fix[chan];
 
           if ( opt->period() == 0 ) { /* automatic optimization desabled */
             fix->set_mag( balance.real() );

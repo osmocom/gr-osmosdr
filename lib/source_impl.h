@@ -104,8 +104,10 @@ private:
   std::map< size_t, double > _bb_gain;
   std::map< size_t, std::string > _antenna;
 #ifdef HAVE_IQBALANCE
-  std::vector< gr::iqbalance::fix_cc * > _iq_fix;
-  std::vector< gr::iqbalance::optimize_c * > _iq_opt;
+  gr::basic_block_sptr block;
+  std::vector< gr::iqbalance::fix_cc::sptr > _iq_fix;
+  std::vector< gr::iqbalance::optimize_c::sptr > _iq_opt;
+  std::vector< int > _iq_mode;
   std::map< size_t, std::pair<float, float> > _vals;
 #endif
   std::map< size_t, double > _bandwidth;
