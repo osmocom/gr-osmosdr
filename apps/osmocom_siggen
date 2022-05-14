@@ -483,7 +483,7 @@ def main():
         app.MainLoop()
 
     except RuntimeError, e:
-        print e
+        print(e)
         sys.exit(1)
 
 # Make sure to create the top block (tb) within a function: That code
