@@ -63,15 +63,7 @@ if((CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR
     add_definitions(-fvisibility-inlines-hidden)
 endif()
 
-if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    set(CMAKE_CXX_STANDARD 11)
-elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    set(CMAKE_CXX_STANDARD 11)
-elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-    set(CMAKE_CXX_STANDARD 11)
-else()
-    message(WARNING "C++ standard could not be set because compiler is not GNU, Clang or MSVC.")
-endif()
+set(CMAKE_CXX_STANDARD 11)
 
 # Misc options
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR
