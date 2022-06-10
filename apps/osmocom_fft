@@ -238,11 +238,14 @@ class app_top_block(gr.top_block, Qt.QMainWindow):
         self.iq_balance_mag = 0
         self.iq_balance_pha = 0
 
+        # see https://github.com/gnuradio/gnuradio/issues/5175 - 3.9 has a backport of pyqwidget, but 3.10 does not.
+        check_qwidget = lambda : self.scope.pyqwidget() if "pyqwidget" in dir(self.scope) else self.scope.qwidget()
+
         if options.fosphor:
             from gnuradio import fosphor
             self.scope = fosphor.qt_sink_c()
             self.scope.set_frequency_range(0, input_rate)
-            self.scope_win = sip.wrapinstance(self.scope.pyqwidget(), Qt.QWidget)
+            self.scope_win = sip.wrapinstance(check_qwidget(), Qt.QWidget)
             self.scope_win.setMinimumSize(800, 300)
         elif options.waterfall:
             self.scope = qtgui.waterfall_sink_c(
@@ -256,7 +259,7 @@ class app_top_block(gr.top_block, Qt.QMainWindow):
             self.scope.enable_grid(False)
             self.scope.enable_axis_labels(True)
             self.scope.set_intensity_range(-100, 20)
-            self.scope_win = sip.wrapinstance(self.scope.pyqwidget(), Qt.QWidget)
+            self.scope_win = sip.wrapinstance(check_qwidget(), Qt.QWidget)
             self.scope_win.setMinimumSize(800, 420)
 
         elif options.oscilloscope:
@@ -266,7 +269,7 @@ class app_top_block(gr.top_block, Qt.QMainWindow):
                 name="",
                 nconnections=1
             )
-            self.scope_win = sip.wrapinstance(self.scope.pyqwidget(), Qt.QWidget)
+            self.scope_win = sip.wrapinstance(check_qwidget(), Qt.QWidget)
             self.scope_win.setMinimumSize(800, 600)
 
         elif options.qtgui:
@@ -281,7 +284,7 @@ class app_top_block(gr.top_block, Qt.QMainWindow):
                 plottime=True,
                 plotconst=True
             )
-            self.scope_win = sip.wrapinstance(self.scope.pyqwidget(), Qt.QWidget)
+            self.scope_win = sip.wrapinstance(check_qwidget(), Qt.QWidget)
             self.scope.set_update_time(1.0/10)
             self.scope_win.setMinimumSize(800, 600)
 
@@ -294,7 +297,7 @@ class app_top_block(gr.top_block, Qt.QMainWindow):
                 name="",
                 nconnections=1
             )
-            self.scope_win = sip.wrapinstance(self.scope.pyqwidget(), Qt.QWidget)
+            self.scope_win = sip.wrapinstance(check_qwidget(), Qt.QWidget)
             self.scope.disable_legend()
             self.scope_win.setMinimumSize(800, 420)
 
