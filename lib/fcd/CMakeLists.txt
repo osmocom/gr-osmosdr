@@ -23,11 +23,11 @@
 
 target_include_directories(gnuradio-osmosdr PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${GNURADIO_FCDPP_INCLUDE_DIRS}
+    ${GNURADIO_FUNCUBE_INCLUDE_DIRS}
 )
 
 APPEND_LIB_LIST(
-    ${GNURADIO_FCDPP_LIBRARIES}
+    ${GNURADIO_FUNCUBE_LIBRARIES}
 )
 
 list(APPEND gr_osmosdr_srcs

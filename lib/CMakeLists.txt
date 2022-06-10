@@ -138,7 +138,7 @@ endif(ENABLE_IQBALANCE)
 ########################################################################
 # Setup FCD component
 ########################################################################
-GR_REGISTER_COMPONENT("FUNcube Dongle" ENABLE_FCD GNURADIO_FCDPP_FOUND)
+GR_REGISTER_COMPONENT("FUNcube Dongle" ENABLE_FCD GNURADIO_FUNCUBE_FOUND)
 if(ENABLE_FCD)
     add_subdirectory(fcd)
 endif(ENABLE_FCD)
