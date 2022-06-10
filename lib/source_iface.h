@@ -32,6 +32,8 @@
 class source_iface
 {
 public:
+  virtual ~source_iface() = default;
+
   /*!
    * Get the number of channels the underlying radio hardware offers.
    * \return the number of available channels

@@ -32,6 +32,8 @@
 class sink_iface
 {
 public:
+  virtual ~sink_iface() = default;
+
   /*!
    * Get the number of channels the underlying radio hardware offers.
    * \return the number of available channels
