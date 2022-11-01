@@ -112,6 +112,15 @@ bladerf_source_c::bladerf_source_c(const std::string &args) :
   /* RX Mux */
   set_rx_mux_mode(dict.count("rxmux") ? dict["rxmux"] : "baseband");
 
+  /* Ref in frequency */
+  if (dict.count("refin_freq")) {
+    status = bladerf_set_pll_refclk(_dev.get(), boost::lexical_cast< uint64_t >(dict["refin_freq"]));
+    if (status != 0) {
+      BLADERF_WARNING("Problem while setting refin_freq: " <<
+                      bladerf_strerror(status));
+    }
+  }
+
   /* AGC mode */
   if (dict.count("agc_mode")) {
     set_agc_mode(dict["agc_mode"]);
