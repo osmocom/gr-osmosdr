@@ -252,6 +252,7 @@ protected:
   size_t _num_transfers;        /**< number of active backend transfers */
   unsigned int _stream_timeout; /**< timeout for backend transfers */
 
+  bladerf_feature _feature;     /**< feature assigned to board */
   bladerf_format _format;       /**< sample format to use */
 
   bladerf_channel_map _chanmap; /**< map of antennas to channels */

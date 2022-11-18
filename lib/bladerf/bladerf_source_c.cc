@@ -230,6 +230,11 @@ bool bladerf_source_c::start()
 
   gr::thread::scoped_lock guard(d_mutex);
 
+  status = bladerf_enable_feature(_dev.get(), _feature, true);
+  if (status != 0) {
+    BLADERF_THROW_STATUS(status, "bladeRF enable_feature failed");
+  }
+
   status = bladerf_sync_config(_dev.get(), _layout, _format, _num_buffers,
                                _samples_per_buffer, _num_transfers,
                                _stream_timeout);

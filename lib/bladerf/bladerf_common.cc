@@ -313,6 +313,27 @@ void bladerf_common::init(dict_t const &dict, bladerf_direction direction)
     _stream_timeout = boost::lexical_cast<unsigned int>(_get(dict, "stream_timeout_ms"));
   }
 
+  /* Set feature */
+  if (dict.count("feature")) {
+    if (_get(dict, "feature") == "oversample") {
+        _feature = BLADERF_FEATURE_OVERSAMPLE;
+    } else if (_get(dict, "feature") == "default") {
+        _feature = BLADERF_FEATURE_DEFAULT;
+    } else {
+        BLADERF_THROW("Specified feature invalid. Valid formats: [default|oversample]");
+    }
+  } else {
+    _feature = BLADERF_FEATURE_DEFAULT;
+  }
+
+  status = bladerf_enable_feature(_dev.get(), _feature, true);
+  if (status != 0) {
+    BLADERF_THROW_STATUS(status, "Unable to set feature");
+  } else {
+    std::string feature_text = (_feature == BLADERF_FEATURE_OVERSAMPLE) ? "OVERSAMPLE" : "DEFAULT";
+    BLADERF_INFO(feature_text + " feature enabled");
+  }
+
   /* Explicately set sample_format */
   if (dict.count("sample_format")) {
     if (_get(dict, "sample_format") == "16" || _get(dict, "sample_format") == "16bit") {
