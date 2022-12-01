@@ -256,8 +256,14 @@ int bladerf_sink_c::work(int noutput_items,
 
   // convert floating point to fixed point and scale
   // input_items is gr_complex (2x float), so num_points is 2*noutput_items
-  volk_32f_s32f_convert_16i(_16icbuf, reinterpret_cast<float const *>(_32fcbuf),
-                            SCALING_FACTOR_SC16_Q11, 2*noutput_items);
+  if (_format == BLADERF_FORMAT_SC8_Q7 || _format == BLADERF_FORMAT_SC8_Q7_META) {
+    volk_32f_s32f_convert_8i((int8_t*)_16icbuf, reinterpret_cast<float const *>(_32fcbuf),
+                              SCALING_FACTOR_SC8_Q7, 2*noutput_items);
+  }
+  else {
+    volk_32f_s32f_convert_16i(_16icbuf, reinterpret_cast<float const *>(_32fcbuf),
+                              SCALING_FACTOR_SC16_Q11, 2*noutput_items);
+  }
 
   // transmit the samples from the temp buffer
   if (BLADERF_FORMAT_SC16_Q11_META == _format) {

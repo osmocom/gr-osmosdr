@@ -134,6 +134,7 @@ private:
 
   /* Scaling factor used when converting from float to int16_t */
   const float SCALING_FACTOR_SC16_Q11 = 2048.0f;
+  const float SCALING_FACTOR_SC8_Q7 = 127.0f;
 };
 
 #endif // INCLUDED_BLADERF_SINK_C_H
