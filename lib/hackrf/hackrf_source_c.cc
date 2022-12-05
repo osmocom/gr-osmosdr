@@ -101,11 +101,35 @@ hackrf_source_c::hackrf_source_c (const std::string &args)
   set_sample_rate( get_sample_rates().start() );
   set_bandwidth( 0 );
 
+  if (dict.count("lna_gain")) {
+  //std::string amp_stage;
+  //const char * _amp_stage = amp_stage.c_str();
+  double gain_to_set =  std::stod( dict["lna_gain"] );
+  set_gain( gain_to_set ); /* disable AMP gain stage by default to protect full sprectrum pre-amp from physical damage */
+  } else {
   set_gain( 0 ); /* disable AMP gain stage by default to protect full sprectrum pre-amp from physical damage */
+  }
 
+  if (dict.count("if_gain")) {
+  //std::string amp_stage;
+  //const char * _amp_stage = amp_stage.c_str();
+  double gain_to_set =  std::stod( dict["if_gain"] );
+  set_if_gain( gain_to_set ); /* disable AMP gain stage by default to protect full sprectrum pre-amp from physical damage */
+  } else {
   set_if_gain( 16 ); /* preset to a reasonable default (non-GRC use case) */
+  }
 
+//  set_if_gain( 16 ); /* preset to a reasonable default (non-GRC use case) */
+
+  if (dict.count("bb_gain")) {
+  //std::string amp_stage;
+  //const char * _amp_stage = amp_stage.c_str();
+  double gain_to_set =  std::stod( dict["bb_gain"] );
+  set_bb_gain( gain_to_set ); /* disable AMP gain stage by default to protect full sprectrum pre-amp from physical damage */
+  } else {
   set_bb_gain( 20 ); /* preset to a reasonable default (non-GRC use case) */
+  }
+  //set_bb_gain( 20 ); /* preset to a reasonable default (non-GRC use case) */
 
   // Check device args to find out if bias/phantom power is desired.
   if ( dict.count("bias") ) {

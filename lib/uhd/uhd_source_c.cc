@@ -80,6 +80,8 @@ uhd_source_c::uhd_source_c(const std::string &args) :
          "nchan" == entry.first ||
          "subdev" == entry.first ||
          "lo_offset" == entry.first ||
+         "clock_source" == entry.first ||
+         "time_source" == entry.first ||
          "uhd" == entry.first )
       continue;
 
@@ -108,6 +110,14 @@ uhd_source_c::uhd_source_c(const std::string &args) :
 
   if (dict.count("subdev"))
     _src->set_subdev_spec( dict["subdev"] );
+
+
+  if (dict.count("time_source"))
+    _src->set_time_source( dict["time_source"] );
+
+  if (dict.count("clock_source"))
+    _src->set_clock_source( dict["clock_source"] );
+
 
   std::cerr << "-- Using subdev spec '" << _src->get_subdev_spec() << "'."
             << std::endl;
