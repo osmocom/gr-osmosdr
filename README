@@ -7,7 +7,7 @@ as well supports:
  * MSi2500 based DVB-T dongles through libmirisdr
  * SDRplay RSP through SDRplay API library
  * gnuradio .cfile input through libgnuradio-blocks
- * RFSPACE SDR-IQ, SDR-IP, NetSDR (incl. X2 option)
+ * RFSPACE SDR-IQ, SDR-IP, NetSDR (incl. X2 option), Cloud-IQ, and CloudSDR
  * AirSpy Wideband Receiver through libairspy
  * CCCamp 2015 rad1o Badge through libhackrf
  * Great Scott Gadgets HackRF through libhackrf

@@ -130,7 +130,8 @@ private: /* members */
     RFSPACE_SDR_IQ,
     RFSPACE_SDR_IP,
     RFSPACE_NETSDR,
-    RFSPACE_CLOUDIQ
+    RFSPACE_CLOUDIQ,
+    RFSPACE_CLOUDSDR
   };
 
   radio_type _radio;

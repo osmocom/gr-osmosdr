@@ -186,6 +186,7 @@ source_impl::source_impl( const std::string &args )
   dev_types.push_back("sdr-ip");
   dev_types.push_back("netsdr");
   dev_types.push_back("cloudiq");
+  dev_types.push_back("cloudsdr");
 #endif
 
   for (std::string arg : arg_list) {
@@ -346,7 +347,8 @@ source_impl::source_impl( const std::string &args )
          dict.count("sdr-iq") ||
          dict.count("sdr-ip") ||
          dict.count("netsdr") ||
-         dict.count("cloudiq") ) {
+         dict.count("cloudiq") ||
+         dict.count("cloudsdr") ) {
       rfspace_source_c_sptr src = make_rfspace_source_c( arg );
       block = src; iface = src.get();
     }

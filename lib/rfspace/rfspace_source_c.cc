@@ -122,6 +122,9 @@ rfspace_source_c::rfspace_source_c (const std::string &args)
   if ( dict.count("cloudiq") )
     dict["rfspace"] = dict["cloudiq"];
 
+  if ( dict.count("cloudsdr") )
+    dict["rfspace"] = dict["cloudsdr"];
+
   if ( dict.count("rfspace") )
   {
     std::string value = dict["rfspace"];
@@ -145,6 +148,9 @@ rfspace_source_c::rfspace_source_c (const std::string &args)
 
         if ( first.count("cloudiq") )
           value = first["cloudiq"];
+
+        if ( first.count("cloudsdr") )
+          value = first["cloudsdr"];
 
         dict["rfspace"] = value;
         dict["label"] = first["label"];
@@ -291,7 +297,7 @@ rfspace_source_c::rfspace_source_c (const std::string &args)
     memset(&host_sa, 0, sizeof(host_sa));
     host_sa.sin_family = AF_INET;
     host_sa.sin_addr.s_addr = htonl(INADDR_ANY);
-    host_sa.sin_port = htons(DEFAULT_PORT);
+    host_sa.sin_port = htons(port); /* host port must match sdr port */
 
     if ( bind(_udp, (struct sockaddr *)&host_sa, sizeof(host_sa)) < 0 )
     {
@@ -336,6 +342,8 @@ rfspace_source_c::rfspace_source_c (const std::string &args)
       _radio = RFSPACE_NETSDR;
     else if ( 0x434C4951 == product_id ) /* CloudIQ Product ID */
       _radio = RFSPACE_CLOUDIQ;
+    else if ( 0x434C5344 == product_id ) /* CloudSDR Product ID */
+      _radio = RFSPACE_CLOUDSDR;
     else
       std::cerr << "UNKNOWN ";
   }
@@ -374,7 +382,8 @@ rfspace_source_c::rfspace_source_c (const std::string &args)
 
   if ( RFSPACE_NETSDR == _radio ||
        RFSPACE_SDR_IP == _radio ||
-       RFSPACE_CLOUDIQ == _radio)
+       RFSPACE_CLOUDIQ == _radio ||
+       RFSPACE_CLOUDSDR == _radio)
   {
     unsigned char hardver[] = { 0x05, 0x20, 0x04, 0x00, 0x02 };
     if ( transaction( hardver, sizeof(hardver), response ) )
@@ -382,7 +391,8 @@ rfspace_source_c::rfspace_source_c (const std::string &args)
   }
 
   if ( RFSPACE_NETSDR == _radio ||
-       RFSPACE_CLOUDIQ == _radio)
+       RFSPACE_CLOUDIQ == _radio ||
+       RFSPACE_CLOUDSDR == _radio)
   {
     unsigned char fpgaver[] = { 0x05, 0x20, 0x04, 0x00, 0x03 };
     if ( transaction( fpgaver, sizeof(fpgaver), response ) )
@@ -431,7 +441,8 @@ rfspace_source_c::rfspace_source_c (const std::string &args)
 
     set_bandwidth( 0 ); /* switch to automatic filter selection by default */
   }
-  else if ( RFSPACE_CLOUDIQ == _radio)
+  else if ( RFSPACE_CLOUDIQ == _radio ||
+	    RFSPACE_CLOUDSDR == _radio)
   {
     set_sample_rate( 240000 );
     set_bandwidth( 0 );
@@ -440,7 +451,8 @@ rfspace_source_c::rfspace_source_c (const std::string &args)
   /* start TCP keepalive thread */
   if ( RFSPACE_NETSDR == _radio ||
        RFSPACE_SDR_IP == _radio ||
-       RFSPACE_CLOUDIQ == _radio )
+       RFSPACE_CLOUDIQ == _radio ||
+       RFSPACE_CLOUDSDR == _radio )
   {
     _run_tcp_keepalive_task = true;
     _thread = gr::thread::thread( boost::bind(&rfspace_source_c::tcp_keepalive_task, this) );
@@ -1265,6 +1277,21 @@ osmosdr::meta_range_t rfspace_source_c::get_sample_rates()
     range += osmosdr::range_t( 1228800 );
     range += osmosdr::range_t( 1807058 );
   }
+  else if ( RFSPACE_CLOUDSDR == _radio )
+  {
+    /* CloudSDR supports 122.88 MHz / 4*N for N = 15 ... 2560, but lets limit
+     * ourselves to the ones available in SpectraVue
+     */
+    range += osmosdr::range_t( 48000 ); // 40 kHz
+    range += osmosdr::range_t( 61440 ); // 50 kHz
+    range += osmosdr::range_t( 122880 ); // 100 kHz
+    range += osmosdr::range_t( 245760 ); // 200 kHz
+    range += osmosdr::range_t( 370120 ); // 300 kHz
+    range += osmosdr::range_t( 495483 ); // 400 kHz
+    range += osmosdr::range_t( 614400 ); // 500 kHz
+    range += osmosdr::range_t( 1228800 ); // 1 MHz
+    range += osmosdr::range_t( 2048000 ); // 2 MHz (16 bit)
+  }
 
   return range;
 }
@@ -1562,7 +1589,8 @@ std::string rfspace_source_c::get_antenna( size_t chan )
 double rfspace_source_c::set_bandwidth( double bandwidth, size_t chan )
 {
   if ( RFSPACE_SDR_IQ == _radio ||
-       RFSPACE_CLOUDIQ == _radio) /* not supported by SDR-IQ or Cloud-IQ */
+       RFSPACE_CLOUDIQ == _radio ||
+       RFSPACE_CLOUDSDR == _radio) /* not supported by SDR-IQ, Cloud-IQ, or CloudSDR */
     return 0.0f;
 
   /* SDR-IP 4.2.5 RF Filter Selection */
