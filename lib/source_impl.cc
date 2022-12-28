@@ -52,6 +52,10 @@
 #include <uhd_source_c.h>
 #endif
 
+#ifdef ENABLE_MIRI
+#include <miri_source_c.h>
+#endif
+
 #ifdef ENABLE_SDRPLAY
 #include <sdrplay_source_c.h>
 #endif
@@ -136,6 +140,9 @@ source_impl::source_impl( const std::string &args )
 #ifdef ENABLE_UHD
   dev_types.push_back("uhd");
 #endif
+#ifdef ENABLE_MIRI
+  dev_types.push_back("miri");
+#endif
 #ifdef ENABLE_SDRPLAY
   dev_types.push_back("sdrplay");
 #endif
@@ -203,6 +210,10 @@ source_impl::source_impl( const std::string &args )
 #endif
 #ifdef ENABLE_UHD
     for (std::string dev : uhd_source_c::get_devices())
+      dev_list.push_back( dev );
+#endif
+#ifdef ENABLE_MIRI
+    for (std::string dev : miri_source_c::get_devices())
       dev_list.push_back( dev );
 #endif
 #ifdef ENABLE_SDRPLAY
@@ -298,6 +309,13 @@ source_impl::source_impl( const std::string &args )
 #ifdef ENABLE_UHD
     if ( dict.count("uhd") ) {
       uhd_source_c_sptr src = make_uhd_source_c( arg );
+      block = src; iface = src.get();
+    }
+#endif
+
+#ifdef ENABLE_MIRI
+    if ( dict.count("miri") ) {
+      miri_source_c_sptr src = make_miri_source_c( arg );
       block = src; iface = src.get();
     }
 #endif

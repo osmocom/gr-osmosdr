@@ -176,6 +176,14 @@ if(ENABLE_UHD)
 endif(ENABLE_UHD)
 
 ########################################################################
+# Setup MiriSDR component
+########################################################################
+GR_REGISTER_COMPONENT("Osmocom MiriSDR" ENABLE_MIRI LIBMIRISDR_FOUND)
+if(ENABLE_MIRI)
+    add_subdirectory(miri)
+endif(ENABLE_MIRI)
+
+########################################################################
 # Setup SDRplay component
 ########################################################################
 if(ENABLE_NONFREE)
