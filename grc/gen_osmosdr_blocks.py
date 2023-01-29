@@ -159,6 +159,7 @@ documentation: |-
   % if sourk == 'source':
    * RTL2832U based DVB-T dongles through librtlsdr
    * RTL-TCP spectrum server (see librtlsdr project)
+   * MSi2500 based DVB-T dongles through libmirisdr
    * SDRplay RSP devices through SDRplay library
    * gnuradio .cfile input through libgnuradio-blocks
    * RFSPACE SDR-IQ, SDR-IP, NetSDR (incl. X2 option)
@@ -191,6 +192,7 @@ documentation: |-
   Lines ending with ... mean it's possible to bind devices together by specifying multiple device arguments separated with a space.
 
   % if sourk == 'source':
+    miri=0[,buffers=32] ...
     rtl=serial_number ...
     rtl=0[,rtl_xtal=28.8e6][,tuner_xtal=28.8e6] ...
     rtl=1[,buffers=32][,buflen=N*512] ...

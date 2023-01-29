@@ -52,6 +52,10 @@
 #include <uhd_source_c.h>
 #endif
 
+#ifdef ENABLE_MIRI
+#include <miri_source_c.h>
+#endif
+
 #ifdef ENABLE_SDRPLAY
 #include <sdrplay_source_c.h>
 #endif
@@ -136,6 +140,9 @@ source_impl::source_impl( const std::string &args )
 #ifdef ENABLE_UHD
   dev_types.push_back("uhd");
 #endif
+#ifdef ENABLE_MIRI
+  dev_types.push_back("miri");
+#endif
 #ifdef ENABLE_SDRPLAY
   dev_types.push_back("sdrplay");
 #endif
@@ -179,6 +186,7 @@ source_impl::source_impl( const std::string &args )
   dev_types.push_back("sdr-ip");
   dev_types.push_back("netsdr");
   dev_types.push_back("cloudiq");
+  dev_types.push_back("cloudsdr");
 #endif
 
   for (std::string arg : arg_list) {
@@ -203,6 +211,10 @@ source_impl::source_impl( const std::string &args )
 #endif
 #ifdef ENABLE_UHD
     for (std::string dev : uhd_source_c::get_devices())
+      dev_list.push_back( dev );
+#endif
+#ifdef ENABLE_MIRI
+    for (std::string dev : miri_source_c::get_devices())
       dev_list.push_back( dev );
 #endif
 #ifdef ENABLE_SDRPLAY
@@ -302,6 +314,13 @@ source_impl::source_impl( const std::string &args )
     }
 #endif
 
+#ifdef ENABLE_MIRI
+    if ( dict.count("miri") ) {
+      miri_source_c_sptr src = make_miri_source_c( arg );
+      block = src; iface = src.get();
+    }
+#endif
+
 #ifdef ENABLE_SDRPLAY
     if ( dict.count("sdrplay") ) {
       sdrplay_source_c_sptr src = make_sdrplay_source_c( arg );
@@ -328,7 +347,8 @@ source_impl::source_impl( const std::string &args )
          dict.count("sdr-iq") ||
          dict.count("sdr-ip") ||
          dict.count("netsdr") ||
-         dict.count("cloudiq") ) {
+         dict.count("cloudiq") ||
+         dict.count("cloudsdr") ) {
       rfspace_source_c_sptr src = make_rfspace_source_c( arg );
       block = src; iface = src.get();
     }
