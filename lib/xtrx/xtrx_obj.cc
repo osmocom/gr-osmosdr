@@ -68,6 +68,8 @@ xtrx_obj::xtrx_obj(const std::string &path, unsigned loglevel, bool lmsreset)
   unsigned xtrxflag = (loglevel & XTRX_O_LOGLVL_MASK) | ((lmsreset) ? XTRX_O_RESET : 0);
   std::cerr << "xtrx_obj::xtrx_obj = " << xtrxflag << std::endl;
 
+  xtrx_log_setlevel(loglevel, NULL);
+
   int res = xtrx_open_string(path.c_str(), &_obj);
   if (res < 0) {
     std::stringstream message;
