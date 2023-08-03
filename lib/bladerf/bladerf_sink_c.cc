@@ -286,7 +286,7 @@ int bladerf_sink_c::work(int noutput_items,
     _failures = 0;
   }
 
-  return noutput_items;
+  return noutput_items/get_num_channels();
 }
 
 int bladerf_sink_c::transmit_with_tags(void const *samples,
