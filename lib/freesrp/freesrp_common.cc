@@ -6,13 +6,11 @@
 
 #include <arg_helpers.h>
 
-using namespace FreeSRP;
-using namespace std;
 using namespace boost::assign;
 
 std::shared_ptr<::FreeSRP::FreeSRP> freesrp_common::_srp;
 
-freesrp_common::freesrp_common(const string &args)
+freesrp_common::freesrp_common(const std::string &args)
 {
   dict_t dict = params_to_dict(args);
 
@@ -20,7 +18,7 @@ freesrp_common::freesrp_common(const string &args)
   {
     try
     {
-      string serial = "";
+      std::string serial = "";
 
       if(dict.count("freesrp"))
       {
@@ -29,22 +27,22 @@ freesrp_common::freesrp_common(const string &args)
 
       if(dict.count("fx3"))
       {
-        if(Util::find_fx3())
+        if(FreeSRP::Util::find_fx3())
         {
           // Upload firmware to FX3
-          string firmware_path = string(getenv("HOME")) + "/.freesrp/fx3.img";
+          std::string firmware_path = std::string(getenv("HOME")) + "/.freesrp/fx3.img";
           if(dict["fx3"].length() > 0)
           {
             firmware_path = dict["fx3"];
           }
-          Util::find_fx3(true, firmware_path);
-          cout << "FX3 programmed with '" << firmware_path << "'" << endl;
+          FreeSRP::Util::find_fx3(true, firmware_path);
+          std::cout << "FX3 programmed with '" << firmware_path << "'" << std::endl;
           // Give FX3 time to re-enumerate
-          this_thread::sleep_for(chrono::milliseconds(600));
+          std::this_thread::sleep_for(std::chrono::milliseconds(600));
         }
         else
         {
-          cout << "No FX3 in bootloader mode found" << endl;
+          std::cout << "No FX3 in bootloader mode found" << std::endl;
         }
       }
 
@@ -52,45 +50,45 @@ freesrp_common::freesrp_common(const string &args)
 
       if(dict.count("fpga") || !_srp->fpga_loaded())
       {
-        string bitstream_path = string(getenv("HOME")) + "/.freesrp/fpga.bin";
+        std::string bitstream_path = std::string(getenv("HOME")) + "/.freesrp/fpga.bin";
         if(dict["fpga"].length() > 0)
         {
           bitstream_path = dict["fpga"];
         }
-        fpga_status stat = _srp->load_fpga(bitstream_path);
+        FreeSRP::fpga_status stat = _srp->load_fpga(bitstream_path);
         switch(stat)
         {
-        case FPGA_CONFIG_ERROR:
-          throw runtime_error("Could not load FPGA configuration!");
-        case FPGA_CONFIG_SKIPPED:
-          cout << "FPGA already configured. Restart the FreeSRP to load a new bitstream." << endl;
+        case FreeSRP::FPGA_CONFIG_ERROR:
+          throw std::runtime_error("Could not load FPGA configuration!");
+        case FreeSRP::FPGA_CONFIG_SKIPPED:
+          std::cout << "FPGA already configured. Restart the FreeSRP to load a new bitstream." << std::endl;
           break;
-        case FPGA_CONFIG_DONE:
-          cout << "FPGA configured with '" << bitstream_path << "'" << endl;
+        case FreeSRP::FPGA_CONFIG_DONE:
+          std::cout << "FPGA configured with '" << bitstream_path << "'" << std::endl;
           break;
         }
       }
 
-      cout << "Connected to FreeSRP" << endl;
+      std::cout << "Connected to FreeSRP" << std::endl;
 
       if(dict.count("loopback"))
       {
-        response res = _srp->send_cmd({SET_LOOPBACK_EN, 1});
-        if(res.error == CMD_OK)
+        FreeSRP::response res = _srp->send_cmd({FreeSRP::SET_LOOPBACK_EN, 1});
+        if(res.error == FreeSRP::CMD_OK)
         {
-          cout << "AD9364 in loopback mode" << endl;
+          std::cout << "AD9364 in loopback mode" << std::endl;
         }
         else
         {
-          throw runtime_error("Could not put AD9364 into loopback mode!");
+          throw std::runtime_error("Could not put AD9364 into loopback mode!");
         }
       }
       else
       {
-        response res = _srp->send_cmd({SET_LOOPBACK_EN, 0});
-        if(res.error != CMD_OK)
+        FreeSRP::response res = _srp->send_cmd({FreeSRP::SET_LOOPBACK_EN, 0});
+        if(res.error != FreeSRP::CMD_OK)
         {
-          throw runtime_error("Error disabling AD9364 loopback mode!");
+          throw std::runtime_error("Error disabling AD9364 loopback mode!");
         }
       }
 
@@ -103,28 +101,28 @@ freesrp_common::freesrp_common(const string &args)
         _ignore_overflow = false;
       }
     }
-    catch(const runtime_error& e)
+    catch(const std::runtime_error& e)
     {
-      cerr << "FreeSRP Error: " << e.what() << endl;
-      throw runtime_error(e.what());
+      std::cerr << "FreeSRP Error: " << e.what() << std::endl;
+      throw std::runtime_error(e.what());
     }
   }
 }
 
-vector<string> freesrp_common::get_devices()
+std::vector<std::string> freesrp_common::get_devices()
 {
-  vector<string> devices;
+  std::vector<std::string> devices;
 
-  vector<string> serial_numbers = ::FreeSRP::FreeSRP::list_connected();
+  std::vector<std::string> serial_numbers = ::FreeSRP::FreeSRP::list_connected();
 
   int index = 0;
 
-  for(string &serial : serial_numbers)
+  for(std::string &serial : serial_numbers)
   {
     index++;
 
-    string str;
-    str = "freesrp=" + serial + ",label='FreeSRP " + to_string(index) + "'";
+    std::string str;
+    str = "freesrp=" + serial + ",label='FreeSRP " + std::to_string(index) + "'";
 
     devices.push_back(str);
   }
