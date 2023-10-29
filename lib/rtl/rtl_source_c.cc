@@ -455,6 +455,8 @@ double rtl_source_c::get_sample_rate()
 osmosdr::freq_range_t rtl_source_c::get_freq_range( size_t chan )
 {
   osmosdr::freq_range_t range;
+  char manufact[256];
+  char product[256];
 
   if (_dev) {
     if (_no_tuner) {
@@ -463,6 +465,8 @@ osmosdr::freq_range_t rtl_source_c::get_freq_range( size_t chan )
         range += osmosdr::range_t( 0, double(rtl_freq) );
       return range;
     }
+
+    rtlsdr_get_usb_strings( _dev, manufact, product, NULL );
 
     enum rtlsdr_tuner tuner = rtlsdr_get_tuner_type(_dev);
 
@@ -478,6 +482,8 @@ osmosdr::freq_range_t rtl_source_c::get_freq_range( size_t chan )
       range += osmosdr::range_t( 438e6, 924e6 );
     } else if ( tuner == RTLSDR_TUNER_R820T ) {
       range += osmosdr::range_t( 24e6, 1766e6 );
+    } else if ( tuner == RTLSDR_TUNER_R828D && strcmp(manufact, "RTLSDRBlog") == 0 && strcmp(product, "Blog V4") == 0 ) {
+      range += osmosdr::range_t( 0e6, 1766e6 );
     } else if ( tuner == RTLSDR_TUNER_R828D ) {
       range += osmosdr::range_t( 24e6, 1766e6 );
     }
