@@ -410,7 +410,7 @@ bool sink_impl::set_gain_mode( bool automatic, size_t chan )
   for (sink_iface *dev : _devs)
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
       if ( chan == channel++ ) {
-        if ( _gain_mode[ chan ] != automatic ) {
+        if ( (_gain_mode.count(chan) == 0) || (_gain_mode[ chan ] != automatic) ) {
           _gain_mode[ chan ] = automatic;
           bool mode = dev->set_gain_mode( automatic, dev_chan );
           if (!automatic) // reapply gain value when switched to manual mode
