@@ -56,7 +56,7 @@ Files: lib/freesrp/*
 Copyright: 2017 by Lukas Lao Beyer
 License: GPL-3+
 
-Files: AUTHORS MANIFEST.md README gnuradio-osmosdr.pc.in
+Files: AUTHORS MANIFEST.md README.md gnuradio-osmosdr.pc.in
  cmake/cmake_uninstall.cmake.in include/osmosdr/device.h
  include/osmosdr/sink.h include/osmosdr/source.h
  lib/arg_helpers.h lib/config.h.in lib/device.cc
