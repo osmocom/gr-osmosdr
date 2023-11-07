@@ -24,6 +24,6 @@ version-to-get:
 	echo $(VER) is $(GITREV)
 
 get-orig-source: version-to-get
-	git clone git://git.osmocom.org/gr-osmosdr
+	git clone https://gitea.osmocom.org/sdr/gr-osmosdr
 	cd gr-osmosdr && git archive --format=tar --prefix=gr-osmosdr-$(VER)/  $(GITREV) | xz > ../gr-osmosdr_$(VER).orig.tar.xz
 	rm -rf gr-osmosdr

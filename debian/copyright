@@ -2,7 +2,7 @@ Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: gr-osmosdr
 Upstream-Contact: http://sdr.osmocom.org/trac/wiki/rtl-sdr
 Source:
- git clone git://git.osmocom.org/gr-osmosdr
+ git clone https://gitea.osmocom.org/sdr/gr-osmosdr
  The upstream package source tarball was generated from the tag:
  git archive --format=tar --prefix=gr-osmosdr-0.1.4/  v0.1.4 | xz > ../gr-osmosdr_0.1.4.orig.tar.xz
 Comment:

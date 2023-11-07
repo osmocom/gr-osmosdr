@@ -30,8 +30,8 @@ Build-Depends: cmake,
 X-Python-Version: >= 2.7, << 2.8
 Standards-Version: 4.1.0
 Homepage: https://osmocom.org/projects/gr-osmosdr/wiki
-Vcs-Git: git://git.osmocom.org/gr-osmosdr
-Vcs-Browser: https://git.osmocom.org/gr-osmosdr
+Vcs-Git: https://gitea.osmocom.org/sdr/gr-osmosdr
+Vcs-Browser: https://gitea.osmocom.org/sdr/gr-osmosdr
 
 Package: gr-osmosdr
 Architecture: any
