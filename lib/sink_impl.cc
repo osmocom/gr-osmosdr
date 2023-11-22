@@ -232,13 +232,13 @@ sink_impl::sink_impl( const std::string &args )
     }
 #endif
 
-    if ( iface != NULL && long(block.get()) != 0 ) {
+    if (iface != NULL && reinterpret_cast<std::intptr_t>(block.get()) != 0) {
       _devs.push_back( iface );
 
       for (size_t i = 0; i < iface->get_num_channels(); i++) {
         connect(self(), channel++, block, i);
       }
-    } else if ( (iface != NULL) || (long(block.get()) != 0) )
+    } else if ((iface != NULL) || (reinterpret_cast<std::intptr_t>(block.get()) != 0))
       throw std::runtime_error("Either iface or block are NULL.");
 
   }
