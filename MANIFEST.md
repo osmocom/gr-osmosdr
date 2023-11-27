@@ -15,7 +15,7 @@ author:
 copyright_owner:
     - Dimitri Stolnikov <horiz0n@gmx.net>
 license: GPLv3
-repo: git://git.osmocom.org/gr-osmosdr
+repo: https://gitea.osmocom.org/sdr/gr-osmosdr
 website: http://sdr.osmocom.org/trac/wiki/GrOsmoSDR
 ---
 GNU Radio block for interfacing with various radio hardware

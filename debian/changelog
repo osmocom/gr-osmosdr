@@ -1,0 +1,188 @@
+gr-osmosdr (0.1.5git) unstable; urgency=medium
+
+  * Add initial support for Airspy HF+
+  * Support for FreeSRP via libfreesrp
+
+ -- Harald Welte <laforge@gnumonks.org>  Sun, 03 Jun 2018 10:38:52 +0200
+
+gr-osmosdr (0.1.4-14) unstable; urgency=medium
+
+  * Add initial support for Airspy HF+
+  * Support for FreeSRP via libfreesrp
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Thu, 23 Nov 2017 10:38:52 -0500
+
+gr-osmosdr (0.1.4-13) unstable; urgency=medium
+
+  * update to v0.1.4-98-gc653754
+  * rtl-sdr bias-T support
+  * build with gnuradio-3.7.11
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Thu, 07 Sep 2017 19:50:05 -0400
+
+gr-osmosdr (0.1.4-12) unstable; urgency=medium
+
+  * rebuild with airspy-host 1.0.9
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Fri, 14 Oct 2016 20:58:28 -0400
+
+gr-osmosdr (0.1.4-11) unstable; urgency=medium
+
+  * Add SoapySDR support
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Sun, 28 Aug 2016 14:52:53 -0400
+
+gr-osmosdr (0.1.4-10) unstable; urgency=medium
+
+  * build with gnuradio-3.7.10
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Sun, 10 Jul 2016 12:41:34 -0400
+
+gr-osmosdr (0.1.4-9) unstable; urgency=medium
+
+  * update to v0.1.4-72-g164a09f
+  * rebuild on kfreebsd (Closes: #822132)
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Fri, 29 Apr 2016 05:10:35 -0400
+
+gr-osmosdr (0.1.4-8) unstable; urgency=medium
+
+  * update to v0.1.4-67-gac15e78, build with gnuradio 3.7.9
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Wed, 13 Jan 2016 00:16:06 -0500
+
+gr-osmosdr (0.1.4-7) unstable; urgency=medium
+
+  * Lintian cleanups pre-depends and dep5-copyright
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Sat, 28 Nov 2015 22:57:30 -0500
+
+gr-osmosdr (0.1.4-6) unstable; urgency=medium
+
+  * Don't depend upon hackrf on non-linux
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Mon, 05 Oct 2015 00:25:01 -0400
+
+gr-osmosdr (0.1.4-5) unstable; urgency=medium
+
+  * Rebuild with uhd 3.9.1-3
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Wed, 30 Sep 2015 21:06:49 -0400
+
+gr-osmosdr (0.1.4-4) unstable; urgency=medium
+
+  * Tighten libuhd003 versioned dependency via dh_makeshlibs
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Wed, 30 Sep 2015 01:04:40 -0400
+
+gr-osmosdr (0.1.4-3) unstable; urgency=low
+
+  * rebuild with uhd-3.9.1
+  * post gcc-5 libstdc++6 transition build (Closes: #791062)
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Mon, 14 Sep 2015 20:51:16 -0400
+
+gr-osmosdr (0.1.4-2) unstable; urgency=medium
+
+  * add watch file, rebuild with uhd-3.9.0
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Thu, 10 Sep 2015 10:55:58 -0400
+
+gr-osmosdr (0.1.4-1) unstable; urgency=medium
+
+  * New upstream, update to v0.1.4-48-g86ad584
+    build with gnuradio 3.7.8
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Sun, 16 Aug 2015 21:55:38 -0400
+
+gr-osmosdr (0.1.3-2) unstable; urgency=low
+
+  * Add versioned depends for bladerf (Closes: #759927)
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Wed, 10 Sep 2014 23:57:56 -0400
+
+gr-osmosdr (0.1.3-1) unstable; urgency=low
+
+  * New upstream release
+  * build with gnuradio 3.7.5
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Wed, 03 Sep 2014 22:21:12 -0400
+
+gr-osmosdr (0.1.2-1) unstable; urgency=low
+
+  * New upstream release, update to v0.1.2-2-g8604d76
+  * Include airspy support
+  * pkg-gr-osmosdr git for Debian packaging (Closes: #759268)
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Thu, 28 Aug 2014 14:37:08 -0400
+
+gr-osmosdr (0.1.1.4.ac95af2-1) unstable; urgency=low
+
+  * Update to v0.1.1-4-gac95af2
+    reverting 66109099 rtl: implement methods allowing runtime to control
+    sampling process
+  * Build with gnuradio 3.7.3 (Closes: #743392)
+  * Osmocom MiriSDR support
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Sat, 19 Apr 2014 19:22:49 -0400
+
+gr-osmosdr (0.1.0.55.80c4af-2~bpo70~1) wheezy-backports; urgency=low
+
+  * Rebuild for wheezy-backports.
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Tue, 11 Feb 2014 16:57:11 -0500
+
+gr-osmosdr (0.1.0.55.80c4af-2) unstable; urgency=low
+
+  * ship grc blocks
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Fri, 03 Jan 2014 00:32:28 -0500
+
+gr-osmosdr (0.1.0.55.80c4af-1) unstable; urgency=low
+
+  * New upstream commit, build with gnuradio 3.7.2.1
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Tue, 31 Dec 2013 00:09:54 -0500
+
+gr-osmosdr (0.1.0.11.04b4c8-3) unstable; urgency=low
+
+  * Fix up dependencies for current unstable build
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Thu, 12 Dec 2013 12:05:35 -0500
+
+gr-osmosdr (0.1.0.11.04b4c8-2) unstable; urgency=low
+
+  * drop bladerf dependency
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Sat, 23 Nov 2013 11:25:21 -0500
+
+gr-osmosdr (0.1.0.11.04b4c8-1) unstable; urgency=low
+
+  * New upstream snapshot (Closes: #726469)
+  * Match GNU Radio live distribution version
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Tue, 08 Oct 2013 17:30:31 -0400
+
+gr-osmosdr (0.1git59ceddb-1) unstable; urgency=low
+
+  * New upstream release, build with gnuradio 3.6.4.1-0wheezy1
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Wed, 01 May 2013 17:19:35 -0400
+
+gr-osmosdr (0.1gitd11b7a-1) unstable; urgency=low
+
+  * New upstream git, build with gnuradio 3.6.3
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Wed, 13 Feb 2013 15:56:33 -0500
+
+gr-osmosdr (0.1git0f25dae-1) unstable; urgency=low
+
+  * New upstream git, build with gnuradio 3.6.2
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Sun, 16 Sep 2012 20:47:39 -0400
+
+gr-osmosdr (0.0git7f796fe-1) unstable; urgency=low
+
+  * New upstream git, build with gnuradio 3.6.0
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Mon, 14 May 2012 20:28:18 -0400

@@ -1,0 +1,29 @@
+#!/usr/bin/make -f
+DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
+export DEB_HOST_MULTIARCH
+DEB_DEBIAN_DIR=$(dir $(firstword $(MAKEFILE_LIST)))
+VER=$(shell dpkg-parsechangelog -l$(DEB_DEBIAN_DIR)/changelog \
+              | sed -rne 's,^Version: ([^-]+).*,\1,p')
+GITREV=$(shell echo $(VER) | sed -rne 's,[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+\.([0-f]+),\1,p')
+
+%:
+	dh $@ --with python2
+
+override_dh_auto_configure:
+	dh_auto_configure -- -DLIB_SUFFIX="/$(DEB_HOST_MULTIARCH)" -DPythonLibs_FIND_VERSION:STRING="2.7" -DPYTHON_EXECUTABLE:STRING="/usr/bin/python"
+
+override_dh_auto_install:
+	dh_auto_install
+	rm -f debian/gr-osmosdr/usr/lib/python2.7/dist-packages/osmosdr/*pyc
+	rm -f debian/gr-osmosdr/usr/lib/python2.7/dist-packages/osmosdr/*pyo
+
+override_dh_makeshlibs:
+	dh_makeshlibs -V 'libgnuradio-osmosdr0.1.4 (>= 0.1.4-13)'
+
+version-to-get:
+	echo $(VER) is $(GITREV)
+
+get-orig-source: version-to-get
+	git clone https://gitea.osmocom.org/sdr/gr-osmosdr
+	cd gr-osmosdr && git archive --format=tar --prefix=gr-osmosdr-$(VER)/  $(GITREV) | xz > ../gr-osmosdr_$(VER).orig.tar.xz
+	rm -rf gr-osmosdr

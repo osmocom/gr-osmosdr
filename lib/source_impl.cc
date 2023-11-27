@@ -396,7 +396,7 @@ source_impl::source_impl( const std::string &args )
     }
 #endif
 
-    if ( iface != NULL && long(block.get()) != 0 ) {
+    if (iface != NULL && reinterpret_cast<std::intptr_t>(block.get()) != 0 ) {
       _devs.push_back( iface );
 
       for (size_t i = 0; i < iface->get_num_channels(); i++) {
@@ -416,7 +416,7 @@ source_impl::source_impl( const std::string &args )
         connect(block, i, self(), channel++);
 #endif
       }
-    } else if ( (iface != NULL) || (long(block.get()) != 0) )
+    } else if ((iface != NULL) || (reinterpret_cast<std::intptr_t>(block.get()) != 0))
       throw std::runtime_error("Either iface or block are NULL.");
 
   }
@@ -617,7 +617,7 @@ bool source_impl::set_gain_mode( bool automatic, size_t chan )
   for (source_iface *dev : _devs)
     for (size_t dev_chan = 0; dev_chan < dev->get_num_channels(); dev_chan++)
       if ( chan == channel++ ) {
-        if ( _gain_mode[ chan ] != automatic ) {
+        if ( (_gain_mode.count(chan) == 0) || (_gain_mode[ chan ] != automatic) ) {
           _gain_mode[ chan ] = automatic;
           bool mode = dev->set_gain_mode( automatic, dev_chan );
           if (!automatic) // reapply gain value when switched to manual mode
