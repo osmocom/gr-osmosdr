@@ -32,7 +32,6 @@
 
 #if defined(_WIN32)
 // if not posix, assume winsock
-#pragma comment(lib, "ws2_32.lib")
 #define USING_WINSOCK
 #include <winsock2.h>
 #include <ws2tcpip.h>
@@ -89,7 +88,9 @@ static int is_error( int perr )
 {
   // Compare error to posix error code; return nonzero if match.
 #if defined(USING_WINSOCK)
+#ifndef ENOPROTOOPT
 #define ENOPROTOOPT 109
+#endif
   // All codes to be checked for must be defined below
   int werr = WSAGetLastError();
   switch( werr ) {
