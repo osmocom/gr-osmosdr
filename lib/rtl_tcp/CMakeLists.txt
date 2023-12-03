@@ -29,6 +29,12 @@ APPEND_LIB_LIST(
     ${Gnuradio-blocks_LIBRARIES}
 )
 
+if(WIN32)
+    APPEND_LIB_LIST(
+        ws2_32
+    )
+endif()
+
 list(APPEND gr_osmosdr_srcs
     ${CMAKE_CURRENT_SOURCE_DIR}/rtl_tcp_source_c.cc
 )

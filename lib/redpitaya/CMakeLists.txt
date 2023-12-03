@@ -29,6 +29,12 @@ APPEND_LIB_LIST(
     ${Gnuradio-blocks_LIBRARIES}
 )
 
+if(WIN32)
+    APPEND_LIB_LIST(
+        ws2_32
+    )
+endif()
+
 list(APPEND gr_osmosdr_srcs
     ${CMAKE_CURRENT_SOURCE_DIR}/redpitaya_source_c.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/redpitaya_sink_c.cc
