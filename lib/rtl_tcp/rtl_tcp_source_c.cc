@@ -88,7 +88,9 @@ static int is_error( int perr )
 {
   // Compare error to posix error code; return nonzero if match.
 #if defined(USING_WINSOCK)
+#ifndef ENOPROTOOPT
 #define ENOPROTOOPT 109
+#endif
   // All codes to be checked for must be defined below
   int werr = WSAGetLastError();
   switch( werr ) {
