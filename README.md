@@ -62,7 +62,7 @@ in GRC menu.
 Forum
 -----
 
-We welcome any pySim related discussions in the
+We welcome any gr-osmosdr related discussions in the
 [SDR](https://discourse.osmocom.org/c/sdr/)
 section of the osmocom discourse (web based Forum).
 
