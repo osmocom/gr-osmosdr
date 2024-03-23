@@ -59,6 +59,13 @@ sudo ldconfig
 NOTE: The osmocom blocks will appear under *Sources* and *Sinks* categories
 in GRC menu.
 
+Forum
+-----
+
+We welcome any pySim related discussions in the
+[SDR](https://discourse.osmocom.org/c/sdr/)
+section of the osmocom discourse (web based Forum).
+
 Mailing List
 ------------
 
