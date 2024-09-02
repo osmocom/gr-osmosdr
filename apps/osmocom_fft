@@ -326,7 +326,7 @@ class app_top_block(gr.top_block, Qt.QMainWindow):
         s = self._fre.text()
         s = s.replace('%S', '%e' % self.src.get_sample_rate())
         s = s.replace('%F', '%e' % self.src.get_center_freq())
-        s = s.replace('%T', datetime.datetime.now().strftime('%Y%m%d%H%M%S'))
+        s = s.replace('%T', datetime.datetime.now().astimezone().strftime('%Y%m%d%H%M%S%z'))
         return s
 
     def _set_status_msg(self, msg, timeout=0):
