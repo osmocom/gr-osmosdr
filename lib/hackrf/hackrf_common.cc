@@ -150,6 +150,41 @@ void hackrf_common::close(void *dev)
   }
 }
 
+uint8_t hackrf_common::get_operacake_address()
+{
+  uint8_t boards[HACKRF_OPERACAKE_MAX_BOARDS];
+  if (hackrf_get_operacake_boards(_dev.get(), boards) == HACKRF_SUCCESS) {
+    for (int i = 0; i < HACKRF_OPERACAKE_MAX_BOARDS; i++) {
+      if (boards[i] != HACKRF_OPERACAKE_ADDRESS_INVALID) {
+        return boards[i];
+      }
+    }
+  }
+  return HACKRF_OPERACAKE_ADDRESS_INVALID;
+}
+
+std::string hackrf_common::port2str(int port)
+{
+  if (port == HACKRF_OC_PORT_INVALID || port >= HACKRF_OC_PORT_COUNT) {
+    return "TX/RX";
+  }  else if (port <= HACKRF_OC_PORTS_PER_SIDE) {
+    return "A" + std::to_string(port + 1);
+  } else {
+    return "B" + std::to_string(port + 1 - HACKRF_OC_PORTS_PER_SIDE);
+  }
+}
+
+int hackrf_common::str2port(std::string const &str)
+{
+  if (str[0] == 'A') {
+    return OPERACAKE_PA1 + str[1] - '1';
+  } else if (str[0] == 'B') {
+    return OPERACAKE_PB1 + str[1] - '1';
+  } else {
+    return HACKRF_OC_PORT_INVALID;
+  }
+}
+
 std::vector<std::string> hackrf_common::get_devices()
 {
   std::vector<std::string> devices;
@@ -322,17 +357,42 @@ double hackrf_common::get_gain( size_t chan )
 
 std::vector< std::string > hackrf_common::get_antennas( size_t chan )
 {
-  return { get_antenna( chan ) };
+  std::vector<std::string> antennas;
+  antennas.push_back("TX/RX");
+  if (get_operacake_address() != HACKRF_OPERACAKE_ADDRESS_INVALID) {
+    for (int i = 0; i <= HACKRF_OC_PORT_COUNT; i++) {
+      antennas.push_back(port2str(i));
+    }
+  }
+  return antennas;
 }
 
 std::string hackrf_common::set_antenna( const std::string & antenna, size_t chan )
 {
+  // This exposes the most common/simple switching setup to fit in the available API:
+  //  * A single Opera Cake board
+  //  * Switching the A0 connection between A1-4 & B1-4
+  //
+  // If set to the default/invalid selection, don't adjust any Opera Cake settings.
+  // This allows for using the `hackrf_operacake` CLI tool for more complex setups.
+  int port = str2port(antenna);
+  if (port != HACKRF_OC_PORT_INVALID) {
+    // Grab the first available Opera Cake board.
+    uint8_t address = get_operacake_address();
+    if (address != HACKRF_OPERACAKE_ADDRESS_INVALID) {
+      hackrf_set_operacake_mode(_dev.get(), address, OPERACAKE_MODE_MANUAL);
+      // We have to set the B0 connection too, so just make it mirror A0.
+      int port_b = (port + HACKRF_OC_PORTS_PER_SIDE) % HACKRF_OC_PORT_COUNT;
+      hackrf_set_operacake_ports(_dev.get(), address, port, port_b);
+    }
+  }
+  _selected_port = port;
   return get_antenna( chan );
 }
 
 std::string hackrf_common::get_antenna( size_t chan )
 {
-  return "TX/RX";
+  return port2str(_selected_port);
 }
 
 double hackrf_common::set_bandwidth( double bandwidth, size_t chan )

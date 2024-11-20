@@ -34,6 +34,10 @@
 #define BUF_LEN  (16 * 32 * 512) /* must be multiple of 512 */
 #define BUF_NUM   15
 
+#define HACKRF_OC_PORT_COUNT 8
+#define HACKRF_OC_PORTS_PER_SIDE 4
+#define HACKRF_OC_PORT_INVALID -1
+
 #define BYTES_PER_SAMPLE  2 /* HackRF device produces/consumes 8 bit signed IQ data */
 
 #define HACKRF_FORMAT_ERROR(ret, msg) \
@@ -93,6 +97,10 @@ protected:
 private:
   static void close(void *dev);
 
+  uint8_t get_operacake_address();
+  std::string port2str(int port);
+  int str2port(std::string const &str);
+
   static int _usage;
   static std::mutex _usage_mutex;
 
@@ -108,6 +116,7 @@ private:
   double _bandwidth;
   bool _bias;
   bool _started;
+  int _selected_port = HACKRF_OC_PORT_INVALID;
 };
 
 #endif /* INCLUDED_HACKRF_COMMON_H */
