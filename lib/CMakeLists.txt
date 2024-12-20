@@ -199,6 +199,12 @@ endif(ENABLE_NONFREE)
 GR_REGISTER_COMPONENT("HackRF & rad1o Badge" ENABLE_HACKRF LIBHACKRF_FOUND)
 if(ENABLE_HACKRF)
     add_subdirectory(hackrf)
+    if(PC_LIBHACKRF_VERSION VERSION_GREATER_EQUAL "0.7")
+        add_definitions("-DHACKRF_OPERACAKE_SUPPORT")
+        message(STATUS "  Enabling Opera Cake antenna switch support")
+    else()
+        message(STATUS "  Disabling Opera Cake antenna switch support")
+    endif()
 endif(ENABLE_HACKRF)
 
 ########################################################################

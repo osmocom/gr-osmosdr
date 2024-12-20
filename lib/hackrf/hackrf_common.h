@@ -97,9 +97,11 @@ protected:
 private:
   static void close(void *dev);
 
+#ifdef HACKRF_OPERACAKE_SUPPORT
   uint8_t get_operacake_address();
   std::string port2str(int port);
   int str2port(std::string const &str);
+#endif
 
   static int _usage;
   static std::mutex _usage_mutex;
