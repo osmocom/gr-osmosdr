@@ -48,11 +48,9 @@ Building with cmake:
 ```
 git clone https://gitea.osmocom.org/sdr/gr-osmosdr
 cd gr-osmosdr/
-mkdir build
-cd build/
-cmake ../
-make
-sudo make install
+cmake -S . -B build
+cmake --build build --parallel
+sudo cmake --install build
 sudo ldconfig
 ```
 
