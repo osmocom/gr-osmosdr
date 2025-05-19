@@ -339,11 +339,14 @@ void bladerf_common::init(dict_t const &dict, bladerf_direction direction)
     if (_get(dict, "sample_format") == "16" || _get(dict, "sample_format") == "16bit") {
         _format = BLADERF_FORMAT_SC16_Q11;
         BLADERF_INFO("Sample format set to 16bit");
+    } else if (_get(dict, "sample_format") == "16packed" || _get(dict, "sample_format") == "16bit_packed") {
+        _format = BLADERF_FORMAT_SC16_Q11_PACKED;
+        BLADERF_INFO("Sample format set to 16bit packed");
     } else if (_get(dict, "sample_format") == "8" || _get(dict, "sample_format") == "8bit") {
         _format = BLADERF_FORMAT_SC8_Q7;
         BLADERF_INFO("Sample format set to 8bit");
     } else {
-        BLADERF_THROW("Specified sample format invalid. Valid formats: [16bit|8bit]");
+        BLADERF_THROW("Specified sample format invalid. Valid formats: [16bit|16bit_packed|8bit]");
     }
   } else {
     _format = BLADERF_FORMAT_SC16_Q11;
