@@ -240,6 +240,14 @@ if(ENABLE_AIRSPYHF)
 endif(ENABLE_AIRSPYHF)
 
 ########################################################################
+# Setup HYDRASDR component
+########################################################################
+GR_REGISTER_COMPONENT("HYDRASDR Receiver" ENABLE_HYDRASDR LIBHYDRASDR_FOUND)
+if(ENABLE_HYDRASDR)
+    add_subdirectory(hydrasdr)
+endif(ENABLE_HYDRASDR)
+
+########################################################################
 # Setup SoapySDR component
 ########################################################################
 GR_REGISTER_COMPONENT("SoapySDR support" ENABLE_SOAPY SoapySDR_FOUND)

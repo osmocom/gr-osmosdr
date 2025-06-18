@@ -1,0 +1,42 @@
+if(NOT PKG_CONFIG_FOUND)
+    INCLUDE(FindPkgConfig)
+endif()
+PKG_CHECK_MODULES(PC_LIBHYDRASDR libhydrasdr)
+
+message("Debug: Running PKG_CHECK_MODULES for libhydrasdr")
+PKG_CHECK_MODULES(PC_LIBHYDRASDR libhydrasdr)
+message("Debug: PC_LIBHYDRASDR_FOUND=${PC_LIBHYDRASDR_FOUND}")
+message("Debug: PC_LIBHYDRASDR_INCLUDEDIR=${PC_LIBHYDRASDR_INCLUDEDIR}")
+message("Debug: PC_LIBHYDRASDR_LIBDIR=${PC_LIBHYDRASDR_LIBDIR}")
+
+message("Debug: Looking for libhydrasdr/hydrasdr.h")
+
+FIND_PATH(
+LIBHYDRASDR_INCLUDE_DIRS
+    NAMES libhydrasdr/hydrasdr.h
+    HINTS $ENV{LIBHYDRASDR_DIR}/include
+        ${PC_LIBHYDRASDR_INCLUDEDIR}
+    PATHS /usr/local/include
+	      /usr/include
+)
+
+message("Debug: LIBHYDRASDR_INCLUDE_DIRS=${LIBHYDRASDR_INCLUDE_DIRS}")
+message("Debug: Looking for hydrasdr library")
+
+FIND_LIBRARY(
+    LIBHYDRASDR_LIBRARIES
+    NAMES hydrasdr
+    HINTS $ENV{LIBHYDRASDR_DIR}/lib
+        ${PC_LIBHYDRASDR_LIBDIR}
+    PATHS /usr/local/lib
+          /usr/lib
+)
+
+message("Debug: LIBHYDRASDR_LIBRARIES=${LIBHYDRASDR_LIBRARIES}")
+
+INCLUDE(FindPackageHandleStandardArgs)
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(LibHYDRASDR DEFAULT_MSG LIBHYDRASDR_LIBRARIES LIBHYDRASDR_INCLUDE_DIRS)
+MARK_AS_ADVANCED(LIBHYDRASDR_LIBRARIES LIBHYDRASDR_INCLUDE_DIRS)
+
+message("Debug: LibHYDRASDR_FOUND=${LibHYDRASDR_FOUND}")
+message("Debug: LIBHYDRASDR_FOUND=${LIBHYDRASDR_FOUND}")

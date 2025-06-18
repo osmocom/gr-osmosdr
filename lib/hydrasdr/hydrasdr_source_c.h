@@ -1,6 +1,7 @@
 /* -*- c++ -*- */
 /*
  * Copyright 2013 Dimitri Stolnikov <horiz0n@gmx.net>
+ * Copyright 2025 Adapted to HydraSDR by Sébastien Dudek @ Penthertz.com
  *
  * This file is part of GNU Radio
  *
@@ -19,8 +20,8 @@
  * the Free Software Foundation, Inc., 51 Franklin Street,
  * Boston, MA 02110-1301, USA.
  */
-#ifndef INCLUDED_AIRSPY_SOURCE_C_H
-#define INCLUDED_AIRSPY_SOURCE_C_H
+#ifndef INCLUDED_HYDRASDR_SOURCE_C_H
+#define INCLUDED_HYDRASDR_SOURCE_C_H
 
 #include <boost/circular_buffer.hpp>
 
@@ -29,11 +30,11 @@
 
 #include <gnuradio/sync_block.h>
 
-#include "airspy_wrapper.h"
+#include "hydrasdr_wrapper.h"
 
 #include "source_iface.h"
 
-class airspy_source_c;
+class hydrasdr_source_c;
 
 /*
  * We use std::shared_ptr's instead of raw pointers for all access
@@ -46,38 +47,38 @@ class airspy_source_c;
  *
  * As a convention, the _sptr suffix indicates a std::shared_ptr
  */
-typedef std::shared_ptr<airspy_source_c> airspy_source_c_sptr;
+typedef std::shared_ptr<hydrasdr_source_c> hydrasdr_source_c_sptr;
 
 /*!
- * \brief Return a shared_ptr to a new instance of airspy_source_c.
+ * \brief Return a shared_ptr to a new instance of hydrasdr_source_c.
  *
- * To avoid accidental use of raw pointers, airspy_source_c's
- * constructor is private.  make_airspy_source_c is the public
+ * To avoid accidental use of raw pointers, hydrasdr_source_c's
+ * constructor is private.  make_hydrasdr_source_c is the public
  * interface for creating new instances.
  */
-airspy_source_c_sptr make_airspy_source_c (const std::string & args = "");
+hydrasdr_source_c_sptr make_hydrasdr_source_c (const std::string & args = "");
 
 /*!
  * \brief Provides a stream of complex samples.
  * \ingroup block
  */
-class airspy_source_c :
+class hydrasdr_source_c :
     public gr::sync_block,
     public source_iface
 {
 private:
-  // The friend declaration allows make_airspy_source_c to
+  // The friend declaration allows make_hydrasdr_source_c to
   // access the private constructor.
 
-  friend airspy_source_c_sptr make_airspy_source_c (const std::string & args);
+  friend hydrasdr_source_c_sptr make_hydrasdr_source_c (const std::string & args);
 
   /*!
    * \brief Provides a stream of complex samples.
    */
-  airspy_source_c (const std::string & args);  	// private constructor
+  hydrasdr_source_c (const std::string & args);  	// private constructor
 
 public:
-  ~airspy_source_c (); 	// public destructor
+  ~hydrasdr_source_c (); 	// public destructor
 
   bool start();
   bool stop();
@@ -123,10 +124,10 @@ public:
   osmosdr::freq_range_t get_bandwidth_range( size_t chan = 0 );
 
 private:
-  static int _airspy_rx_callback(airspy_transfer* transfer);
-  int airspy_rx_callback(void *samples, int sample_count);
+  static int _hydrasdr_rx_callback(hydrasdr_transfer* transfer);
+  int hydrasdr_rx_callback(void *samples, int sample_count);
 
-  airspy_device *_dev;
+  hydrasdr_device *_dev;
 
   boost::circular_buffer<gr_complex> *_fifo;
   std::mutex _fifo_lock;
@@ -150,4 +151,4 @@ private:
   double _bandwidth;
 };
 
-#endif /* INCLUDED_AIRSPY_SOURCE_C_H */
+#endif /* INCLUDED_HYDRASDR_SOURCE_C_H */

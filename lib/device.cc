@@ -77,6 +77,10 @@
 #include <airspyhf_source_c.h>
 #endif
 
+#ifdef ENABLE_HYDRASDR
+#include <hydrasdr_source_c.h>
+#endif
+
 #ifdef ENABLE_SOAPY
 #include <soapy_source_c.h>
 #endif

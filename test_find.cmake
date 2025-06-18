@@ -1,0 +1,15 @@
+FIND_PATH(
+    LIBHYDRASDR_INCLUDE_DIRS
+    NAMES libhydrasdr/hydrasdr.h
+    PATHS /usr/include
+)
+
+FIND_LIBRARY(
+    LIBHYDRASDR_LIBRARIES
+    NAMES hydrasdr
+    PATHS /usr/lib
+          /lib
+)
+
+message("LIBHYDRASDR_INCLUDE_DIRS: ${LIBHYDRASDR_INCLUDE_DIRS}")
+message("LIBHYDRASDR_LIBRARIES: ${LIBHYDRASDR_LIBRARIES}")
