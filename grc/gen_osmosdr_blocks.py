@@ -211,7 +211,7 @@ documentation: |-
     redpitaya=192.168.1.100[:1001]
     freesrp=0[,fx3='path/to/fx3.img',fpga='path/to/fpga.bin',loopback]
     hackrf=0[,buffers=32][,bias=0|1][,bias_tx=0|1]
-    bladerf=0[,tamer=internal|external|external_1pps][,smb=25e6]
+    bladerf=0[,tamer=internal|external|external_1pps][,smb=25e6][,feature=oversample|default][,sample_format=16bit|16bit_packed|8bit]
     uhd[,serial=...][,lo_offset=0][,mcr=52e6][,nchan=2][,subdev='\\\\'B:0 A:0\\\\''] ...
     xtrx
 

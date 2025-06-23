@@ -181,6 +181,12 @@ program MCU firmware from given file. usually not needed. power cycle required.
 .TP
 fpga='/path/to/the/bitstream.rbf'
 load FPGA bitstream from given file. required only at first run at the moment.
+.TP
+feature=oversample|default
+controls bladeRF hardware features (default: default)
+.TP
+sample_format=16bit|16bit_packed|8bit
+specifies the sample format to use (default: 16bit)
 .SH HackRF Source / Sink
 .TP
 Argument
