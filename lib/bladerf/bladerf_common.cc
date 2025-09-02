@@ -354,8 +354,22 @@ void bladerf_common::init(dict_t const &dict, bladerf_direction direction)
   }
 
   if (dict.count("enable_metadata") > 0) {
-    _format = (_format == BLADERF_FORMAT_SC16_Q11) ? BLADERF_FORMAT_SC16_Q11_META : BLADERF_FORMAT_SC8_Q7_META;
-    BLADERF_INFO("Meta mode enabled");
+    switch (_format) {
+      case BLADERF_FORMAT_SC16_Q11:
+        _format = BLADERF_FORMAT_SC16_Q11_META;
+        BLADERF_INFO("Meta mode enabled for SC16_Q11");
+        break;
+      case BLADERF_FORMAT_SC8_Q7:
+        _format = BLADERF_FORMAT_SC8_Q7_META;
+        BLADERF_INFO("Meta mode enabled for SC8_Q7");
+        break;
+      case BLADERF_FORMAT_SC16_Q11_PACKED:
+        BLADERF_THROW("Metadata mode is not supported with packed format (SC16_Q11_PACKED)");
+        break;
+      default:
+        BLADERF_THROW("Meta enable requested for unknown sample format");
+        break;
+    }
   }
 
   /* Require value to be >= 2 so we can ensure we have twice as many
