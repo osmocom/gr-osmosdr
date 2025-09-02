@@ -120,7 +120,7 @@ public:
   void set_biastee_mode(const std::string &mode);
 
 private:
-  int transmit_with_tags(int16_t const *samples, int noutput_items);
+  int transmit_with_tags(void const *samples, int noutput_items);
 
   // Sample-handling buffers
   int16_t *_16icbuf;              /**< raw samples to bladeRF */
