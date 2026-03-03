@@ -119,7 +119,7 @@ endif()
 ########################################################################
 # Find boost
 ########################################################################
-find_package(Boost "1.65" REQUIRED chrono thread system)
+find_package(Boost "1.69" REQUIRED chrono thread)
 
 if(NOT Boost_FOUND)
     message(FATAL_ERROR "Boost required to compile osmosdr")
