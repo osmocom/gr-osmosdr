@@ -184,9 +184,10 @@ find_package(Doxygen)
 find_package(PythonLibs 3)
 find_package(pybind11)
 
-GR_REGISTER_COMPONENT("Python support" ENABLE_PYTHON
-    PYTHONLIBS_FOUND
-    pybind11_FOUND
+GR_REGISTER_COMPONENT(
+    NAME "Python support"
+    VAR ENABLE_PYTHON
+    REQUIRED_TPLS PYTHONLIBS_FOUND pybind11_FOUND
 )
 
 ########################################################################
