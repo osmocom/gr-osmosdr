@@ -242,7 +242,7 @@ documentation: |-
     Manual: Keep last estimated correction when switched from Automatic to Manual.
     Automatic: Periodicallly find the best solution to compensate for image signals.
 
-  This functionality depends on http://cgit.osmocom.org/cgit/gr-iqbal/
+  This functionality depends on https://gitea.osmocom.org/sdr/gr-iqbal
 
   Gain Mode:
   Chooses between the manual (default) and automatic gain mode where appropriate.
