@@ -75,19 +75,53 @@ soapy_source_c::soapy_source_c (const std::string &args)
 
 soapy_source_c::~soapy_source_c(void)
 {
-    _device->closeStream(_stream);
+    /* closeStream() still talks to the device, which may already be
+     * gone (e.g. a remote device whose connection was lost). Nothing
+     * may throw out of a destructor, so report the failure and go on
+     * with the teardown instead of terminating the application. */
+    try {
+        _device->closeStream(_stream);
+    } catch (const std::exception &ex) {
+        std::cerr << "soapy_source_c: closeStream() failed: "
+                  << ex.what() << std::endl;
+    } catch (...) {
+        std::cerr << "soapy_source_c: closeStream() failed with an "
+                     "unknown exception" << std::endl;
+    }
     std::lock_guard<std::mutex> l(get_soapy_maker_mutex());
     SoapySDR::Device::unmake(_device);
 }
 
 bool soapy_source_c::start()
 {
-    return _device->activateStream(_stream) == 0;
+    /* The SoapySDR stream API reports errors through its return value,
+     * but a device is not required to honour that: a remote device
+     * whose link is down throws instead. start() is called from the
+     * block_executor constructor on a scheduler thread, so catch the
+     * exception and report failure the regular way. */
+    try {
+        return _device->activateStream(_stream) == 0;
+    } catch (const std::exception &ex) {
+        std::cerr << "soapy_source_c: activateStream() failed: "
+                  << ex.what() << std::endl;
+        return false;
+    }
 }
 
 bool soapy_source_c::stop()
 {
-    return _device->deactivateStream(_stream) == 0;
+    /* stop() is called from the block_executor destructor, which is
+     * implicitly noexcept: an exception escaping from here (thrown by
+     * deactivateStream() on a device whose connection died) calls
+     * std::terminate and aborts the whole application. Catch it and
+     * simply report that the stream did not deactivate cleanly. */
+    try {
+        return _device->deactivateStream(_stream) == 0;
+    } catch (const std::exception &ex) {
+        std::cerr << "soapy_source_c: deactivateStream() failed: "
+                  << ex.what() << std::endl;
+        return false;
+    }
 }
 
 int soapy_source_c::work( int noutput_items,
@@ -100,9 +134,19 @@ int soapy_source_c::work( int noutput_items,
     int retries = 1;
 
     do {
-        ret = _device->readStream(
-            _stream, &output_items[0],
-            noutput_items, flags, timeNs);
+        try {
+            ret = _device->readStream(
+                _stream, &output_items[0],
+                noutput_items, flags, timeNs);
+        } catch (const std::exception &ex) {
+            /* Same reasoning as in stop(): a device that throws here
+             * (e.g. a remote device that lost its connection) must not
+             * take down the scheduler thread. Treat it like a stream
+             * error and ask to be called again. */
+            std::cerr << "soapy_source_c: readStream() failed: "
+                      << ex.what() << std::endl;
+            return 0;
+        }
     } while (retries-- && (ret == SOAPY_SDR_OVERFLOW));
 
     if (ret < 0) return 0; //call again
